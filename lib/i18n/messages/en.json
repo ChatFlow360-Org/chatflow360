@@ -1,0 +1,165 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "add": "Add",
+    "edit": "Edit",
+    "active": "Active",
+    "comingSoon": "Coming soon"
+  },
+  "layout": {
+    "sidebar": {
+      "dashboard": "Dashboard",
+      "conversations": "Conversations",
+      "channels": "Channels",
+      "settings": "Settings",
+      "reports": "Reports"
+    },
+    "header": {
+      "myProfile": "My Profile",
+      "logout": "Log out"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Overview of your conversations and performance",
+    "totalConversations": "Total Conversations",
+    "activeNow": "Active Now",
+    "avgSessionTime": "Avg Session Time",
+    "aiHandled": "AI Handled",
+    "newVisitors": "New Visitors",
+    "recentConversations": "Recent Conversations",
+    "topPages": "Top Pages",
+    "visits": "{count} chats",
+    "aiPerformance": "AI Performance",
+    "handledByAi": "Handled by AI",
+    "escalatedToHuman": "Escalated to Human",
+    "satisfactionRate": "Satisfaction Rate"
+  },
+  "conversations": {
+    "title": "Conversations",
+    "subtitle": "Manage and monitor your customer conversations",
+    "noConversations": "No conversations found",
+    "typeMessage": "Type a message...",
+    "msgs": "{count} msgs",
+    "filters": {
+      "all": "All",
+      "active": "Active",
+      "ai": "AI",
+      "human": "Human",
+      "searchPlaceholder": "Search conversations..."
+    },
+    "status": {
+      "active": "Active",
+      "waiting": "Waiting",
+      "closed": "Closed"
+    },
+    "handler": {
+      "ai": "AI",
+      "human": "Human",
+      "visitor": "Visitor"
+    },
+    "detail": {
+      "conversationInfo": "Conversation",
+      "handler": "Handler",
+      "messages": "Messages",
+      "started": "Started",
+      "lastActivity": "Last Activity",
+      "channelInfo": "Channel",
+      "channel": "Source",
+      "closeConversation": "Close Conversation",
+      "reopenConversation": "Reopen Conversation",
+      "assignToAgent": "Assign to Agent",
+      "leadInfo": "Lead Info"
+    }
+  },
+  "channels": {
+    "title": "Channels",
+    "subtitle": "Manage your communication channels",
+    "comingSoonDescription": "Configure your website widgets and communication channels here."
+  },
+  "reports": {
+    "title": "Reports",
+    "subtitle": "Analytics and performance metrics",
+    "comingSoonDescription": "View detailed analytics, trends, and performance reports here."
+  },
+  "settings": {
+    "title": "AI Settings",
+    "subtitle": "Configure your AI assistant behavior and knowledge",
+    "tabs": {
+      "instructions": "Instructions",
+      "knowledge": "Knowledge Base"
+    },
+    "systemPrompt": {
+      "title": "System Prompt",
+      "description": "Define how the AI assistant behaves and responds",
+      "placeholder": "Enter system prompt instructions...",
+      "active": "Active"
+    },
+    "handoff": {
+      "title": "Handoff Keywords",
+      "description": "Words that trigger transfer to a human agent",
+      "placeholder": "Add keyword..."
+    },
+    "saveChanges": "Save Changes",
+    "preview": {
+      "title": "AI Preview",
+      "description": "How your AI will respond based on current settings:",
+      "question": "What are your business hours?",
+      "answer": "Our business hours are Monday to Friday, 9 AM to 6 PM EST. We're located in Miami, FL. Is there anything else I can help you with?"
+    },
+    "quickSettings": {
+      "title": "Quick Settings",
+      "aiModel": "AI Model",
+      "temperature": "Temperature",
+      "maxTokens": "Max Tokens",
+      "humanTakeover": "Human Takeover"
+    },
+    "knowledge": {
+      "title": "Knowledge Items",
+      "description": "Information the AI uses to answer questions (RAG)",
+      "addKnowledge": "Add Knowledge",
+      "dialogTitle": "Add Knowledge Item",
+      "titleLabel": "Title",
+      "titlePlaceholder": "e.g. Services and Pricing",
+      "contentLabel": "Content",
+      "contentPlaceholder": "Enter the knowledge content..."
+    }
+  },
+  "dateRange": {
+    "selectDates": "Select dates",
+    "custom": "Custom"
+  },
+  "auth": {
+    "title": "Welcome back",
+    "subtitle": "Sign in to your ChatFlow360 dashboard",
+    "email": "Email",
+    "emailPlaceholder": "you@company.com",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "signIn": "Sign in",
+    "signingIn": "Signing in...",
+    "noAccount": "Don't have an account?",
+    "signUp": "Get started",
+    "branding": {
+      "headline": "Get ChatFlow360, and Turn Traffic into Leads",
+      "subheadline": "The easiest way to run ChatFlow360, an AI-powered live chat for bilingual WordPress. Always on, designed to engage visitors in real-time across languages.",
+      "rights": "All rights reserved."
+    },
+    "features": {
+      "alwaysOn": "Always On",
+      "moreLeads": "More Leads",
+      "flatPrice": "One Flat Price",
+      "growth": "Built for Businesses Growth",
+      "moreValue": "More Value, Less Overhead",
+      "enterpriseAi": "Enterprise-Level AI"
+    }
+  },
+  "time": {
+    "justNow": "Just now",
+    "minutesAgo": "{count}m ago",
+    "hoursAgo": "{count}h ago",
+    "daysAgo": "{count}d ago"
+  }
+}

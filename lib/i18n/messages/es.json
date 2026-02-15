@@ -1,0 +1,165 @@
+{
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "add": "Agregar",
+    "edit": "Editar",
+    "active": "Activo",
+    "comingSoon": "Proximamente"
+  },
+  "layout": {
+    "sidebar": {
+      "dashboard": "Panel",
+      "conversations": "Conversaciones",
+      "channels": "Canales",
+      "settings": "Configuracion",
+      "reports": "Reportes"
+    },
+    "header": {
+      "myProfile": "Mi Perfil",
+      "logout": "Cerrar sesion"
+    }
+  },
+  "dashboard": {
+    "title": "Panel",
+    "subtitle": "Resumen de tus conversaciones y rendimiento",
+    "totalConversations": "Conversaciones Totales",
+    "activeNow": "Activas Ahora",
+    "avgSessionTime": "Tiempo Promedio de Uso",
+    "aiHandled": "Resueltas por IA",
+    "newVisitors": "Visitantes Nuevos",
+    "recentConversations": "Conversaciones Recientes",
+    "topPages": "Páginas Más Relevantes",
+    "visits": "{count} chats",
+    "aiPerformance": "Rendimiento de IA",
+    "handledByAi": "Manejadas por IA",
+    "escalatedToHuman": "Escaladas a Humano",
+    "satisfactionRate": "Satisfaccion"
+  },
+  "conversations": {
+    "title": "Conversaciones",
+    "subtitle": "Gestiona y monitorea las conversaciones de tus clientes",
+    "noConversations": "No se encontraron conversaciones",
+    "typeMessage": "Escribe un mensaje...",
+    "msgs": "{count} msgs",
+    "filters": {
+      "all": "Todas",
+      "active": "Activas",
+      "ai": "IA",
+      "human": "Humano",
+      "searchPlaceholder": "Buscar conversaciones..."
+    },
+    "status": {
+      "active": "Activa",
+      "waiting": "En espera",
+      "closed": "Cerrada"
+    },
+    "handler": {
+      "ai": "IA",
+      "human": "Humano",
+      "visitor": "Visitante"
+    },
+    "detail": {
+      "conversationInfo": "Conversacion",
+      "handler": "Gestor",
+      "messages": "Mensajes",
+      "started": "Iniciada",
+      "lastActivity": "Ultima Actividad",
+      "channelInfo": "Canal",
+      "channel": "Fuente",
+      "closeConversation": "Cerrar Conversacion",
+      "reopenConversation": "Reabrir Conversacion",
+      "assignToAgent": "Asignar a Agente",
+      "leadInfo": "Info del Lead"
+    }
+  },
+  "channels": {
+    "title": "Canales",
+    "subtitle": "Gestiona tus canales de comunicacion",
+    "comingSoonDescription": "Configura tus widgets de sitio web y canales de comunicacion aqui."
+  },
+  "reports": {
+    "title": "Reportes",
+    "subtitle": "Analiticas y metricas de rendimiento",
+    "comingSoonDescription": "Visualiza analiticas detalladas, tendencias y reportes de rendimiento aqui."
+  },
+  "settings": {
+    "title": "Configuracion de IA",
+    "subtitle": "Configura el comportamiento y conocimiento de tu asistente de IA",
+    "tabs": {
+      "instructions": "Instrucciones",
+      "knowledge": "Base de Conocimiento"
+    },
+    "systemPrompt": {
+      "title": "Prompt del Sistema",
+      "description": "Define como se comporta y responde el asistente de IA",
+      "placeholder": "Ingresa las instrucciones del prompt...",
+      "active": "Activo"
+    },
+    "handoff": {
+      "title": "Palabras Clave de Transferencia",
+      "description": "Palabras que activan la transferencia a un agente humano",
+      "placeholder": "Agregar palabra clave..."
+    },
+    "saveChanges": "Guardar Cambios",
+    "preview": {
+      "title": "Vista Previa de IA",
+      "description": "Como respondera tu IA basado en la configuracion actual:",
+      "question": "Cual es su horario de atencion?",
+      "answer": "Nuestro horario de atencion es de lunes a viernes, 9 AM a 6 PM EST. Estamos ubicados en Miami, FL. Hay algo mas en lo que pueda ayudarle?"
+    },
+    "quickSettings": {
+      "title": "Ajustes Rapidos",
+      "aiModel": "Modelo de IA",
+      "temperature": "Temperatura",
+      "maxTokens": "Tokens Maximos",
+      "humanTakeover": "Transferencia a Humano"
+    },
+    "knowledge": {
+      "title": "Base de Conocimiento",
+      "description": "Informacion que la IA usa para responder preguntas (RAG)",
+      "addKnowledge": "Agregar Conocimiento",
+      "dialogTitle": "Agregar Elemento de Conocimiento",
+      "titleLabel": "Titulo",
+      "titlePlaceholder": "ej. Servicios y Precios",
+      "contentLabel": "Contenido",
+      "contentPlaceholder": "Ingresa el contenido del conocimiento..."
+    }
+  },
+  "dateRange": {
+    "selectDates": "Seleccionar fechas",
+    "custom": "Personalizado"
+  },
+  "auth": {
+    "title": "Bienvenido de nuevo",
+    "subtitle": "Inicia sesion en tu panel de ChatFlow360",
+    "email": "Correo electronico",
+    "emailPlaceholder": "tu@empresa.com",
+    "password": "Contrasena",
+    "forgotPassword": "Olvidaste tu contrasena?",
+    "signIn": "Iniciar sesion",
+    "signingIn": "Iniciando sesion...",
+    "noAccount": "No tienes una cuenta?",
+    "signUp": "Comienza aqui",
+    "branding": {
+      "headline": "Obtén ChatFlow360 y Convierte Tráfico en Leads",
+      "subheadline": "La forma más fácil de usar ChatFlow360, un chat en vivo con IA para WordPress bilingüe. Siempre activo, diseñado para interactuar con visitantes en tiempo real en ambos idiomas.",
+      "rights": "Todos los derechos reservados."
+    },
+    "features": {
+      "alwaysOn": "Siempre Activo",
+      "moreLeads": "Más Leads",
+      "flatPrice": "Un Solo Precio",
+      "growth": "Hecho para Crecer",
+      "moreValue": "Más Valor, Menos Costo",
+      "enterpriseAi": "IA Empresarial"
+    }
+  },
+  "time": {
+    "justNow": "Justo ahora",
+    "minutesAgo": "hace {count}m",
+    "hoursAgo": "hace {count}h",
+    "daysAgo": "hace {count}d"
+  }
+}

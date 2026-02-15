@@ -1,0 +1,207 @@
+// ChatFlow360 - Prisma Schema
+// Based on docs/DATA-MODELS.md
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// Organization
+// ============================================
+
+model Organization {
+  id                       String   @id @default(uuid()) @db.Uuid
+  name                     String
+  slug                     String   @unique
+  defaultLanguage          String   @default("en") @map("default_language")
+  timezone                 String   @default("America/New_York")
+  plan                     String   @default("starter") // starter | pro | growth
+  maxChannels              Int      @default(1) @map("max_channels")
+  maxAgents                Int      @default(2) @map("max_agents")
+  maxConversationsPerMonth Int      @default(300) @map("max_conversations_per_month")
+  isActive                 Boolean  @default(true) @map("is_active")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  members       OrganizationMember[]
+  channels      Channel[]
+  aiSettings    AiSettings?
+  usageTracking UsageTracking[]
+
+  @@map("organizations")
+}
+
+// ============================================
+// User
+// ============================================
+
+model User {
+  id                String   @id @default(uuid()) @db.Uuid
+  email             String   @unique
+  fullName          String?  @map("full_name")
+  avatarUrl         String?  @map("avatar_url")
+  isSuperAdmin      Boolean  @default(false) @map("is_super_admin")
+  preferredLanguage String   @default("en") @map("preferred_language")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  memberships   OrganizationMember[]
+  conversations Conversation[]       @relation("AssignedConversations")
+  messages      Message[]            @relation("SentMessages")
+
+  @@map("users")
+}
+
+// ============================================
+// OrganizationMember (pivot: User <-> Organization)
+// ============================================
+
+model OrganizationMember {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  role           String   @default("admin") // owner | admin | agent
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@map("organization_members")
+}
+
+// ============================================
+// AiSettings (Config IA — SOLO Super Admin)
+// Technical params: model, temperature, maxTokens
+// Business defaults: systemPrompt, handoffKeywords (fallback)
+// ============================================
+
+model AiSettings {
+  id               String   @id @default(uuid()) @db.Uuid
+  organizationId   String   @unique @map("organization_id") @db.Uuid
+  provider         String   @default("openai")
+  model            String   @default("gpt-4o-mini")
+  systemPrompt     String?  @map("system_prompt") @db.Text
+  temperature      Decimal  @default(0.7) @db.Decimal(3, 2)
+  maxTokens        Int      @default(500) @map("max_tokens")
+  handoffKeywords  String[] @default([]) @map("handoff_keywords")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("ai_settings")
+}
+
+// ============================================
+// Channel
+// Business params (org admin): systemPrompt, handoffEnabled, handoffKeywords
+// ============================================
+
+model Channel {
+  id              String   @id @default(uuid()) @db.Uuid
+  organizationId  String   @map("organization_id") @db.Uuid
+  name            String
+  type            String   // website | whatsapp | facebook
+  isActive        Boolean  @default(true) @map("is_active")
+  systemPrompt    String?  @map("system_prompt") @db.Text
+  handoffEnabled  Boolean  @default(true) @map("handoff_enabled")
+  handoffKeywords String[] @default([]) @map("handoff_keywords")
+  config          Json     @default("{}")
+  publicKey       String?  @unique @map("public_key")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+  // Note: ChannelKnowledge is managed via SQL (pgvector), not Prisma
+
+  @@map("channels")
+}
+
+// ============================================
+// Conversation
+// ============================================
+
+model Conversation {
+  id             String    @id @default(uuid()) @db.Uuid
+  channelId      String    @map("channel_id") @db.Uuid
+  visitorId      String?   @map("visitor_id")
+  contactInfo    Json      @default("{}") @map("contact_info")
+  status         String    @default("open") // open | pending | resolved | closed
+  responderMode  String    @default("ai") @map("responder_mode") // ai | human
+  assignedTo     String?   @map("assigned_to") @db.Uuid
+  metadata       Json      @default("{}")
+  lastMessageAt  DateTime  @default(now()) @map("last_message_at")
+  resolvedAt     DateTime? @map("resolved_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  channel  Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  assignee User?    @relation("AssignedConversations", fields: [assignedTo], references: [id], onDelete: SetNull)
+  messages Message[]
+
+  @@index([channelId, status])
+  @@index([lastMessageAt(sort: Desc)])
+  @@map("conversations")
+}
+
+// ============================================
+// Message
+// ============================================
+
+model Message {
+  id             String   @id @default(uuid()) @db.Uuid
+  conversationId String   @map("conversation_id") @db.Uuid
+  senderType     String   @map("sender_type") // visitor | ai | agent
+  senderId       String?  @map("sender_id") @db.Uuid
+  content        String   @db.Text
+  contentType    String   @default("text") @map("content_type")
+  attachments    Json     @default("[]")
+  metadata       Json     @default("{}")
+  tokensUsed     Int?     @map("tokens_used") // Only for AI messages (internal cost tracking)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User?        @relation("SentMessages", fields: [senderId], references: [id], onDelete: SetNull)
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+// ============================================
+// UsageTracking (monthly summary — SOLO Super Admin)
+// ============================================
+
+model UsageTracking {
+  id                String  @id @default(uuid()) @db.Uuid
+  organizationId    String  @map("organization_id") @db.Uuid
+  month             String  // "2026-02" (YYYY-MM)
+  conversationCount Int     @default(0) @map("conversation_count")
+  totalTokensUsed   Int     @default(0) @map("total_tokens_used")
+  estimatedCostUsd  Decimal @default(0.00) @map("estimated_cost_usd") @db.Decimal(10, 4)
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, month])
+  @@map("usage_tracking")
+}
+
+// ============================================
+// Note: channel_knowledge table is managed via SQL (pgvector)
+// See docs/RAG-KNOWLEDGE.md for the SQL schema
+// Prisma does not support VECTOR type natively
+// ============================================
