@@ -1,36 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { useRouter, usePathname } from "@/lib/i18n/navigation";
+import { useRouter, usePathname, Link } from "@/lib/i18n/navigation";
 import Image from "next/image";
 import { Clock, Users, DollarSign, TrendingUp, Zap, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { cn } from "@/lib/utils";
+import { login, type AuthState } from "@/lib/auth/actions";
 
 export default function LoginPage() {
   const t = useTranslations("auth");
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+
+  const [state, formAction, isPending] = useActionState<AuthState, FormData>(
+    login,
+    null
+  );
 
   const switchLocale = (newLocale: string) => {
     router.replace(pathname, { locale: newLocale as "en" | "es" });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    // TODO: Implement Supabase Auth
-    setTimeout(() => {
-      router.push("/");
-      setIsLoading(false);
-    }, 1000);
   };
 
   const features = [
@@ -81,7 +74,7 @@ export default function LoginPage() {
         </p>
       </div>
 
-      {/* Right Panel — Login Form (bg-card for dark mode distinction) */}
+      {/* Right Panel — Login Form */}
       <div className="flex w-full flex-col bg-card p-6 sm:p-8 lg:w-1/2 xl:w-[45%]">
         {/* Top: Theme + Language Toggle */}
         <div className="flex items-center justify-end gap-2">
@@ -90,7 +83,7 @@ export default function LoginPage() {
             <button
               onClick={() => switchLocale("en")}
               className={cn(
-                "h-6 rounded-full px-2.5 text-xs font-medium transition-colors",
+                "h-6 cursor-pointer rounded-full px-2.5 text-xs font-medium transition-colors",
                 locale === "en"
                   ? "bg-cta text-white shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -101,7 +94,7 @@ export default function LoginPage() {
             <button
               onClick={() => switchLocale("es")}
               className={cn(
-                "h-6 rounded-full px-2.5 text-xs font-medium transition-colors",
+                "h-6 cursor-pointer rounded-full px-2.5 text-xs font-medium transition-colors",
                 locale === "es"
                   ? "bg-cta text-white shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -112,10 +105,10 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Center: Form — flex-1 to fill remaining space and center */}
+        {/* Center: Form */}
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-sm space-y-8">
-            {/* Logo — centered above heading */}
+            {/* Logo */}
             <div className="flex justify-center">
               <Image
                 src="/logo.png"
@@ -136,17 +129,25 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Error banner */}
+            {state?.error && (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                {t(`errors.${state.error}`)}
+              </div>
+            )}
+
+            <form action={formAction} className="space-y-5">
+              <input type="hidden" name="locale" value={locale} />
+
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium text-foreground">
                   {t("email")}
                 </Label>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
                   placeholder={t("emailPlaceholder")}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
                   required
                   maxLength={254}
                   className="h-10 bg-background dark:border-muted-foreground/20 dark:bg-muted/30"
@@ -158,16 +159,18 @@ export default function LoginPage() {
                   <Label htmlFor="password" className="text-sm font-medium text-foreground">
                     {t("password")}
                   </Label>
-                  <button type="button" className="text-xs font-medium text-cta hover:text-cta/80 transition-colors">
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs font-medium text-cta hover:text-cta/80 transition-colors"
+                  >
                     {t("forgotPassword")}
-                  </button>
+                  </Link>
                 </div>
                 <Input
                   id="password"
+                  name="password"
                   type="password"
                   placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={8}
                   maxLength={128}
@@ -177,19 +180,19 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isPending}
                 className={cn(
-                  "flex h-10 w-full items-center justify-center rounded-lg bg-cta text-sm font-semibold text-white transition-colors hover:bg-cta/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta/50",
-                  isLoading && "opacity-70 cursor-not-allowed"
+                  "flex h-10 w-full cursor-pointer items-center justify-center rounded-lg bg-cta text-sm font-semibold text-white transition-colors hover:bg-cta/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta/50",
+                  isPending && "opacity-70 cursor-not-allowed"
                 )}
               >
-                {isLoading ? t("signingIn") : t("signIn")}
+                {isPending ? t("signingIn") : t("signIn")}
               </button>
             </form>
 
             <p className="text-center text-sm text-muted-foreground">
               {t("noAccount")}{" "}
-              <button type="button" className="font-semibold text-cta hover:text-cta/80 transition-colors">
+              <button type="button" className="cursor-pointer font-semibold text-cta hover:text-cta/80 transition-colors">
                 {t("signUp")}
               </button>
             </p>

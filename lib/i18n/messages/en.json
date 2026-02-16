@@ -154,6 +154,31 @@
       "growth": "Built for Businesses Growth",
       "moreValue": "More Value, Less Overhead",
       "enterpriseAi": "Enterprise-Level AI"
+    },
+    "errors": {
+      "invalidCredentials": "Invalid email or password. Please try again.",
+      "invalidEmail": "Please enter a valid email address.",
+      "passwordTooShort": "Password must be at least 8 characters.",
+      "passwordsMismatch": "Passwords do not match.",
+      "updateFailed": "Failed to update password. Please try again."
+    },
+    "success": {
+      "resetEmailSent": "If an account exists with this email, you will receive a password reset link."
+    },
+    "resetPassword": {
+      "title": "Reset your password",
+      "subtitle": "Enter your email and we'll send you a reset link",
+      "sendLink": "Send reset link",
+      "sending": "Sending...",
+      "backToLogin": "Back to sign in"
+    },
+    "updatePassword": {
+      "title": "Set new password",
+      "subtitle": "Enter your new password below",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password",
+      "update": "Update password",
+      "updating": "Updating..."
     }
   },
   "time": {

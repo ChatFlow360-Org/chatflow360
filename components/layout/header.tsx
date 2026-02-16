@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useRouter, usePathname } from "@/lib/i18n/navigation";
 import { mockUser, mockOrganization } from "@/lib/mock/data";
+import { logout } from "@/lib/auth/actions";
 import type { Locale } from "@/lib/i18n/routing";
 
 interface HeaderProps {
@@ -108,10 +109,14 @@ export function Header({ onMenuClick }: HeaderProps) {
               {t("myProfile")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive">
-              <LogOut className="mr-2 h-4 w-4" />
-              {t("logout")}
-            </DropdownMenuItem>
+            <form action={logout} className="contents">
+              <DropdownMenuItem asChild className="cursor-pointer text-destructive focus:text-destructive">
+                <button type="submit" className="flex w-full items-center">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  {t("logout")}
+                </button>
+              </DropdownMenuItem>
+            </form>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -154,6 +154,31 @@
       "growth": "Hecho para Crecer",
       "moreValue": "Más Valor, Menos Costo",
       "enterpriseAi": "IA Empresarial"
+    },
+    "errors": {
+      "invalidCredentials": "Correo o contraseña inválidos. Intenta de nuevo.",
+      "invalidEmail": "Por favor ingresa un correo electrónico válido.",
+      "passwordTooShort": "La contraseña debe tener al menos 8 caracteres.",
+      "passwordsMismatch": "Las contraseñas no coinciden.",
+      "updateFailed": "No se pudo actualizar la contraseña. Intenta de nuevo."
+    },
+    "success": {
+      "resetEmailSent": "Si existe una cuenta con este correo, recibirás un enlace para restablecer tu contraseña."
+    },
+    "resetPassword": {
+      "title": "Restablecer contraseña",
+      "subtitle": "Ingresa tu correo y te enviaremos un enlace de recuperación",
+      "sendLink": "Enviar enlace",
+      "sending": "Enviando...",
+      "backToLogin": "Volver a iniciar sesión"
+    },
+    "updatePassword": {
+      "title": "Nueva contraseña",
+      "subtitle": "Ingresa tu nueva contraseña",
+      "newPassword": "Nueva contraseña",
+      "confirmPassword": "Confirmar contraseña",
+      "update": "Actualizar contraseña",
+      "updating": "Actualizando..."
     }
   },
   "time": {
