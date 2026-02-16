@@ -10,9 +10,8 @@ interface StatCardProps {
 
 export function StatCard({ title, value, icon: Icon, trend }: StatCardProps) {
   return (
-    <Card className="relative overflow-hidden border-border bg-card">
-      <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg bg-cta" />
-      <CardContent className="flex items-center gap-4 p-5 pl-6">
+    <Card className="border-border border-l-[3px] border-l-cta bg-card">
+      <CardContent className="flex items-center gap-4 p-5">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cta/10">
           <Icon className="h-5 w-5 text-cta" />
         </div>
