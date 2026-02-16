@@ -8,6 +8,8 @@ import {
   // Radio,
   Settings,
   // BarChart3,
+  Building2,
+  Users,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,7 +17,6 @@ import { Link, usePathname } from "@/lib/i18n/navigation";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { mockUser, mockOrganization } from "@/lib/mock/data";
 
 const navItems = [
   { labelKey: "dashboard" as const, href: "/" as const, icon: LayoutDashboard },
@@ -25,12 +26,20 @@ const navItems = [
   // { labelKey: "reports" as const, href: "/reports" as const, icon: BarChart3 },
 ];
 
+const adminItems = [
+  { labelKey: "organizations" as const, href: "/organizations" as const, icon: Building2 },
+  { labelKey: "users" as const, href: "/users" as const, icon: Users },
+];
+
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
+  isSuperAdmin?: boolean;
+  userName?: string;
+  userEmail?: string;
 }
 
-export function Sidebar({ isOpen, onClose }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, isSuperAdmin, userName, userEmail }: SidebarProps) {
   const pathname = usePathname();
   const t = useTranslations("layout.sidebar");
 
@@ -38,6 +47,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     if (href === "/") return pathname === "/";
     return pathname.startsWith(href);
   };
+
+  const initials = userName
+    ? userName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+    : userEmail
+      ? userEmail[0].toUpperCase()
+      : "?";
 
   return (
     <aside
@@ -95,6 +110,38 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             );
           })}
         </ul>
+
+        {/* Admin Section */}
+        {isSuperAdmin && (
+          <div className="mt-4">
+            <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
+              {t("admin")}
+            </p>
+            <ul className="space-y-1">
+              {adminItems.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.href);
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      onClick={onClose}
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                        active
+                          ? "bg-sidebar-accent text-sidebar-primary"
+                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {t(item.labelKey)}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
       </nav>
 
       {/* Footer: Theme + User */}
@@ -103,12 +150,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="flex items-center gap-2">
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-sidebar-accent text-xs text-sidebar-foreground">
-                {mockUser.name.split(" ").map((n) => n[0]).join("")}
+                {initials}
               </AvatarFallback>
             </Avatar>
             <div>
-              <p className="text-xs font-medium text-sidebar-foreground">{mockUser.name}</p>
-              <p className="text-[10px] text-sidebar-foreground/50">{mockUser.email}</p>
+              <p className="text-xs font-medium text-sidebar-foreground">
+                {userName || userEmail || "User"}
+              </p>
+              <p className="text-[10px] text-sidebar-foreground/50">
+                {userEmail || ""}
+              </p>
             </div>
           </div>
           <ThemeToggle />

@@ -2,6 +2,36 @@
 
 > Historial completo de versiones y cambios del proyecto.
 
+## v0.2.0 (2026-02-15)
+
+### Autenticacion Real con Supabase Auth
+
+- **Login funcional** con Supabase Auth (`signInWithPassword`) — credenciales reales, no mock
+- **Logout funcional** desde header dropdown via server action (`signOut`)
+- **Forgot Password page** (`/forgot-password`) — split-screen, envia email de reset (pendiente config Supabase SMTP)
+- **Update Password page** (`/update-password`) — formulario centrado para setear nueva contrasena
+- **Server actions** en `lib/auth/actions.ts`: login, logout, forgotPassword, updatePassword
+  - Zod validation con `z.string().email()` + password min/max
+  - Retornan i18n error keys (`invalidCredentials`, `passwordsMismatch`, etc.)
+  - `useActionState` (React 19) en vez de deprecated `useFormState`
+- **Middleware integrado** Supabase + next-intl (patron: "Supabase primero, intl despues, copiar cookies")
+  - `getUser()` para validacion server-side (no `getSession()`)
+  - Redirect automatico: no-auth → login, auth + public route → dashboard
+  - Async middleware con cookie bridging entre Supabase y next-intl responses
+- **Auth callback** en `app/api/auth/callback/route.ts` — code exchange para email links de password reset
+- **Login page rewired**: `useState` + fake `handleSubmit` → `useActionState` + `formAction`
+  - Inputs uncontrolled con `name` attributes para FormData
+  - Hidden locale input para redirects locale-aware
+  - Error banner traducido via `t(`errors.${state.error}`)`
+  - Link a `/forgot-password` funcional
+- **Header logout**: DropdownMenuItem envuelto en `<form action={logout}>` con `<button type="submit">`
+- **+40 traducciones** (EN + ES): errors, success, resetPassword, updatePassword namespaces
+- **Stat card border style**: cambiado de `<div>` absoluto a `border-l-[3px] border-l-cta` (CSS puro)
+- **Cursor-pointer fixes**: language chip (EN/ES), notification bell, theme toggle
+- Verificado en produccion (Vercel) — login, logout, redirect de rutas protegidas
+- `publicRoutes`: `/login`, `/signup`, `/forgot-password`, `/update-password`
+- Super admin: `joseleon86@gmail.com` creado en Supabase Auth dashboard
+
 ## v0.1.10 (2026-02-14)
 
 ### Login Page Polish — Branding Alignment with Website

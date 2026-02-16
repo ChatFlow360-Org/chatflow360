@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.1.10 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.2.0 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -73,4 +73,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.1.10** - Login page polish (logo oficial, 6 feature cards con colores del sitio web, branding copy actualizado), security headers, i18n bilingue EN/ES (next-intl), dark/light mode, 5 stat cards.
+**v0.2.0** - Autenticacion real con Supabase Auth (login, logout, forgot-password, update-password). Server actions + useActionState. Middleware integrado Supabase + next-intl. Verificado en produccion (Vercel).

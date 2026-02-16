@@ -6,9 +6,17 @@ import { Header } from "@/components/layout/header";
 
 interface DashboardShellProps {
   children: React.ReactNode;
+  isSuperAdmin: boolean;
+  userName: string;
+  userEmail: string;
 }
 
-export function DashboardShell({ children }: DashboardShellProps) {
+export function DashboardShell({
+  children,
+  isSuperAdmin,
+  userName,
+  userEmail,
+}: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -25,11 +33,18 @@ export function DashboardShell({ children }: DashboardShellProps) {
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        isSuperAdmin={isSuperAdmin}
+        userName={userName}
+        userEmail={userEmail}
       />
 
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header onMenuClick={() => setSidebarOpen(true)} />
+        <Header
+          onMenuClick={() => setSidebarOpen(true)}
+          userName={userName}
+          userEmail={userEmail}
+        />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           {children}
         </main>

@@ -14,7 +14,10 @@
       "conversations": "Conversations",
       "channels": "Channels",
       "settings": "Settings",
-      "reports": "Reports"
+      "reports": "Reports",
+      "admin": "ADMIN",
+      "organizations": "Organizations",
+      "users": "Users"
     },
     "header": {
       "myProfile": "My Profile",
@@ -179,6 +182,61 @@
       "confirmPassword": "Confirm Password",
       "update": "Update password",
       "updating": "Updating..."
+    }
+  },
+  "organizations": {
+    "title": "Organizations",
+    "subtitle": "Manage all organizations on the platform",
+    "newOrganization": "New Organization",
+    "name": "Organization Name",
+    "slug": "Slug",
+    "plan": "Plan",
+    "status": "Status",
+    "members": "Members",
+    "created": "Created",
+    "noOrganizations": "No organizations yet",
+    "createFirst": "Create your first organization to get started",
+    "plans": {
+      "starter": "Starter",
+      "pro": "Pro",
+      "growth": "Growth"
+    },
+    "editOrganization": "Edit Organization",
+    "deleteConfirm": "Are you sure you want to delete this organization? This action cannot be undone.",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "users": {
+    "title": "Users",
+    "subtitle": "Manage all users on the platform",
+    "newUser": "New User",
+    "fullName": "Full Name",
+    "email": "Email",
+    "role": "Role",
+    "organization": "Organization",
+    "created": "Created",
+    "noUsers": "No users yet",
+    "temporaryPassword": "Temporary Password",
+    "selectOrganization": "Select organization",
+    "selectRole": "Select role",
+    "roles": {
+      "admin": "Admin",
+      "agent": "Agent",
+      "owner": "Owner"
+    },
+    "superAdmin": "Super Admin",
+    "noOrganization": "No organization",
+    "deleteConfirm": "Are you sure you want to delete this user? This action cannot be undone."
+  },
+  "admin": {
+    "errors": {
+      "orgNameRequired": "Organization name is required.",
+      "slugExists": "This slug is already in use.",
+      "emailRequired": "Email is required.",
+      "emailExists": "A user with this email already exists.",
+      "passwordTooShort": "Password must be at least 8 characters.",
+      "createFailed": "Operation failed. Please try again.",
+      "unauthorized": "You don't have permission to perform this action."
     }
   },
   "time": {

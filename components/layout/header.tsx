@@ -14,15 +14,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useRouter, usePathname } from "@/lib/i18n/navigation";
-import { mockUser, mockOrganization } from "@/lib/mock/data";
+import { mockOrganization } from "@/lib/mock/data";
 import { logout } from "@/lib/auth/actions";
 import type { Locale } from "@/lib/i18n/routing";
 
 interface HeaderProps {
   onMenuClick?: () => void;
+  userName?: string;
+  userEmail?: string;
 }
 
-export function Header({ onMenuClick }: HeaderProps) {
+export function Header({ onMenuClick, userName, userEmail }: HeaderProps) {
   const locale = useLocale() as Locale;
   const router = useRouter();
   const pathname = usePathname();
@@ -90,7 +92,9 @@ export function Header({ onMenuClick }: HeaderProps) {
             <button className="rounded-full outline-none ring-ring focus-visible:ring-2">
               <Avatar className="h-8 w-8 cursor-pointer">
                 <AvatarFallback className="bg-primary text-xs text-primary-foreground">
-                  {mockUser.name.split(" ").map((n) => n[0]).join("")}
+                  {userName
+                    ? userName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+                    : userEmail?.[0]?.toUpperCase() || "?"}
                 </AvatarFallback>
               </Avatar>
             </button>
@@ -99,8 +103,8 @@ export function Header({ onMenuClick }: HeaderProps) {
             <div className="absolute -top-[6px] right-[16px] z-10 h-3 w-3 rotate-45 border-l border-t border-border bg-popover shadow-[-2px_-2px_3px_rgba(28,46,71,0.06)] dark:border-muted-foreground/20 dark:shadow-[-2px_-2px_4px_rgba(0,0,0,0.4)]" />
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col gap-1">
-                <p className="text-sm font-medium">{mockUser.name}</p>
-                <p className="text-xs text-muted-foreground">{mockUser.email}</p>
+                <p className="text-sm font-medium">{userName || userEmail || "User"}</p>
+                <p className="text-xs text-muted-foreground">{userEmail || ""}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

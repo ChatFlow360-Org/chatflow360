@@ -14,7 +14,10 @@
       "conversations": "Conversaciones",
       "channels": "Canales",
       "settings": "Configuracion",
-      "reports": "Reportes"
+      "reports": "Reportes",
+      "admin": "ADMIN",
+      "organizations": "Organizaciones",
+      "users": "Usuarios"
     },
     "header": {
       "myProfile": "Mi Perfil",
@@ -179,6 +182,61 @@
       "confirmPassword": "Confirmar contraseña",
       "update": "Actualizar contraseña",
       "updating": "Actualizando..."
+    }
+  },
+  "organizations": {
+    "title": "Organizaciones",
+    "subtitle": "Gestiona todas las organizaciones de la plataforma",
+    "newOrganization": "Nueva Organizacion",
+    "name": "Nombre de la Organizacion",
+    "slug": "Slug",
+    "plan": "Plan",
+    "status": "Estado",
+    "members": "Miembros",
+    "created": "Creada",
+    "noOrganizations": "Aun no hay organizaciones",
+    "createFirst": "Crea tu primera organizacion para comenzar",
+    "plans": {
+      "starter": "Starter",
+      "pro": "Pro",
+      "growth": "Growth"
+    },
+    "editOrganization": "Editar Organizacion",
+    "deleteConfirm": "Estas seguro de que quieres eliminar esta organizacion? Esta accion no se puede deshacer.",
+    "active": "Activa",
+    "inactive": "Inactiva"
+  },
+  "users": {
+    "title": "Usuarios",
+    "subtitle": "Gestiona todos los usuarios de la plataforma",
+    "newUser": "Nuevo Usuario",
+    "fullName": "Nombre Completo",
+    "email": "Correo",
+    "role": "Rol",
+    "organization": "Organizacion",
+    "created": "Creado",
+    "noUsers": "Aun no hay usuarios",
+    "temporaryPassword": "Contrasena Temporal",
+    "selectOrganization": "Seleccionar organizacion",
+    "selectRole": "Seleccionar rol",
+    "roles": {
+      "admin": "Admin",
+      "agent": "Agente",
+      "owner": "Propietario"
+    },
+    "superAdmin": "Super Admin",
+    "noOrganization": "Sin organizacion",
+    "deleteConfirm": "Estas seguro de que quieres eliminar este usuario? Esta accion no se puede deshacer."
+  },
+  "admin": {
+    "errors": {
+      "orgNameRequired": "El nombre de la organizacion es requerido.",
+      "slugExists": "Este slug ya esta en uso.",
+      "emailRequired": "El correo es requerido.",
+      "emailExists": "Ya existe un usuario con este correo.",
+      "passwordTooShort": "La contrasena debe tener al menos 8 caracteres.",
+      "createFailed": "La operacion fallo. Intenta de nuevo.",
+      "unauthorized": "No tienes permisos para realizar esta accion."
     }
   },
   "time": {

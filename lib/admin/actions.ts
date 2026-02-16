@@ -1,0 +1,314 @@
+"use server";
+
+import { z } from "zod";
+import { revalidatePath } from "next/cache";
+import { prisma } from "@/lib/db/prisma";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentUser } from "@/lib/auth/user";
+
+// ============================================
+// Types
+// ============================================
+
+export type AdminActionState = {
+  error?: string;
+  success?: string;
+} | null;
+
+// ============================================
+// Auth Guard
+// ============================================
+
+async function requireSuperAdmin() {
+  const user = await getCurrentUser();
+  if (!user?.isSuperAdmin) {
+    throw new Error("Unauthorized");
+  }
+  return user;
+}
+
+// ============================================
+// Organizations
+// ============================================
+
+const createOrgSchema = z.object({
+  name: z.string().min(1).max(100),
+  slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/),
+  plan: z.enum(["starter", "pro", "growth"]).default("starter"),
+});
+
+const updateOrgSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1).max(100),
+  plan: z.enum(["starter", "pro", "growth"]),
+  isActive: z.preprocess((v) => v === "true" || v === true, z.boolean()),
+});
+
+export async function createOrganization(
+  _prevState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    await requireSuperAdmin();
+
+    const parsed = createOrgSchema.safeParse({
+      name: formData.get("name"),
+      slug: formData.get("slug"),
+      plan: formData.get("plan") || "starter",
+    });
+
+    if (!parsed.success) {
+      return { error: "orgNameRequired" };
+    }
+
+    // Check slug uniqueness
+    const existing = await prisma.organization.findUnique({
+      where: { slug: parsed.data.slug },
+    });
+    if (existing) {
+      return { error: "slugExists" };
+    }
+
+    // Create org + default AI settings
+    await prisma.organization.create({
+      data: {
+        name: parsed.data.name,
+        slug: parsed.data.slug,
+        plan: parsed.data.plan,
+        aiSettings: {
+          create: {
+            provider: "openai",
+            model: "gpt-4o-mini",
+            temperature: 0.7,
+            maxTokens: 500,
+          },
+        },
+      },
+    });
+
+    revalidatePath("/organizations");
+    return { success: "organizationCreated" };
+  } catch {
+    return { error: "createFailed" };
+  }
+}
+
+export async function updateOrganization(
+  _prevState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    await requireSuperAdmin();
+
+    const parsed = updateOrgSchema.safeParse({
+      id: formData.get("id"),
+      name: formData.get("name"),
+      plan: formData.get("plan"),
+      isActive: formData.get("isActive"),
+    });
+
+    if (!parsed.success) {
+      return { error: "orgNameRequired" };
+    }
+
+    await prisma.organization.update({
+      where: { id: parsed.data.id },
+      data: {
+        name: parsed.data.name,
+        plan: parsed.data.plan,
+        isActive: parsed.data.isActive,
+      },
+    });
+
+    revalidatePath("/organizations");
+    return { success: "organizationUpdated" };
+  } catch {
+    return { error: "createFailed" };
+  }
+}
+
+export async function deleteOrganization(id: string): Promise<AdminActionState> {
+  try {
+    await requireSuperAdmin();
+
+    await prisma.organization.delete({
+      where: { id },
+    });
+
+    revalidatePath("/organizations");
+    return { success: "organizationDeleted" };
+  } catch {
+    return { error: "createFailed" };
+  }
+}
+
+// ============================================
+// Users
+// ============================================
+
+const createUserSchema = z.object({
+  email: z.string().email().max(254),
+  fullName: z.string().min(1).max(100),
+  password: z.string().min(8).max(128),
+  organizationId: z.string().uuid().optional().or(z.literal("")),
+  role: z.enum(["admin", "agent"]).optional(),
+});
+
+const updateUserSchema = z.object({
+  id: z.string().uuid(),
+  fullName: z.string().min(1).max(100),
+  organizationId: z.string().uuid().optional().or(z.literal("")),
+  role: z.enum(["admin", "agent"]).optional(),
+});
+
+export async function createUser(
+  _prevState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    await requireSuperAdmin();
+
+    const parsed = createUserSchema.safeParse({
+      email: formData.get("email"),
+      fullName: formData.get("fullName"),
+      password: formData.get("password"),
+      organizationId: formData.get("organizationId") || "",
+      role: formData.get("role") || undefined,
+    });
+
+    if (!parsed.success) {
+      const firstError = parsed.error.issues[0];
+      if (firstError?.path[0] === "email") return { error: "emailRequired" };
+      if (firstError?.path[0] === "password") return { error: "passwordTooShort" };
+      return { error: "createFailed" };
+    }
+
+    const supabase = createAdminClient();
+
+    // Step 1: Create in Supabase Auth
+    const { data: authData, error: authError } =
+      await supabase.auth.admin.createUser({
+        email: parsed.data.email,
+        password: parsed.data.password,
+        email_confirm: true,
+      });
+
+    if (authError) {
+      if (authError.message?.includes("already been registered")) {
+        return { error: "emailExists" };
+      }
+      return { error: "createFailed" };
+    }
+
+    const supabaseUserId = authData.user.id;
+
+    // Step 2: Create in Prisma (with rollback if fails)
+    try {
+      await prisma.user.create({
+        data: {
+          id: supabaseUserId,
+          email: parsed.data.email,
+          fullName: parsed.data.fullName,
+          isSuperAdmin: false,
+        },
+      });
+
+      // Step 3: Assign to organization if specified
+      const orgId = parsed.data.organizationId;
+      if (orgId && orgId !== "") {
+        await prisma.organizationMember.create({
+          data: {
+            userId: supabaseUserId,
+            organizationId: orgId,
+            role: parsed.data.role || "admin",
+          },
+        });
+      }
+    } catch {
+      // Rollback: delete from Supabase Auth if Prisma fails
+      await supabase.auth.admin.deleteUser(supabaseUserId);
+      return { error: "createFailed" };
+    }
+
+    revalidatePath("/users");
+    return { success: "userCreated" };
+  } catch {
+    return { error: "createFailed" };
+  }
+}
+
+export async function updateUser(
+  _prevState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    await requireSuperAdmin();
+
+    const parsed = updateUserSchema.safeParse({
+      id: formData.get("id"),
+      fullName: formData.get("fullName"),
+      organizationId: formData.get("organizationId") || "",
+      role: formData.get("role") || undefined,
+    });
+
+    if (!parsed.success) {
+      return { error: "createFailed" };
+    }
+
+    // Update user name
+    await prisma.user.update({
+      where: { id: parsed.data.id },
+      data: { fullName: parsed.data.fullName },
+    });
+
+    // Update organization membership
+    const orgId = parsed.data.organizationId;
+
+    // Remove all existing memberships
+    await prisma.organizationMember.deleteMany({
+      where: { userId: parsed.data.id },
+    });
+
+    // Add new membership if org specified
+    if (orgId && orgId !== "") {
+      await prisma.organizationMember.create({
+        data: {
+          userId: parsed.data.id,
+          organizationId: orgId,
+          role: parsed.data.role || "admin",
+        },
+      });
+    }
+
+    revalidatePath("/users");
+    return { success: "userUpdated" };
+  } catch {
+    return { error: "createFailed" };
+  }
+}
+
+export async function deleteUser(id: string): Promise<AdminActionState> {
+  try {
+    await requireSuperAdmin();
+
+    // Don't allow deleting yourself
+    const currentUser = await getCurrentUser();
+    if (currentUser?.id === id) {
+      return { error: "createFailed" };
+    }
+
+    // Delete from Prisma first
+    await prisma.user.delete({
+      where: { id },
+    });
+
+    // Delete from Supabase Auth
+    const supabase = createAdminClient();
+    await supabase.auth.admin.deleteUser(id);
+
+    revalidatePath("/users");
+    return { success: "userDeleted" };
+  } catch {
+    return { error: "createFailed" };
+  }
+}
