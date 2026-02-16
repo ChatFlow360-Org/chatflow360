@@ -223,6 +223,7 @@
     "created": "Created",
     "noUsers": "No users yet",
     "temporaryPassword": "Temporary Password",
+    "generate": "Generate",
     "selectOrganization": "Select organization",
     "selectRole": "Select role",
     "roles": {

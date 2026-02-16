@@ -223,6 +223,7 @@
     "created": "Creado",
     "noUsers": "Aun no hay usuarios",
     "temporaryPassword": "Contrasena Temporal",
+    "generate": "Generar",
     "selectOrganization": "Seleccionar organizacion",
     "selectRole": "Seleccionar rol",
     "roles": {

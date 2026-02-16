@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useActionState, useEffect } from "react";
+import { useState, useActionState, useEffect, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Plus, Pencil, Trash2, Users, Shield } from "lucide-react";
+import { Plus, Pencil, Trash2, Users, Shield, RefreshCw, Eye, EyeOff, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,6 +61,50 @@ export function UsersClient({ users, organizations }: UsersClientProps) {
   const [editingUser, setEditingUser] = useState<SerializedUser | null>(null);
   const [orgValue, setOrgValue] = useState("");
   const [roleValue, setRoleValue] = useState("admin");
+  const [showPassword, setShowPassword] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const passwordRef = useRef<HTMLInputElement>(null);
+
+  const generatePassword = () => {
+    const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+    const lower = "abcdefghjkmnpqrstuvwxyz";
+    const digits = "23456789";
+    const symbols = "!@#$%&*_+-=";
+    const all = upper + lower + digits + symbols;
+
+    // Guarantee at least one of each type
+    const required = [
+      upper[Math.floor(Math.random() * upper.length)],
+      lower[Math.floor(Math.random() * lower.length)],
+      digits[Math.floor(Math.random() * digits.length)],
+      symbols[Math.floor(Math.random() * symbols.length)],
+    ];
+
+    const remaining = Array.from({ length: 12 }, () =>
+      all[Math.floor(Math.random() * all.length)]
+    );
+
+    // Shuffle all characters together
+    const password = [...required, ...remaining]
+      .sort(() => Math.random() - 0.5)
+      .join("");
+
+    if (passwordRef.current) {
+      // Set value via native setter to work with uncontrolled input
+      const nativeSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+      nativeSetter?.call(passwordRef.current, password);
+      passwordRef.current.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    setShowPassword(true);
+  };
+
+  const copyPassword = async () => {
+    if (passwordRef.current?.value) {
+      await navigator.clipboard.writeText(passwordRef.current.value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   const [createState, createAction, isCreating] = useActionState<AdminActionState, FormData>(
     createUser,
@@ -84,6 +128,8 @@ export function UsersClient({ users, organizations }: UsersClientProps) {
     setEditingUser(null);
     setOrgValue("");
     setRoleValue("admin");
+    setShowPassword(false);
+    setCopied(false);
     setDialogOpen(true);
   };
 
@@ -269,17 +315,54 @@ export function UsersClient({ users, organizations }: UsersClientProps) {
 
             {!editingUser && (
               <div className="space-y-2">
-                <Label htmlFor="password">{t("temporaryPassword")}</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="••••••••"
-                  required
-                  minLength={8}
-                  maxLength={128}
-                  className="bg-background"
-                />
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">{t("temporaryPassword")}</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 cursor-pointer gap-1 px-2 text-[11px] text-cta hover:text-cta/80"
+                    onClick={generatePassword}
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                    {t("generate")}
+                  </Button>
+                </div>
+                <div className="relative">
+                  <Input
+                    ref={passwordRef}
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    required
+                    minLength={8}
+                    maxLength={128}
+                    className="bg-background pr-18"
+                  />
+                  <div className="absolute right-1 top-1/2 flex -translate-y-1/2 gap-0.5">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 cursor-pointer text-muted-foreground hover:text-foreground"
+                      onClick={copyPassword}
+                      tabIndex={-1}
+                    >
+                      {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 cursor-pointer text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowPassword(!showPassword)}
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    </Button>
+                  </div>
+                </div>
               </div>
             )}
 
