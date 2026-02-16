@@ -14,7 +14,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useRouter, usePathname } from "@/lib/i18n/navigation";
-import { mockOrganization } from "@/lib/mock/data";
 import { logout } from "@/lib/auth/actions";
 import type { Locale } from "@/lib/i18n/routing";
 
@@ -22,9 +21,10 @@ interface HeaderProps {
   onMenuClick?: () => void;
   userName?: string;
   userEmail?: string;
+  organizationName?: string;
 }
 
-export function Header({ onMenuClick, userName, userEmail }: HeaderProps) {
+export function Header({ onMenuClick, userName, userEmail, organizationName }: HeaderProps) {
   const locale = useLocale() as Locale;
   const router = useRouter();
   const pathname = usePathname();
@@ -52,7 +52,9 @@ export function Header({ onMenuClick, userName, userEmail }: HeaderProps) {
           <Menu className="h-5 w-5" />
         </Button>
         <div>
-          <h2 className="text-sm font-semibold text-foreground">{mockOrganization.name}</h2>
+          {organizationName && (
+            <h2 className="text-sm font-semibold text-foreground">{organizationName}</h2>
+          )}
           <p className="text-xs text-muted-foreground">{currentDate}</p>
         </div>
       </div>

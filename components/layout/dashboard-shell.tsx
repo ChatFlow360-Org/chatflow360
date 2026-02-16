@@ -53,6 +53,11 @@ export function DashboardShell({
           onMenuClick={() => setSidebarOpen(true)}
           userName={userName}
           userEmail={userEmail}
+          organizationName={
+            adminContext?.selectedOrgId
+              ? adminContext.organizations.find((o) => o.id === adminContext.selectedOrgId)?.name
+              : undefined
+          }
         />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           {children}
