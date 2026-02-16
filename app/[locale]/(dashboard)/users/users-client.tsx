@@ -63,7 +63,16 @@ export function UsersClient({ users, organizations }: UsersClientProps) {
   const [roleValue, setRoleValue] = useState("admin");
   const [showPassword, setShowPassword] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [passwordValue, setPasswordValue] = useState("");
   const passwordRef = useRef<HTMLInputElement>(null);
+
+  const passwordChecks = [
+    { key: "pwMin8" as const, pass: passwordValue.length >= 8 },
+    { key: "pwUppercase" as const, pass: /[A-Z]/.test(passwordValue) },
+    { key: "pwLowercase" as const, pass: /[a-z]/.test(passwordValue) },
+    { key: "pwNumber" as const, pass: /[0-9]/.test(passwordValue) },
+    { key: "pwSymbol" as const, pass: /[^A-Za-z0-9]/.test(passwordValue) },
+  ];
 
   const generatePassword = () => {
     const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -72,7 +81,6 @@ export function UsersClient({ users, organizations }: UsersClientProps) {
     const symbols = "!@#$%&*_+-=";
     const all = upper + lower + digits + symbols;
 
-    // Guarantee at least one of each type
     const required = [
       upper[Math.floor(Math.random() * upper.length)],
       lower[Math.floor(Math.random() * lower.length)],
@@ -84,23 +92,17 @@ export function UsersClient({ users, organizations }: UsersClientProps) {
       all[Math.floor(Math.random() * all.length)]
     );
 
-    // Shuffle all characters together
     const password = [...required, ...remaining]
       .sort(() => Math.random() - 0.5)
       .join("");
 
-    if (passwordRef.current) {
-      // Set value via native setter to work with uncontrolled input
-      const nativeSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
-      nativeSetter?.call(passwordRef.current, password);
-      passwordRef.current.dispatchEvent(new Event("input", { bubbles: true }));
-    }
+    setPasswordValue(password);
     setShowPassword(true);
   };
 
   const copyPassword = async () => {
-    if (passwordRef.current?.value) {
-      await navigator.clipboard.writeText(passwordRef.current.value);
+    if (passwordValue) {
+      await navigator.clipboard.writeText(passwordValue);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -130,6 +132,7 @@ export function UsersClient({ users, organizations }: UsersClientProps) {
     setRoleValue("admin");
     setShowPassword(false);
     setCopied(false);
+    setPasswordValue("");
     setDialogOpen(true);
   };
 
@@ -336,6 +339,8 @@ export function UsersClient({ users, organizations }: UsersClientProps) {
                     name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
+                    value={passwordValue}
+                    onChange={(e) => setPasswordValue(e.target.value)}
                     required
                     minLength={8}
                     maxLength={128}
@@ -365,9 +370,18 @@ export function UsersClient({ users, organizations }: UsersClientProps) {
                     </Button>
                   </div>
                 </div>
-                <p className="text-[11px] text-muted-foreground">
-                  {t("passwordHint")}
-                </p>
+                {passwordValue.length > 0 && (
+                  <ul className="space-y-0.5 pt-1">
+                    {passwordChecks.map(({ key, pass }) => (
+                      <li key={key} className="flex items-center gap-1.5">
+                        <Check className={`h-3 w-3 ${pass ? "text-emerald-500" : "text-muted-foreground/30"}`} />
+                        <span className={`text-[11px] ${pass ? "text-emerald-500" : "text-muted-foreground"}`}>
+                          {t(key)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             )}
 

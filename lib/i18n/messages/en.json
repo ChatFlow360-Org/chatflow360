@@ -224,7 +224,11 @@
     "noUsers": "No users yet",
     "temporaryPassword": "Temporary Password",
     "generate": "Generate",
-    "passwordHint": "Min. 8 characters. Use uppercase, lowercase, numbers, and symbols for a strong password.",
+    "pwMin8": "At least 8 characters",
+    "pwUppercase": "One uppercase letter",
+    "pwLowercase": "One lowercase letter",
+    "pwNumber": "One number",
+    "pwSymbol": "One special character (!@#$...)",
     "selectOrganization": "Select organization",
     "selectRole": "Select role",
     "roles": {
