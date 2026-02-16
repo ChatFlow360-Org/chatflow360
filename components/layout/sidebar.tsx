@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import {
@@ -11,12 +12,21 @@ import {
   Building2,
   Users,
   X,
+  ChevronsUpDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Link, usePathname } from "@/lib/i18n/navigation";
+import { Link, usePathname, useRouter } from "@/lib/i18n/navigation";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { AdminContext } from "@/components/layout/dashboard-shell";
 
 const navItems = [
   { labelKey: "dashboard" as const, href: "/" as const, icon: LayoutDashboard },
@@ -37,15 +47,40 @@ interface SidebarProps {
   isSuperAdmin?: boolean;
   userName?: string;
   userEmail?: string;
+  adminContext?: AdminContext;
 }
 
-export function Sidebar({ isOpen, onClose, isSuperAdmin, userName, userEmail }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, isSuperAdmin, userName, userEmail, adminContext }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const t = useTranslations("layout.sidebar");
+
+  const [selectedOrg, setSelectedOrg] = useState(adminContext?.selectedOrgId || "");
+  const [selectedChannel, setSelectedChannel] = useState(adminContext?.selectedChannelId || "");
+
+  const organizations = adminContext?.organizations || [];
+  const currentOrg = organizations.find((o) => o.id === selectedOrg);
+  const channels = currentOrg?.channels || [];
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
     return pathname.startsWith(href);
+  };
+
+  const handleOrgChange = (orgId: string) => {
+    const newOrgId = orgId === "none" ? "" : orgId;
+    setSelectedOrg(newOrgId);
+    setSelectedChannel("");
+    document.cookie = `selectedOrgId=${newOrgId};path=/;max-age=${60 * 60 * 24 * 90}`;
+    document.cookie = "selectedChannelId=;path=/;max-age=0";
+    router.refresh();
+  };
+
+  const handleChannelChange = (channelId: string) => {
+    const newChannelId = channelId === "none" ? "" : channelId;
+    setSelectedChannel(newChannelId);
+    document.cookie = `selectedChannelId=${newChannelId};path=/;max-age=${60 * 60 * 24 * 90}`;
+    router.refresh();
   };
 
   const initials = userName
@@ -84,6 +119,65 @@ export function Sidebar({ isOpen, onClose, isSuperAdmin, userName, userEmail }: 
           </Button>
         )}
       </div>
+
+      {/* Admin Context Selectors */}
+      {isSuperAdmin && organizations.length > 0 && (
+        <div className="space-y-2 border-b border-sidebar-border px-3 py-3">
+          <p className="px-1 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
+            {t("context")}
+          </p>
+
+          {/* Organization Selector */}
+          <Select value={selectedOrg || "none"} onValueChange={handleOrgChange}>
+            <SelectTrigger className="h-8 bg-sidebar-accent/50 text-xs [&>svg]:hidden">
+              <div className="flex w-full items-center gap-2">
+                <Building2 className="h-3.5 w-3.5 shrink-0 text-sidebar-foreground/50" />
+                <SelectValue placeholder={t("selectOrg")} />
+                <ChevronsUpDown className="ml-auto h-3 w-3 shrink-0 text-sidebar-foreground/40" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none" className="text-xs text-muted-foreground">
+                {t("allOrganizations")}
+              </SelectItem>
+              {organizations.map((org) => (
+                <SelectItem key={org.id} value={org.id} className="text-xs">
+                  {org.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Channel Selector — only when org is selected */}
+          {selectedOrg && (
+            <Select value={selectedChannel || "none"} onValueChange={handleChannelChange}>
+              <SelectTrigger className="h-8 bg-sidebar-accent/50 text-xs [&>svg]:hidden">
+                <div className="flex w-full items-center gap-2">
+                  <MessageSquare className="h-3.5 w-3.5 shrink-0 text-sidebar-foreground/50" />
+                  <SelectValue placeholder={t("selectChannel")} />
+                  <ChevronsUpDown className="ml-auto h-3 w-3 shrink-0 text-sidebar-foreground/40" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none" className="text-xs text-muted-foreground">
+                  {t("allChannels")}
+                </SelectItem>
+                {channels.length > 0 ? (
+                  channels.map((ch) => (
+                    <SelectItem key={ch.id} value={ch.id} className="text-xs">
+                      {ch.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                    {t("noChannels")}
+                  </div>
+                )}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+      )}
 
       {/* Nav Links */}
       <nav className="flex-1 px-3 py-2">

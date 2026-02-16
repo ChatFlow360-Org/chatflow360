@@ -17,7 +17,13 @@
       "reports": "Reports",
       "admin": "ADMIN",
       "organizations": "Organizations",
-      "users": "Users"
+      "users": "Users",
+      "context": "CONTEXT",
+      "selectOrg": "Select organization",
+      "selectChannel": "Select channel",
+      "allOrganizations": "All organizations",
+      "allChannels": "All channels",
+      "noChannels": "No channels yet"
     },
     "header": {
       "myProfile": "My Profile",

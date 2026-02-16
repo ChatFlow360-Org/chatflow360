@@ -4,11 +4,18 @@ import { useState } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 
+export interface AdminContext {
+  organizations: { id: string; name: string; channels: { id: string; name: string; type: string }[] }[];
+  selectedOrgId: string;
+  selectedChannelId: string;
+}
+
 interface DashboardShellProps {
   children: React.ReactNode;
   isSuperAdmin: boolean;
   userName: string;
   userEmail: string;
+  adminContext?: AdminContext;
 }
 
 export function DashboardShell({
@@ -16,6 +23,7 @@ export function DashboardShell({
   isSuperAdmin,
   userName,
   userEmail,
+  adminContext,
 }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -36,6 +44,7 @@ export function DashboardShell({
         isSuperAdmin={isSuperAdmin}
         userName={userName}
         userEmail={userEmail}
+        adminContext={adminContext}
       />
 
       {/* Main content */}
