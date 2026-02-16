@@ -2,6 +2,66 @@
 
 > Historial completo de versiones y cambios del proyecto.
 
+## v0.2.2 (2026-02-16)
+
+### Channel CRUD + Header dinámico
+
+- **Header dinámico**: muestra nombre de org seleccionada (super admin) o org del membership (usuario normal), solo fecha si no hay org
+  - Eliminada dependencia de `mockOrganization` del header
+  - `organizationName` derivado en layout.tsx y pasado via DashboardShell → Header
+- **Channel CRUD integrado en Organizations** — filas expandibles con sub-tabla de canales
+  - Click en chevron o "0/1 channels" expande la fila mostrando canales de la org
+  - Sub-tabla: nombre, tipo (Website badge con Globe icon), status (Active/Inactive), acciones (edit/delete)
+  - Dialog para crear/editar canal: nombre + tipo (Website fijo para MVP) + status (solo en edit)
+  - Empty state con Globe icon cuando no hay canales
+  - Limite por plan enforced: Starter=1, Pro=3, Growth=10 — boton deshabilitado + mensaje amber al alcanzar limite
+- **Server actions** en `lib/admin/actions.ts`: `createChannel`, `updateChannel`, `deleteChannel`
+  - Zod validation, `requireSuperAdmin()` guard
+  - `createChannel` verifica org activa + limite de canales + auto-genera `publicKey` (UUID)
+  - `deleteChannel` con cascade (Prisma onDelete)
+- **~15 nuevas traducciones** (EN + ES): channels.newChannel, editChannel, channelName, types.website, limitReached, channelsCount, etc.
+- **Error keys** nuevos: `channelNameRequired`, `channelLimitReached`
+- Verificado con `npm run build` — compila sin errores
+- Deploy a produccion (Vercel)
+
+## v0.2.1 (2026-02-15)
+
+### CRUD Organizaciones + Usuarios (Super Admin) + Context Selectors
+
+- **getCurrentUser()** en `lib/auth/user.ts` — obtiene usuario Supabase Auth + upsert en Prisma
+  - Bootstrap: primer usuario se marca automaticamente como `isSuperAdmin: true`
+  - Incluye memberships con organizations
+- **Supabase Admin Client** en `lib/supabase/admin.ts` — SERVICE_ROLE_KEY para crear/eliminar usuarios en Auth
+- **Server actions** en `lib/admin/actions.ts`: CRUD organizations + users
+  - Guard `requireSuperAdmin()` en cada accion
+  - Zod validation para todos los inputs
+  - Users: creacion dual (Supabase Auth + Prisma) con rollback si Prisma falla
+  - Organizations: auto-genera slug desde nombre, crea AiSettings por defecto
+  - Delete user previene auto-eliminacion del super admin
+- **Organizations page** (`/organizations`) — tabla con Name, Slug, Plan (badge), Status, Members, Created
+  - Dialog para crear/editar con nombre, slug (auto-gen), plan (Starter/Pro/Growth)
+  - Delete con confirmacion
+- **Users page** (`/users`) — tabla con avatar, nombre, email, rol (badge), organizacion, fecha
+  - Dialog para crear: email, nombre, password temporal, organizacion (select), rol (select)
+  - Badge especial "Super Admin" con icono Shield en amber
+  - Super admins no se pueden editar ni eliminar
+- **Sidebar condicional**: seccion ADMIN (Organizations, Users) solo visible para super_admin
+  - Iconos: Building2 para Organizations, Users para Users
+  - Label "ADMIN" en text-xs uppercase
+- **Context selectors** en sidebar (solo super_admin):
+  - Selector de organizacion antes de nav items (Building2 icon + ChevronsUpDown)
+  - Selector de canal aparece al elegir org (MessageSquare icon)
+  - Seleccion guardada en cookies (90 dias), legible server-side
+  - `router.refresh()` al cambiar para actualizar server components
+  - Empty state "No channels yet" cuando org no tiene canales
+- **Header con usuario real**: nombre y email del usuario autenticado (no mock)
+- **Layout async**: fetch user + admin context (orgs con channels) + cookies de seleccion
+- **DashboardShell**: pasa isSuperAdmin, userName, userEmail y adminContext al Sidebar
+- **~106 nuevas traducciones** (EN + ES): organizations, users, admin.errors, context selectors
+- Zebra striping en tablas admin (mismo patron que dashboard)
+- Verificado con `npm run build` — compila sin errores
+- Deploy a produccion (Vercel)
+
 ## v0.2.0 (2026-02-15)
 
 ### Autenticacion Real con Supabase Auth

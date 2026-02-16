@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.2.0 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.2.2 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -73,4 +73,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.2.0** - Autenticacion real con Supabase Auth (login, logout, forgot-password, update-password). Server actions + useActionState. Middleware integrado Supabase + next-intl. Verificado en produccion (Vercel).
+**v0.2.2** - Channel CRUD integrado en Organizations (filas expandibles). Header dinamico (org name o solo fecha). Limites por plan enforced (Starter=1, Pro=3, Growth=10). publicKey auto-generado. ~335 traducciones EN/ES. Deploy en produccion.
