@@ -58,7 +58,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         <div className="flex h-7 items-center rounded-full border border-border bg-muted/40 p-0.5">
           <button
             onClick={() => switchLocale("en")}
-            className={`flex h-6 items-center rounded-full px-2 text-[11px] font-semibold tracking-wide transition-all ${
+            className={`flex h-6 cursor-pointer items-center rounded-full px-2 text-[11px] font-semibold tracking-wide transition-all ${
               locale === "en"
                 ? "bg-cta text-cta-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -68,7 +68,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           </button>
           <button
             onClick={() => switchLocale("es")}
-            className={`flex h-6 items-center rounded-full px-2 text-[11px] font-semibold tracking-wide transition-all ${
+            className={`flex h-6 cursor-pointer items-center rounded-full px-2 text-[11px] font-semibold tracking-wide transition-all ${
               locale === "es"
                 ? "bg-cta text-cta-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -77,7 +77,7 @@ export function Header({ onMenuClick }: HeaderProps) {
             ES
           </button>
         </div>
-        <Button variant="ghost" size="icon" className="relative h-9 w-9">
+        <Button variant="ghost" size="icon" className="relative h-9 w-9 cursor-pointer">
           <Bell className="h-4 w-4" />
           <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-cta" />
         </Button>

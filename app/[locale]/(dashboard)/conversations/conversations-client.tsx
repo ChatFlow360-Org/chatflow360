@@ -128,7 +128,7 @@ export function ConversationsClient() {
             {/* Backdrop */}
             <div
               className={cn(
-                "fixed inset-0 z-50 bg-black/60 backdrop-blur-md transition-all duration-300",
+                "fixed inset-0 z-50 cursor-pointer bg-black/60 backdrop-blur-md transition-all duration-300",
                 isPanelOpen ? "opacity-100" : "pointer-events-none opacity-0 backdrop-blur-none"
               )}
               onClick={closePanel}
