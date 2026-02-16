@@ -9,11 +9,10 @@ export default async function OrganizationsPage() {
 
   const organizations = await prisma.organization.findMany({
     include: {
-      _count: {
-        select: {
-          members: true,
-          channels: true,
-        },
+      _count: { select: { members: true } },
+      channels: {
+        select: { id: true, name: true, type: true, isActive: true, createdAt: true },
+        orderBy: { createdAt: "asc" },
       },
     },
     orderBy: { createdAt: "desc" },
@@ -27,7 +26,14 @@ export default async function OrganizationsPage() {
     plan: org.plan,
     isActive: org.isActive,
     membersCount: org._count.members,
-    channelsCount: org._count.channels,
+    maxChannels: org.maxChannels,
+    channels: org.channels.map((ch) => ({
+      id: ch.id,
+      name: ch.name,
+      type: ch.type,
+      isActive: ch.isActive,
+      createdAt: ch.createdAt.toISOString(),
+    })),
     createdAt: org.createdAt.toISOString(),
   }));
 

@@ -85,8 +85,19 @@
   },
   "channels": {
     "title": "Canales",
-    "subtitle": "Gestiona tus canales de comunicacion",
-    "comingSoonDescription": "Configura tus widgets de sitio web y canales de comunicacion aqui."
+    "newChannel": "Nuevo Canal",
+    "editChannel": "Editar Canal",
+    "channelName": "Nombre del Canal",
+    "namePlaceholder": "ej., Chat del Sitio Web Principal",
+    "type": "Tipo",
+    "types": {
+      "website": "Sitio Web"
+    },
+    "noChannels": "Aun no hay canales",
+    "addFirst": "Agrega un canal para empezar a recibir conversaciones",
+    "deleteConfirm": "Estas seguro de que quieres eliminar este canal? Todas las conversaciones se perderan.",
+    "limitReached": "Limite de canales alcanzado para este plan",
+    "channelsCount": "{count}/{max} canales"
   },
   "reports": {
     "title": "Reportes",
@@ -248,6 +259,8 @@
       "emailExists": "Ya existe un usuario con este correo.",
       "passwordTooShort": "La contrasena debe tener al menos 8 caracteres.",
       "createFailed": "La operacion fallo. Intenta de nuevo.",
+      "channelNameRequired": "El nombre del canal es requerido.",
+      "channelLimitReached": "Limite de canales alcanzado para este plan.",
       "unauthorized": "No tienes permisos para realizar esta accion."
     }
   },

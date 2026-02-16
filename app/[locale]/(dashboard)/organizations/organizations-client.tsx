@@ -2,7 +2,15 @@
 
 import { useState, useActionState, useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Plus, Pencil, Trash2, Building2 } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Building2,
+  ChevronRight,
+  ChevronDown,
+  Globe,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,8 +32,19 @@ import {
   createOrganization,
   updateOrganization,
   deleteOrganization,
+  createChannel,
+  updateChannel,
+  deleteChannel,
   type AdminActionState,
 } from "@/lib/admin/actions";
+
+interface SerializedChannel {
+  id: string;
+  name: string;
+  type: string;
+  isActive: boolean;
+  createdAt: string;
+}
 
 interface SerializedOrg {
   id: string;
@@ -34,7 +53,8 @@ interface SerializedOrg {
   plan: string;
   isActive: boolean;
   membersCount: number;
-  channelsCount: number;
+  maxChannels: number;
+  channels: SerializedChannel[];
   createdAt: string;
 }
 
@@ -55,25 +75,47 @@ export function OrganizationsClient({ organizations }: OrganizationsClientProps)
   const t = useTranslations("organizations");
   const tc = useTranslations("common");
   const te = useTranslations("admin");
+  const tch = useTranslations("channels");
   const locale = useLocale();
 
+  // Org dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingOrg, setEditingOrg] = useState<SerializedOrg | null>(null);
   const [nameValue, setNameValue] = useState("");
   const [slugValue, setSlugValue] = useState("");
   const [planValue, setPlanValue] = useState("starter");
 
+  // Expandable rows
+  const [expandedOrgId, setExpandedOrgId] = useState<string | null>(null);
+
+  // Channel dialog state
+  const [channelDialogOpen, setChannelDialogOpen] = useState(false);
+  const [editingChannel, setEditingChannel] = useState<SerializedChannel | null>(null);
+  const [channelOrgId, setChannelOrgId] = useState("");
+  const [channelName, setChannelName] = useState("");
+  const [channelIsActive, setChannelIsActive] = useState("true");
+
+  // Org actions
   const [createState, createAction, isCreating] = useActionState<AdminActionState, FormData>(
     createOrganization,
     null
   );
-
   const [updateState, updateAction, isUpdating] = useActionState<AdminActionState, FormData>(
     updateOrganization,
     null
   );
 
-  // Close dialog on success
+  // Channel actions
+  const [createChState, createChAction, isCreatingCh] = useActionState<AdminActionState, FormData>(
+    createChannel,
+    null
+  );
+  const [updateChState, updateChAction, isUpdatingCh] = useActionState<AdminActionState, FormData>(
+    updateChannel,
+    null
+  );
+
+  // Close org dialog on success
   useEffect(() => {
     if (createState?.success || updateState?.success) {
       setDialogOpen(false);
@@ -81,6 +123,15 @@ export function OrganizationsClient({ organizations }: OrganizationsClientProps)
     }
   }, [createState?.success, updateState?.success]);
 
+  // Close channel dialog on success
+  useEffect(() => {
+    if (createChState?.success || updateChState?.success) {
+      setChannelDialogOpen(false);
+      setEditingChannel(null);
+    }
+  }, [createChState?.success, updateChState?.success]);
+
+  // Org dialog helpers
   const openCreate = () => {
     setEditingOrg(null);
     setNameValue("");
@@ -109,8 +160,37 @@ export function OrganizationsClient({ organizations }: OrganizationsClientProps)
     await deleteOrganization(id);
   };
 
-  const actionState = editingOrg ? updateState : createState;
-  const isPending = editingOrg ? isUpdating : isCreating;
+  // Channel dialog helpers
+  const openCreateChannel = (orgId: string) => {
+    setEditingChannel(null);
+    setChannelOrgId(orgId);
+    setChannelName("");
+    setChannelIsActive("true");
+    setChannelDialogOpen(true);
+  };
+
+  const openEditChannel = (channel: SerializedChannel, orgId: string) => {
+    setEditingChannel(channel);
+    setChannelOrgId(orgId);
+    setChannelName(channel.name);
+    setChannelIsActive(channel.isActive ? "true" : "false");
+    setChannelDialogOpen(true);
+  };
+
+  const handleDeleteChannel = async (id: string) => {
+    if (!confirm(tch("deleteConfirm"))) return;
+    await deleteChannel(id);
+  };
+
+  const toggleExpand = (orgId: string) => {
+    setExpandedOrgId(expandedOrgId === orgId ? null : orgId);
+  };
+
+  const orgActionState = editingOrg ? updateState : createState;
+  const orgIsPending = editingOrg ? isUpdating : isCreating;
+
+  const chActionState = editingChannel ? updateChState : createChState;
+  const chIsPending = editingChannel ? isUpdatingCh : isCreatingCh;
 
   return (
     <div className="space-y-6">
@@ -138,72 +218,45 @@ export function OrganizationsClient({ organizations }: OrganizationsClientProps)
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30">
+                <th className="w-8 px-2 py-3" />
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("name")}</th>
                 <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground sm:table-cell">{t("slug")}</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("plan")}</th>
                 <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground md:table-cell">{t("status")}</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">{tch("title")}</th>
                 <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground lg:table-cell">{t("members")}</th>
                 <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground lg:table-cell">{t("created")}</th>
                 <th className="px-4 py-3 text-right font-medium text-muted-foreground">{tc("edit")}</th>
               </tr>
             </thead>
             <tbody>
-              {organizations.map((org, i) => (
-                <tr
-                  key={org.id}
-                  className={i % 2 === 0 ? "bg-muted/60" : ""}
-                >
-                  <td className="px-4 py-3 font-medium text-foreground">{org.name}</td>
-                  <td className="hidden px-4 py-3 font-mono text-xs text-muted-foreground sm:table-cell">{org.slug}</td>
-                  <td className="px-4 py-3">
-                    <Badge variant="outline" className="text-xs capitalize">
-                      {t(`plans.${org.plan}`)}
-                    </Badge>
-                  </td>
-                  <td className="hidden px-4 py-3 md:table-cell">
-                    <Badge
-                      variant={org.isActive ? "default" : "secondary"}
-                      className={org.isActive ? "bg-cta/15 text-cta" : ""}
-                    >
-                      {org.isActive ? t("active") : t("inactive")}
-                    </Badge>
-                  </td>
-                  <td className="hidden px-4 py-3 text-muted-foreground lg:table-cell">{org.membersCount}</td>
-                  <td className="hidden px-4 py-3 text-muted-foreground lg:table-cell">
-                    {new Date(org.createdAt).toLocaleDateString(locale, {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 cursor-pointer"
-                        onClick={() => openEdit(org)}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 cursor-pointer text-destructive hover:text-destructive"
-                        onClick={() => handleDelete(org.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {organizations.map((org, i) => {
+                const isExpanded = expandedOrgId === org.id;
+                return (
+                  <OrgRow
+                    key={org.id}
+                    org={org}
+                    index={i}
+                    isExpanded={isExpanded}
+                    onToggle={() => toggleExpand(org.id)}
+                    onEdit={() => openEdit(org)}
+                    onDelete={() => handleDelete(org.id)}
+                    onCreateChannel={() => openCreateChannel(org.id)}
+                    onEditChannel={(ch) => openEditChannel(ch, org.id)}
+                    onDeleteChannel={(chId) => handleDeleteChannel(chId)}
+                    locale={locale}
+                    t={t}
+                    tc={tc}
+                    tch={tch}
+                  />
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
 
-      {/* Create/Edit Dialog */}
+      {/* Create/Edit Org Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -212,9 +265,9 @@ export function OrganizationsClient({ organizations }: OrganizationsClientProps)
             </DialogTitle>
           </DialogHeader>
 
-          {actionState?.error && (
+          {orgActionState?.error && (
             <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-              {te(`errors.${actionState.error}`)}
+              {te(`errors.${orgActionState.error}`)}
             </div>
           )}
 
@@ -294,15 +347,297 @@ export function OrganizationsClient({ organizations }: OrganizationsClientProps)
               </Button>
               <Button
                 type="submit"
-                disabled={isPending}
+                disabled={orgIsPending}
                 className="cursor-pointer bg-cta text-white hover:bg-cta/90"
               >
-                {isPending ? "..." : editingOrg ? tc("save") : tc("add")}
+                {orgIsPending ? "..." : editingOrg ? tc("save") : tc("add")}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create/Edit Channel Dialog */}
+      <Dialog open={channelDialogOpen} onOpenChange={setChannelDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {editingChannel ? tch("editChannel") : tch("newChannel")}
+            </DialogTitle>
+          </DialogHeader>
+
+          {chActionState?.error && (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {te(`errors.${chActionState.error}`)}
+            </div>
+          )}
+
+          <form action={editingChannel ? updateChAction : createChAction} className="space-y-4">
+            {editingChannel && <input type="hidden" name="id" value={editingChannel.id} />}
+            <input type="hidden" name="organizationId" value={channelOrgId} />
+            <input type="hidden" name="type" value="website" />
+
+            <div className="space-y-2">
+              <Label htmlFor="channelName">{tch("channelName")}</Label>
+              <Input
+                id="channelName"
+                name="name"
+                value={channelName}
+                onChange={(e) => setChannelName(e.target.value)}
+                placeholder={tch("namePlaceholder")}
+                required
+                maxLength={100}
+                className="bg-background"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>{tch("type")}</Label>
+              <Input
+                value={tch("types.website")}
+                disabled
+                className="bg-muted/50"
+              />
+            </div>
+
+            {editingChannel && (
+              <div className="space-y-2">
+                <Label htmlFor="channelIsActive">{t("status")}</Label>
+                <Select
+                  name="isActive"
+                  value={channelIsActive}
+                  onValueChange={setChannelIsActive}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="true">{t("active")}</SelectItem>
+                    <SelectItem value="false">{t("inactive")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setChannelDialogOpen(false)}
+                className="cursor-pointer"
+              >
+                {tc("cancel")}
+              </Button>
+              <Button
+                type="submit"
+                disabled={chIsPending}
+                className="cursor-pointer bg-cta text-white hover:bg-cta/90"
+              >
+                {chIsPending ? "..." : editingChannel ? tc("save") : tc("add")}
               </Button>
             </div>
           </form>
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+// ============================================
+// Org Row with expandable channels
+// ============================================
+
+interface OrgRowProps {
+  org: SerializedOrg;
+  index: number;
+  isExpanded: boolean;
+  onToggle: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onCreateChannel: () => void;
+  onEditChannel: (ch: SerializedChannel) => void;
+  onDeleteChannel: (id: string) => void;
+  locale: string;
+  t: ReturnType<typeof useTranslations>;
+  tc: ReturnType<typeof useTranslations>;
+  tch: ReturnType<typeof useTranslations>;
+}
+
+function OrgRow({
+  org,
+  index,
+  isExpanded,
+  onToggle,
+  onEdit,
+  onDelete,
+  onCreateChannel,
+  onEditChannel,
+  onDeleteChannel,
+  locale,
+  t,
+  tc,
+  tch,
+}: OrgRowProps) {
+  const atLimit = org.channels.length >= org.maxChannels;
+
+  return (
+    <>
+      <tr className={index % 2 === 0 ? "bg-muted/60" : ""}>
+        <td className="px-2 py-3">
+          <button
+            onClick={onToggle}
+            className="flex h-6 w-6 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            {isExpanded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </button>
+        </td>
+        <td className="px-4 py-3 font-medium text-foreground">{org.name}</td>
+        <td className="hidden px-4 py-3 font-mono text-xs text-muted-foreground sm:table-cell">{org.slug}</td>
+        <td className="px-4 py-3">
+          <Badge variant="outline" className="text-xs capitalize">
+            {t(`plans.${org.plan}`)}
+          </Badge>
+        </td>
+        <td className="hidden px-4 py-3 md:table-cell">
+          <Badge
+            variant={org.isActive ? "default" : "secondary"}
+            className={org.isActive ? "bg-cta/15 text-cta" : ""}
+          >
+            {org.isActive ? t("active") : t("inactive")}
+          </Badge>
+        </td>
+        <td className="px-4 py-3">
+          <button
+            onClick={onToggle}
+            className="cursor-pointer text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {tch("channelsCount", { count: org.channels.length, max: org.maxChannels })}
+          </button>
+        </td>
+        <td className="hidden px-4 py-3 text-muted-foreground lg:table-cell">{org.membersCount}</td>
+        <td className="hidden px-4 py-3 text-muted-foreground lg:table-cell">
+          {new Date(org.createdAt).toLocaleDateString(locale, {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })}
+        </td>
+        <td className="px-4 py-3 text-right">
+          <div className="flex items-center justify-end gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 cursor-pointer"
+              onClick={onEdit}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 cursor-pointer text-destructive hover:text-destructive"
+              onClick={onDelete}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </td>
+      </tr>
+
+      {/* Expanded: Channels sub-table */}
+      {isExpanded && (
+        <tr>
+          <td colSpan={9} className="border-t border-border/50 bg-muted/30 px-4 py-4">
+            <div className="ml-6 rounded-lg border border-border bg-card p-4">
+              {/* Channels header */}
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-foreground">
+                  {tch("title")} ({org.channels.length}/{org.maxChannels})
+                </h3>
+                <Button
+                  size="sm"
+                  onClick={onCreateChannel}
+                  disabled={atLimit}
+                  className="h-7 cursor-pointer bg-cta text-xs text-white hover:bg-cta/90 disabled:opacity-50"
+                >
+                  <Plus className="mr-1 h-3 w-3" />
+                  {tch("newChannel")}
+                </Button>
+              </div>
+
+              {atLimit && (
+                <p className="mb-3 text-xs text-amber-600 dark:text-amber-400">
+                  {tch("limitReached")}
+                </p>
+              )}
+
+              {org.channels.length === 0 ? (
+                <div className="flex flex-col items-center py-6 text-center">
+                  <Globe className="mb-2 h-8 w-8 text-muted-foreground/30" />
+                  <p className="text-sm text-muted-foreground">{tch("noChannels")}</p>
+                  <p className="text-xs text-muted-foreground/60">{tch("addFirst")}</p>
+                </div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border/50">
+                      <th className="pb-2 text-left text-xs font-medium text-muted-foreground">{tch("channelName")}</th>
+                      <th className="pb-2 text-left text-xs font-medium text-muted-foreground">{tch("type")}</th>
+                      <th className="pb-2 text-left text-xs font-medium text-muted-foreground">{t("status")}</th>
+                      <th className="pb-2 text-right text-xs font-medium text-muted-foreground">{tc("edit")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {org.channels.map((ch) => (
+                      <tr key={ch.id} className="border-b border-border/30 last:border-0">
+                        <td className="py-2 font-medium text-foreground">{ch.name}</td>
+                        <td className="py-2">
+                          <Badge variant="outline" className="text-xs">
+                            <Globe className="mr-1 h-3 w-3" />
+                            {tch(`types.${ch.type}`)}
+                          </Badge>
+                        </td>
+                        <td className="py-2">
+                          <Badge
+                            variant={ch.isActive ? "default" : "secondary"}
+                            className={ch.isActive ? "bg-cta/15 text-cta" : ""}
+                          >
+                            {ch.isActive ? t("active") : t("inactive")}
+                          </Badge>
+                        </td>
+                        <td className="py-2 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 cursor-pointer"
+                              onClick={() => onEditChannel(ch)}
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 cursor-pointer text-destructive hover:text-destructive"
+                              onClick={() => onDeleteChannel(ch.id)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
   );
 }

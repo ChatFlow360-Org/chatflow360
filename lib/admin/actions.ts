@@ -312,3 +312,113 @@ export async function deleteUser(id: string): Promise<AdminActionState> {
     return { error: "createFailed" };
   }
 }
+
+// ============================================
+// Channels
+// ============================================
+
+const createChannelSchema = z.object({
+  organizationId: z.string().uuid(),
+  name: z.string().min(1).max(100),
+  type: z.enum(["website"]), // MVP: only website
+});
+
+const updateChannelSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1).max(100),
+  isActive: z.preprocess((v) => v === "true" || v === true, z.boolean()),
+});
+
+export async function createChannel(
+  _prevState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    await requireSuperAdmin();
+
+    const parsed = createChannelSchema.safeParse({
+      organizationId: formData.get("organizationId"),
+      name: formData.get("name"),
+      type: formData.get("type") || "website",
+    });
+
+    if (!parsed.success) {
+      return { error: "channelNameRequired" };
+    }
+
+    // Verify org exists and check channel limit
+    const org = await prisma.organization.findUnique({
+      where: { id: parsed.data.organizationId },
+      include: { _count: { select: { channels: true } } },
+    });
+
+    if (!org || !org.isActive) {
+      return { error: "createFailed" };
+    }
+
+    if (org._count.channels >= org.maxChannels) {
+      return { error: "channelLimitReached" };
+    }
+
+    await prisma.channel.create({
+      data: {
+        organizationId: parsed.data.organizationId,
+        name: parsed.data.name,
+        type: parsed.data.type,
+        publicKey: crypto.randomUUID(),
+      },
+    });
+
+    revalidatePath("/organizations");
+    return { success: "channelCreated" };
+  } catch {
+    return { error: "createFailed" };
+  }
+}
+
+export async function updateChannel(
+  _prevState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    await requireSuperAdmin();
+
+    const parsed = updateChannelSchema.safeParse({
+      id: formData.get("id"),
+      name: formData.get("name"),
+      isActive: formData.get("isActive"),
+    });
+
+    if (!parsed.success) {
+      return { error: "channelNameRequired" };
+    }
+
+    await prisma.channel.update({
+      where: { id: parsed.data.id },
+      data: {
+        name: parsed.data.name,
+        isActive: parsed.data.isActive,
+      },
+    });
+
+    revalidatePath("/organizations");
+    return { success: "channelUpdated" };
+  } catch {
+    return { error: "createFailed" };
+  }
+}
+
+export async function deleteChannel(id: string): Promise<AdminActionState> {
+  try {
+    await requireSuperAdmin();
+
+    await prisma.channel.delete({
+      where: { id },
+    });
+
+    revalidatePath("/organizations");
+    return { success: "channelDeleted" };
+  } catch {
+    return { error: "createFailed" };
+  }
+}
