@@ -15,6 +15,7 @@ interface DashboardShellProps {
   isSuperAdmin: boolean;
   userName: string;
   userEmail: string;
+  organizationName?: string;
   adminContext?: AdminContext;
 }
 
@@ -23,6 +24,7 @@ export function DashboardShell({
   isSuperAdmin,
   userName,
   userEmail,
+  organizationName,
   adminContext,
 }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -53,11 +55,7 @@ export function DashboardShell({
           onMenuClick={() => setSidebarOpen(true)}
           userName={userName}
           userEmail={userEmail}
-          organizationName={
-            adminContext?.selectedOrgId
-              ? adminContext.organizations.find((o) => o.id === adminContext.selectedOrgId)?.name
-              : undefined
-          }
+          organizationName={organizationName}
         />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           {children}

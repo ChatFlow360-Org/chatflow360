@@ -39,11 +39,21 @@ export default async function DashboardLayout({
     };
   }
 
+  // Derive organization name:
+  // - Super admin: from selected org in context selector
+  // - Regular user: from their first membership
+  const organizationName = user?.isSuperAdmin
+    ? (adminContext?.selectedOrgId
+        ? adminContext.organizations.find((o) => o.id === adminContext.selectedOrgId)?.name
+        : undefined)
+    : user?.memberships?.[0]?.organization?.name;
+
   return (
     <DashboardShell
       isSuperAdmin={user?.isSuperAdmin ?? false}
       userName={user?.fullName || user?.email || ""}
       userEmail={user?.email || ""}
+      organizationName={organizationName}
       adminContext={adminContext}
     >
       {children}
