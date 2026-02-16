@@ -224,6 +224,7 @@
     "noUsers": "Aun no hay usuarios",
     "temporaryPassword": "Contrasena Temporal",
     "generate": "Generar",
+    "passwordHint": "Min. 8 caracteres. Usa mayusculas, minusculas, numeros y simbolos para mayor seguridad.",
     "selectOrganization": "Seleccionar organizacion",
     "selectRole": "Seleccionar rol",
     "roles": {

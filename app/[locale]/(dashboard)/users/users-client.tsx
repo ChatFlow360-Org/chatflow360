@@ -295,6 +295,7 @@ export function UsersClient({ users, organizations }: UsersClientProps) {
                   placeholder="user@company.com"
                   required
                   maxLength={254}
+                  autoComplete="off"
                   className="bg-background"
                 />
               </div>
@@ -338,6 +339,7 @@ export function UsersClient({ users, organizations }: UsersClientProps) {
                     required
                     minLength={8}
                     maxLength={128}
+                    autoComplete="new-password"
                     className="bg-background pr-18"
                   />
                   <div className="absolute right-1 top-1/2 flex -translate-y-1/2 gap-0.5">
@@ -363,6 +365,9 @@ export function UsersClient({ users, organizations }: UsersClientProps) {
                     </Button>
                   </div>
                 </div>
+                <p className="text-[11px] text-muted-foreground">
+                  {t("passwordHint")}
+                </p>
               </div>
             )}
 
