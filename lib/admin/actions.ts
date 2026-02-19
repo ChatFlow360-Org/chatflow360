@@ -131,6 +131,9 @@ export async function deleteOrganization(id: string): Promise<AdminActionState> 
   try {
     await requireSuperAdmin();
 
+    // Validate UUID to prevent injection
+    z.string().uuid().parse(id);
+
     await prisma.organization.delete({
       where: { id },
     });
@@ -291,6 +294,9 @@ export async function deleteUser(id: string): Promise<AdminActionState> {
   try {
     await requireSuperAdmin();
 
+    // Validate UUID to prevent injection
+    z.string().uuid().parse(id);
+
     // Don't allow deleting yourself
     const currentUser = await getCurrentUser();
     if (currentUser?.id === id) {
@@ -411,6 +417,9 @@ export async function updateChannel(
 export async function deleteChannel(id: string): Promise<AdminActionState> {
   try {
     await requireSuperAdmin();
+
+    // Validate UUID to prevent injection
+    z.string().uuid().parse(id);
 
     await prisma.channel.delete({
       where: { id },

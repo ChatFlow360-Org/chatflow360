@@ -4,7 +4,12 @@ import { createServerClient } from "@supabase/ssr";
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/";
+
+  // Sanitize redirect: must be a relative path, no protocol or double slashes
+  let next = searchParams.get("next") ?? "/";
+  if (!next.startsWith("/") || next.startsWith("//") || next.includes("://")) {
+    next = "/";
+  }
 
   if (code) {
     const cookiesToSet: Array<{

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db/prisma";
  * Get the current authenticated user with their Prisma DB record.
  * Auto-creates Prisma record on first access (upsert).
  * Bootstrap: first user to access becomes super_admin.
+ * Uses serializable transaction to prevent race condition in bootstrap.
  */
 export async function getCurrentUser() {
   const supabase = await createClient();
@@ -14,26 +15,32 @@ export async function getCurrentUser() {
 
   if (!user) return null;
 
-  // Bootstrap: if zero super admins exist, first user becomes one
-  const superAdminCount = await prisma.user.count({
-    where: { isSuperAdmin: true },
-  });
+  // Use serializable transaction to prevent race condition where
+  // two concurrent requests both read superAdminCount === 0
+  const dbUser = await prisma.$transaction(
+    async (tx) => {
+      const superAdminCount = await tx.user.count({
+        where: { isSuperAdmin: true },
+      });
 
-  const dbUser = await prisma.user.upsert({
-    where: { id: user.id },
-    update: { email: user.email! },
-    create: {
-      id: user.id,
-      email: user.email!,
-      fullName: user.user_metadata?.full_name || null,
-      isSuperAdmin: superAdminCount === 0,
+      return tx.user.upsert({
+        where: { id: user.id },
+        update: { email: user.email! },
+        create: {
+          id: user.id,
+          email: user.email!,
+          fullName: user.user_metadata?.full_name || null,
+          isSuperAdmin: superAdminCount === 0,
+        },
+        include: {
+          memberships: {
+            include: { organization: true },
+          },
+        },
+      });
     },
-    include: {
-      memberships: {
-        include: { organization: true },
-      },
-    },
-  });
+    { isolationLevel: "Serializable" }
+  );
 
   return dbUser;
 }

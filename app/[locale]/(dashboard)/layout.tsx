@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/user";
 import { prisma } from "@/lib/db/prisma";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
@@ -9,6 +10,11 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const user = await getCurrentUser();
+
+  // Auth guard: redirect to login if not authenticated
+  if (!user) {
+    redirect("/en/login");
+  }
 
   // Fetch admin context for super_admin
   let adminContext: {
