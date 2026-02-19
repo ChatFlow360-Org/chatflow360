@@ -10,7 +10,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@bprogress/next": "^3.2.12",
     "@prisma/adapter-pg": "^7.4.0",
     "@prisma/client": "^7.4.0",
     "@supabase/ssr": "^0.8.0",
