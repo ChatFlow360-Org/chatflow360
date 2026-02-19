@@ -27,8 +27,7 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider messages={messages}>
       <ThemeProvider>
-        <NavigationProgress />
-        {children}
+        <NavigationProgress>{children}</NavigationProgress>
       </ThemeProvider>
     </NextIntlClientProvider>
   );
