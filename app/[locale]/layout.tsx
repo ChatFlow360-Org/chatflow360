@@ -2,6 +2,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { ThemeProvider } from "@/components/layout/theme-provider";
+import { NavigationProgress } from "@/components/layout/navigation-progress";
 import { routing } from "@/lib/i18n/routing";
 
 export function generateStaticParams() {
@@ -25,7 +26,10 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider messages={messages}>
-      <ThemeProvider>{children}</ThemeProvider>
+      <ThemeProvider>
+        <NavigationProgress />
+        {children}
+      </ThemeProvider>
     </NextIntlClientProvider>
   );
 }
