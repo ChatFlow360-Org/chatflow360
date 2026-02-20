@@ -101,7 +101,7 @@ export function ApiKeysClient({ globalKeyHint }: ApiKeysClientProps) {
             </div>
           </CardContent>
 
-          <CardFooter>
+          <CardFooter className="pt-2">
             <Button type="submit" disabled={isPending}>
               {isPending ? t("saving") : t("saveKey")}
             </Button>
