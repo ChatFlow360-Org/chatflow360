@@ -2,6 +2,20 @@
 
 > Historial completo de versiones y cambios del proyecto.
 
+## Post v0.2.3 — AI Settings Page (2026-02-19)
+
+### AI Settings — Two-Column Layout + Preview Widget
+
+- **AI Settings page** (`/settings/ai`) con layout de dos columnas:
+  - Columna izquierda: tabs Instructions + Knowledge Base (contenido principal)
+  - Columna derecha: Quick Settings sidebar (model, temperature, max tokens, handoff toggle)
+- **AI Preview widget** estilo WhatsApp — chat bubbles para previsualizar comportamiento de la IA
+- **Server action `upsertAiSettings`** en `lib/admin/actions.ts` con Zod validation
+  - Server page: fetch de AI settings por org (super_admin via cookie, regular user via membership)
+  - Client component: `AiSettingsClient` con tabs, form state, `useActionState`
+- **`getCurrentUser()` envuelto con React `cache()`** para evitar Serializable transaction deadlocks
+- **~30 nuevas traducciones** (EN + ES): AI settings labels, placeholders, preview, tabs
+
 ## v0.2.3 (2026-02-19)
 
 ### Security Hardening + Navigation Progress Bar

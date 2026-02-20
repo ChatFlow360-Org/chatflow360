@@ -63,6 +63,7 @@ chatflow360-dashboard/
 │   │   │   ├── conversations/
 │   │   │   ├── channels/
 │   │   │   ├── settings/
+│   │   │   │   └── ai/          # AI Settings (server page + client component)
 │   │   │   └── reports/
 │   │   └── (super-admin)/
 │   │       ├── layout.tsx      # Super admin guard
@@ -207,6 +208,18 @@ const getChannelConfig = (channel: Channel, orgAiSettings: AiSettings) => ({
 ```
 
 > Ver detalle completo de control de acceso en [DATA-MODELS.md](./DATA-MODELS.md#control-de-acceso-por-modelo)
+
+### AI Settings Page
+
+**Ruta:** `/[locale]/settings/ai`
+
+| Capa | Archivo | Responsabilidad |
+|------|---------|-----------------|
+| Server page | `app/[locale]/(dashboard)/settings/ai/page.tsx` | Fetch AI settings por org (super_admin via cookie, regular user via membership) |
+| Client component | `AiSettingsClient` | Tabs (Instructions + Knowledge Base), form state, `useActionState` |
+| Server action | `upsertAiSettings` en `lib/admin/actions.ts` | Zod validation, upsert en `ai_settings` tabla |
+
+**Layout:** dos columnas — contenido principal (tabs) a la izquierda, Quick Settings sidebar (model, temperature, max tokens, handoff toggle) a la derecha. Preview widget estilo WhatsApp para previsualizar el comportamiento de la IA.
 
 ### Widget Embed
 

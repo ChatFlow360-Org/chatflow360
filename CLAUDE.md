@@ -73,4 +73,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.2.3** - Security hardening: 4 CRITICAL + 6 HIGH/MED + 3 LOW vulnerabilidades corregidas. CSP header, crypto passwords, locale sanitization, cookie security, transaction atomicity, error logging, Prisma logging. Custom navigation progress bar. Audit completo documentado en `docs/SECURITY-AUDIT-v0.2.2.md`.
+**v0.2.3** - Security hardening: 4 CRITICAL + 6 HIGH/MED + 3 LOW vulnerabilidades corregidas. CSP header, crypto passwords, locale sanitization, cookie security, transaction atomicity, error logging, Prisma logging. Custom navigation progress bar. Audit completo documentado en `docs/SECURITY-AUDIT-v0.2.2.md`. AI Settings page funcional con layout de dos columnas (Instructions + Knowledge Base tabs), preview widget WhatsApp-style, Quick Settings sidebar, y server action `upsertAiSettings`. `getCurrentUser()` con React `cache()` para evitar deadlocks.
