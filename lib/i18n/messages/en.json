@@ -107,27 +107,23 @@
   "settings": {
     "title": "AI Settings",
     "subtitle": "Configure your AI assistant behavior and knowledge",
+    "selectOrgFirst": "Select an organization first",
+    "selectOrgDescription": "Use the organization selector in the sidebar to configure AI settings.",
+    "saved": "Settings saved successfully",
+    "saving": "Saving...",
+    "saveChanges": "Save Changes",
     "tabs": {
       "instructions": "Instructions",
       "knowledge": "Knowledge Base"
     },
-    "systemPrompt": {
-      "title": "System Prompt",
-      "description": "Define how the AI assistant behaves and responds",
-      "placeholder": "Enter system prompt instructions...",
-      "active": "Active"
-    },
-    "handoff": {
-      "title": "Handoff Keywords",
-      "description": "Words that trigger transfer to a human agent",
-      "placeholder": "Add keyword..."
-    },
-    "saveChanges": "Save Changes",
-    "preview": {
-      "title": "AI Preview",
-      "description": "How your AI will respond based on current settings:",
-      "question": "What are your business hours?",
-      "answer": "Our business hours are Monday to Friday, 9 AM to 6 PM EST. We're located in Miami, FL. Is there anything else I can help you with?"
+    "modelConfig": {
+      "title": "AI Model Configuration",
+      "description": "Technical parameters that control AI behavior and costs",
+      "provider": "Provider",
+      "modelDescription": "The AI model used for generating responses",
+      "temperatureDescription": "Lower = more focused and deterministic. Higher = more creative and varied.",
+      "maxTokensDescription": "Maximum tokens per AI response (1 token ≈ 4 characters)",
+      "charCount": "{count}/4000 characters"
     },
     "quickSettings": {
       "title": "Quick Settings",
@@ -136,9 +132,30 @@
       "maxTokens": "Max Tokens",
       "humanTakeover": "Human Takeover"
     },
+    "systemPrompt": {
+      "title": "Default System Prompt",
+      "description": "Define how the AI assistant behaves and responds to visitors",
+      "placeholder": "You are a helpful customer support assistant. Be friendly, professional, and answer questions about our products and services. If you don't know the answer, offer to connect the visitor with a human agent.",
+      "active": "Active"
+    },
+    "handoff": {
+      "title": "Human Handoff",
+      "description": "Keywords that trigger automatic transfer to a human agent",
+      "placeholder": "Type a keyword...",
+      "addKeyword": "Add",
+      "enterKeyword": "Type a keyword and press Enter or click Add (max 20)"
+    },
+    "preview": {
+      "title": "AI Preview",
+      "description": "How your AI will respond based on current settings:",
+      "question": "What are your business hours?",
+      "answer": "Our business hours are Monday to Friday, 9 AM to 6 PM EST. We're located in Miami, FL. Is there anything else I can help you with?"
+    },
     "knowledge": {
-      "title": "Knowledge Items",
+      "title": "Knowledge Base",
       "description": "Information the AI uses to answer questions (RAG)",
+      "comingSoon": "Knowledge base management coming soon",
+      "comingSoonDescription": "You'll be able to upload documents, FAQs, and custom content for your AI to reference.",
       "addKnowledge": "Add Knowledge",
       "dialogTitle": "Add Knowledge Item",
       "titleLabel": "Title",

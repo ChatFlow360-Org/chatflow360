@@ -107,27 +107,23 @@
   "settings": {
     "title": "Configuracion de IA",
     "subtitle": "Configura el comportamiento y conocimiento de tu asistente de IA",
+    "selectOrgFirst": "Selecciona una organizacion primero",
+    "selectOrgDescription": "Usa el selector de organizacion en la barra lateral para configurar los ajustes de IA.",
+    "saved": "Configuracion guardada exitosamente",
+    "saving": "Guardando...",
+    "saveChanges": "Guardar Cambios",
     "tabs": {
       "instructions": "Instrucciones",
       "knowledge": "Base de Conocimiento"
     },
-    "systemPrompt": {
-      "title": "Prompt del Sistema",
-      "description": "Define como se comporta y responde el asistente de IA",
-      "placeholder": "Ingresa las instrucciones del prompt...",
-      "active": "Activo"
-    },
-    "handoff": {
-      "title": "Palabras Clave de Transferencia",
-      "description": "Palabras que activan la transferencia a un agente humano",
-      "placeholder": "Agregar palabra clave..."
-    },
-    "saveChanges": "Guardar Cambios",
-    "preview": {
-      "title": "Vista Previa de IA",
-      "description": "Como respondera tu IA basado en la configuracion actual:",
-      "question": "Cual es su horario de atencion?",
-      "answer": "Nuestro horario de atencion es de lunes a viernes, 9 AM a 6 PM EST. Estamos ubicados en Miami, FL. Hay algo mas en lo que pueda ayudarle?"
+    "modelConfig": {
+      "title": "Configuracion del Modelo de IA",
+      "description": "Parametros tecnicos que controlan el comportamiento y costos de la IA",
+      "provider": "Proveedor",
+      "modelDescription": "El modelo de IA utilizado para generar respuestas",
+      "temperatureDescription": "Menor = mas enfocado y determinista. Mayor = mas creativo y variado.",
+      "maxTokensDescription": "Tokens maximos por respuesta de IA (1 token ≈ 4 caracteres)",
+      "charCount": "{count}/4000 caracteres"
     },
     "quickSettings": {
       "title": "Ajustes Rapidos",
@@ -136,9 +132,30 @@
       "maxTokens": "Tokens Maximos",
       "humanTakeover": "Transferencia a Humano"
     },
+    "systemPrompt": {
+      "title": "Prompt del Sistema por Defecto",
+      "description": "Define como se comporta y responde el asistente de IA con los visitantes",
+      "placeholder": "Eres un asistente de atencion al cliente amigable. Se profesional y responde preguntas sobre nuestros productos y servicios. Si no conoces la respuesta, ofrece conectar al visitante con un agente humano.",
+      "active": "Activo"
+    },
+    "handoff": {
+      "title": "Transferencia a Humano",
+      "description": "Palabras clave que activan la transferencia automatica a un agente humano",
+      "placeholder": "Escribe una palabra clave...",
+      "addKeyword": "Agregar",
+      "enterKeyword": "Escribe una palabra clave y presiona Enter o haz clic en Agregar (max 20)"
+    },
+    "preview": {
+      "title": "Vista Previa de IA",
+      "description": "Como respondera tu IA basado en la configuracion actual:",
+      "question": "Cual es su horario de atencion?",
+      "answer": "Nuestro horario de atencion es de lunes a viernes, 9 AM a 6 PM EST. Estamos ubicados en Miami, FL. Hay algo mas en lo que pueda ayudarle?"
+    },
     "knowledge": {
       "title": "Base de Conocimiento",
       "description": "Informacion que la IA usa para responder preguntas (RAG)",
+      "comingSoon": "Gestion de base de conocimiento proximamente",
+      "comingSoonDescription": "Podras subir documentos, preguntas frecuentes y contenido personalizado para que tu IA consulte.",
       "addKnowledge": "Agregar Conocimiento",
       "dialogTitle": "Agregar Elemento de Conocimiento",
       "titleLabel": "Titulo",

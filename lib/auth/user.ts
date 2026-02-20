@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/db/prisma";
 
@@ -6,8 +7,11 @@ import { prisma } from "@/lib/db/prisma";
  * Auto-creates Prisma record on first access (upsert).
  * Bootstrap: first user to access becomes super_admin.
  * Uses serializable transaction to prevent race condition in bootstrap.
+ *
+ * Wrapped with React cache() to deduplicate calls within the same
+ * request cycle (layout + page both call this without deadlocking).
  */
-export async function getCurrentUser() {
+export const getCurrentUser = cache(async function getCurrentUserImpl() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -43,7 +47,7 @@ export async function getCurrentUser() {
   );
 
   return dbUser;
-}
+});
 
 /** Serializable user data for passing from server to client components */
 export type CurrentUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>;

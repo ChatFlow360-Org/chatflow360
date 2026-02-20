@@ -326,6 +326,81 @@ export async function deleteUser(id: string): Promise<AdminActionState> {
 }
 
 // ============================================
+// AI Settings
+// ============================================
+
+const aiSettingsSchema = z.object({
+  organizationId: z.string().uuid(),
+  model: z.enum(["gpt-4o-mini", "gpt-4o", "gpt-4-turbo"]),
+  systemPrompt: z.string().max(4000).optional().nullable(),
+  temperature: z.coerce.number().min(0).max(2),
+  maxTokens: z.coerce.number().int().min(100).max(4000),
+  handoffKeywords: z.preprocess(
+    (val) =>
+      typeof val === "string"
+        ? val.split(",").map((k: string) => k.trim()).filter(Boolean)
+        : [],
+    z.array(z.string().max(50)).max(20)
+  ),
+});
+
+export async function upsertAiSettings(
+  _prevState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    await requireSuperAdmin();
+
+    const parsed = aiSettingsSchema.safeParse({
+      organizationId: formData.get("organizationId"),
+      model: formData.get("model"),
+      systemPrompt: formData.get("systemPrompt") || null,
+      temperature: formData.get("temperature"),
+      maxTokens: formData.get("maxTokens"),
+      handoffKeywords: formData.get("handoffKeywords"),
+    });
+
+    if (!parsed.success) {
+      return { error: "createFailed" };
+    }
+
+    // Verify org exists
+    const org = await prisma.organization.findUnique({
+      where: { id: parsed.data.organizationId },
+    });
+    if (!org) {
+      return { error: "createFailed" };
+    }
+
+    await prisma.aiSettings.upsert({
+      where: { organizationId: parsed.data.organizationId },
+      update: {
+        model: parsed.data.model,
+        systemPrompt: parsed.data.systemPrompt,
+        temperature: parsed.data.temperature,
+        maxTokens: parsed.data.maxTokens,
+        handoffKeywords: parsed.data.handoffKeywords,
+      },
+      create: {
+        organizationId: parsed.data.organizationId,
+        provider: "openai",
+        model: parsed.data.model,
+        systemPrompt: parsed.data.systemPrompt,
+        temperature: parsed.data.temperature,
+        maxTokens: parsed.data.maxTokens,
+        handoffKeywords: parsed.data.handoffKeywords,
+      },
+    });
+
+    revalidatePath("/settings/ai");
+    return { success: "settingsSaved" };
+  } catch (e) {
+    console.error("[upsertAiSettings]", e instanceof Error ? e.message : e);
+    return { error: "createFailed" };
+  }
+}
+
+// ============================================
 // Channels
 // ============================================
 
