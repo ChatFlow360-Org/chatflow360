@@ -32,7 +32,7 @@ Super Admin (platform owner)
 | RAG | Supabase Vector (pgvector) | Embeddings y busqueda semantica |
 | Embeddings | OpenAI text-embedding-3-small | Generacion de vectores |
 | i18n | next-intl v4 | Bilingue EN/ES, URL routing |
-| Hosting | Vercel | Deploy, edge functions |
+| Hosting | Vercel | Deploy, edge functions — https://app.chatflow360.com |
 | Futuro | n8n (Railway) | Automatizaciones laterales (CRM, email, Slack — NO flujo core de chat) |
 
 ### Prisma + Supabase: Enfoque Hibrido
@@ -212,7 +212,7 @@ const getChannelConfig = (channel: Channel, orgAiSettings: AiSettings) => ({
 
 ```html
 <script
-  src="https://[domain]/widget/embed.js"
+  src="https://app.chatflow360.com/widget/embed.js"
   data-key="PUBLIC_KEY"
   data-lang="es">
 </script>
@@ -251,7 +251,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 OPENAI_API_KEY=
 
 # App
-NEXT_PUBLIC_APP_URL=
+NEXT_PUBLIC_APP_URL=https://app.chatflow360.com
 NEXT_PUBLIC_WIDGET_URL=
 
 # Email

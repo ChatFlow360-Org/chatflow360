@@ -2,6 +2,35 @@
 
 > Historial completo de versiones y cambios del proyecto.
 
+## v0.2.3 (2026-02-19)
+
+### Security Hardening + Navigation Progress Bar
+
+- **Custom navigation progress bar** — reemplazo de `@bprogress/next` (incompatible con Next.js 16 + next-intl)
+  - Click delegation en `<a>` tags (capture phase) + `usePathname()` de next-intl para detectar cambios
+  - Barra teal (#2f92ad) con animacion gradual (15% → 90% → 100%)
+  - Soporta browser back/forward via `popstate`
+- **4 vulnerabilidades CRITICAS corregidas:**
+  - CRIT-01: Race condition en bootstrap → `$transaction` Serializable
+  - CRIT-02: Auth guard faltante en dashboard layout → redirect a login si `!user`
+  - CRIT-03: UUID validation en funciones delete → `z.string().uuid().parse(id)`
+  - CRIT-04: Open redirect en auth callback → sanitizacion OWASP 6 capas + allowlist de hosts
+- **6 vulnerabilidades HIGH/MED corregidas (Phase 1):**
+  - HIGH-01: Locale sanitizado contra `routing.locales` en redirects de auth
+  - HIGH-02: Cookies con `Secure;SameSite=Lax` + validacion UUID server-side
+  - HIGH-03: Content-Security-Policy header con 9 directivas (environment-aware)
+  - HIGH-04: `crypto.getRandomValues()` + Fisher-Yates shuffle para passwords
+  - HIGH-05: `updateUser()` envuelto en `prisma.$transaction`
+  - MED-01: Orden de `deleteUser()` invertido — Supabase Auth primero, Prisma despues
+- **3 mejoras LOW corregidas (Phase 2 quick wins):**
+  - LOW-01: Middleware locale regex dinamico (importa `locales` de routing, no hardcodeado)
+  - LOW-05: `console.error` con nombre de funcion en los 10 catch blocks de server actions
+  - LOW-06: Prisma query logging (`["query", "error", "warn"]` en dev, `["error"]` en prod)
+- **Auth callback** hardened: `sanitizeRedirectPath()` (6 capas) + `getSecureOrigin()` con `ALLOWED_HOSTS`
+- **Audit completo** documentado en `docs/SECURITY-AUDIT-v0.2.2.md` (21 findings, 16 positive practices)
+- Pendiente Phase 2: rate limiting (MED-02), CORS utility (MED-03)
+- Pendiente Phase 3: mock data cleanup, cascade checks, RBAC ownership — cuando conecte backend
+
 ## v0.2.2 (2026-02-16)
 
 ### Channel CRUD + Header dinámico
@@ -22,7 +51,8 @@
 - **~15 nuevas traducciones** (EN + ES): channels.newChannel, editChannel, channelName, types.website, limitReached, channelsCount, etc.
 - **Error keys** nuevos: `channelNameRequired`, `channelLimitReached`
 - Verificado con `npm run build` — compila sin errores
-- Deploy a produccion (Vercel)
+- Deploy a produccion (Vercel) — dominio custom: https://app.chatflow360.com
+- **Dominio personalizado**: `app.chatflow360.com` via Cloudflare DNS (CNAME → Vercel, proxy disabled)
 
 ## v0.2.1 (2026-02-15)
 

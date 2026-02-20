@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.2.2 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.2.3 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -8,7 +8,7 @@
 - **Mercado:** Miami businesses, audiencia bilingue EN/ES
 - **Stack:** Next.js 14+ (App Router) / TypeScript / Supabase / Prisma / OpenAI
 - **RAG:** Supabase Vector (pgvector) para base de conocimiento
-- **Hosting:** Vercel
+- **Hosting:** Vercel → https://app.chatflow360.com
 
 ## Flujo Core
 
@@ -73,4 +73,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.2.2** - Channel CRUD integrado en Organizations (filas expandibles). Header dinamico (org name o solo fecha). Limites por plan enforced (Starter=1, Pro=3, Growth=10). publicKey auto-generado. ~335 traducciones EN/ES. Deploy en produccion.
+**v0.2.3** - Security hardening: 4 CRITICAL + 6 HIGH/MED + 3 LOW vulnerabilidades corregidas. CSP header, crypto passwords, locale sanitization, cookie security, transaction atomicity, error logging, Prisma logging. Custom navigation progress bar. Audit completo documentado en `docs/SECURITY-AUDIT-v0.2.2.md`.
