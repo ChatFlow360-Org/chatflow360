@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.2.3 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.3.0 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -73,4 +73,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.2.3** - Security hardening: 4 CRITICAL + 6 HIGH/MED + 3 LOW vulnerabilidades corregidas. CSP header, crypto passwords, locale sanitization, cookie security, transaction atomicity, error logging, Prisma logging. Custom navigation progress bar. Audit completo documentado en `docs/SECURITY-AUDIT-v0.2.2.md`. AI Settings page funcional con layout de dos columnas (Instructions + Knowledge Base tabs), preview widget WhatsApp-style, Quick Settings sidebar, y server action `upsertAiSettings`. `getCurrentUser()` con React `cache()` para evitar deadlocks.
+**v0.3.0** - Chat Widget + API Backend: producto core funcional. Widget embebible vanilla JS (public/widget/chatflow360.js) con DOM injection, bilingue, mobile responsive. API routes POST /api/chat (mensaje + respuesta IA) y GET /api/chat/[id] (historial). OpenAI integration con resolucion de key 3 niveles (per-org → global → env), encriptacion AES-256-GCM at rest. API Keys page (super_admin) + per-org key en AI Settings. Conversation lifecycle: open → pending (handoff) → resolved → closed. Token tracking (Message.tokensUsed + UsageTracking). Conversations page con datos reales (Prisma). CORS separado para dashboard vs widget. ~360+ traducciones EN/ES. Pendiente: RAG knowledge base, realtime (WebSocket/SSE), dashboard stats reales, agent messaging.

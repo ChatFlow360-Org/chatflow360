@@ -60,96 +60,111 @@ chatflow360-dashboard/
 │   │   ├── (dashboard)/
 │   │   │   ├── layout.tsx      # DashboardShell (sidebar + header)
 │   │   │   ├── page.tsx        # Dashboard home
-│   │   │   ├── conversations/
-│   │   │   ├── channels/
-│   │   │   ├── settings/
-│   │   │   │   └── ai/          # AI Settings (server page + client component)
-│   │   │   └── reports/
-│   │   └── (super-admin)/
-│   │       ├── layout.tsx      # Super admin guard
-│   │       ├── organizations/
-│   │       └── users/
+│   │   │   ├── conversations/  # Conversations page (server) + client
+│   │   │   ├── organizations/  # CRUD organizations (super_admin)
+│   │   │   ├── users/          # CRUD users (super_admin)
+│   │   │   └── settings/
+│   │   │       ├── ai/         # AI Settings (server page + client component)
+│   │   │       └── api-keys/   # API Key management (super_admin only)
 │   ├── api/
 │   │   ├── chat/
-│   │   │   └── route.ts        # Widget chat endpoint
-│   │   ├── ai/
-│   │   │   └── route.ts        # AI completion
-│   │   └── webhooks/
-│   └── widget/
-│       └── [publicKey]/
-│           └── page.tsx        # Widget iframe embebible
+│   │   │   ├── route.ts        # POST — widget chat + AI response
+│   │   │   └── [id]/
+│   │   │       └── route.ts    # GET — conversation history
+│   │   ├── auth/
+│   │   │   └── callback/       # Supabase auth callback (code exchange)
+│   │   └── webhooks/           # Future: WhatsApp, Messenger
 ├── components/
 │   ├── ui/                     # Shadcn components
-│   ├── chat/
-│   ├── dashboard/
-│   ├── layout/                 # Sidebar, Header
-│   └── widget/
+│   ├── chat/                   # ConversationCard, ConversationDetail, ChatMessage, Filters
+│   ├── dashboard/              # StatCard, TopPages, RecentConversations
+│   └── layout/                 # Sidebar, Header, DashboardShell
 ├── lib/
 │   ├── db/
 │   │   └── prisma.ts           # Prisma client singleton
+│   ├── api/
+│   │   ├── cors.ts             # CORS headers + OPTIONS handler
+│   │   └── validate.ts         # Zod schemas for widget API
+│   ├── chat/
+│   │   ├── ai.ts               # generateAiResponse (OpenAI + context building)
+│   │   ├── config.ts           # resolveChannelConfig (herencia channel → org)
+│   │   └── handoff.ts          # detectHandoff (keyword matching)
+│   ├── crypto/
+│   │   └── encryption.ts       # AES-256-GCM encrypt/decrypt/maskApiKey
+│   ├── openai/
+│   │   └── client.ts           # OpenAI factory (3-tier key resolution)
+│   ├── admin/
+│   │   └── actions.ts          # Server actions (CRUD orgs, users, channels, AI settings, API keys)
+│   ├── auth/
+│   │   ├── actions.ts          # Server actions (login, logout, forgot/update password)
+│   │   └── user.ts             # getCurrentUser() with upsert + bootstrap
 │   ├── i18n/
 │   │   ├── routing.ts          # defineRouting (locales, defaultLocale)
 │   │   ├── request.ts          # getRequestConfig (server)
 │   │   ├── navigation.ts       # Locale-aware Link, useRouter, usePathname
 │   │   └── messages/
-│   │       ├── en.json         # English translations (~160+ strings)
-│   │       └── es.json         # Spanish translations (~160+ strings)
+│   │       ├── en.json         # English translations (~360+ strings)
+│   │       └── es.json         # Spanish translations (~360+ strings)
 │   ├── supabase/
 │   │   ├── client.ts           # Browser client (realtime, auth)
-│   │   └── server.ts           # Server client (auth verification)
-│   ├── ai/
-│   │   └── openai.ts
+│   │   ├── server.ts           # Server client (auth verification)
+│   │   └── admin.ts            # Admin client (SERVICE_ROLE_KEY)
 │   └── utils/
-├── middleware.ts                # next-intl locale routing middleware
+├── middleware.ts                # Supabase auth + next-intl locale routing
 ├── prisma/
 │   ├── schema.prisma
 │   └── migrations/
-├── hooks/
 ├── types/
+│   ├── index.ts                # Conversation, Message, ResponderMode types
 │   └── i18n.d.ts               # IntlMessages type for autocomplete
 ├── docs/                       # Documentacion del proyecto
 ├── brand/                      # Identidad visual
 └── public/
     └── widget/
-        └── embed.js            # Script embed standalone
+        └── chatflow360.js      # Widget embebible vanilla JS (~770 lines)
 ```
 
 ## API Routes
 
-### Publicas (Widget)
+### Publicas (Widget) — Implementadas v0.3.0
 
 ```
-POST /api/chat                          # Crear/continuar conversacion
-GET  /api/chat/[conversationId]         # Historial (validacion publicKey)
+POST /api/chat                          # Enviar mensaje + respuesta IA automatica
+GET  /api/chat/[conversationId]         # Historial (validacion visitorId)
 ```
 
-### Protegidas (Dashboard)
+**Autenticacion:** via `publicKey` (UUID del canal) + `visitorId` (generado por widget). Sin JWT — API publica con CORS abierto.
+
+### Dashboard — Server Actions (Implementadas)
+
+Las operaciones del dashboard usan **Server Actions** (no API routes):
 
 ```
-GET    /api/conversations               # Listar conversaciones
-POST   /api/conversations/[id]/takeover # Tomar control humano
+lib/admin/actions.ts:
+  - CRUD Organizations (create, update, delete)
+  - CRUD Users (create, update, delete — dual Supabase Auth + Prisma)
+  - CRUD Channels (create, update, delete — plan limits enforced)
+  - upsertAiSettings (AI config per org)
+  - upsertPlatformKey (global API key — super_admin)
+  - getConversationMessages (fetch messages by conversation)
+
+lib/auth/actions.ts:
+  - login, logout, forgotPassword, updatePassword
+```
+
+### Futuras (Post-MVP)
+
+```
+POST   /api/conversations/[id]/messages # Enviar mensaje como agente desde dashboard
+POST   /api/conversations/[id]/takeover # Tomar control humano (manual)
 POST   /api/conversations/[id]/release  # Devolver a IA
-POST   /api/conversations/[id]/messages # Enviar mensaje
 
-GET    /api/channels                    # Listar canales
-POST   /api/channels                    # Crear canal
-PATCH  /api/channels/[id]              # Actualizar canal
-
-GET    /api/settings/ai                 # Config IA (instrucciones)
-PATCH  /api/settings/ai                 # Actualizar instrucciones
-
-GET    /api/channels/[id]/knowledge     # Listar conocimiento del canal
+GET    /api/channels/[id]/knowledge     # Listar conocimiento del canal (RAG)
 POST   /api/channels/[id]/knowledge     # Agregar conocimiento
 DELETE /api/channels/[id]/knowledge/[kId] # Eliminar conocimiento
-```
 
-### Super Admin
-
-```
-GET    /api/admin/organizations         # Listar orgs
-POST   /api/admin/organizations         # Crear org
-PATCH  /api/admin/organizations/[id]    # Actualizar org
-POST   /api/admin/organizations/[id]/users  # Agregar usuario a org
+POST   /api/webhooks/whatsapp          # WhatsApp Cloud API webhook
+POST   /api/webhooks/messenger         # Facebook Messenger webhook
 ```
 
 ## Logica de Negocio Clave
@@ -224,12 +239,35 @@ const getChannelConfig = (channel: Channel, orgAiSettings: AiSettings) => ({
 ### Widget Embed
 
 ```html
-<script
-  src="https://app.chatflow360.com/widget/embed.js"
-  data-key="PUBLIC_KEY"
-  data-lang="es">
-</script>
+<script src="https://app.chatflow360.com/widget/chatflow360.js"
+  data-key="PUBLIC_KEY" data-lang="es" data-color="#2f92ad" defer></script>
 ```
+
+| Atributo | Requerido | Default | Descripcion |
+|----------|-----------|---------|-------------|
+| `data-key` | Si | — | publicKey del canal (UUID) |
+| `data-lang` | No | browser detect | "en" o "es" |
+| `data-color` | No | #2f92ad | Color primario del widget |
+| `data-position` | No | "right" | "right" o "left" |
+
+**Implementacion:** vanilla JS IIFE (~770 lineas), DOM injection directa (no iframe), clases `.cf360-`, z-index maximo. Persistencia via localStorage (visitorId + conversationId). Polling cada 5s en modo humano. Mobile fullscreen <480px.
+
+### API Key Encryption
+
+**Algoritmo:** AES-256-GCM (Node.js crypto nativo, zero dependencies)
+
+```
+encrypt(apiKey) → base64[IV(12B) + authTag(16B) + ciphertext]
+decrypt(base64)  → plaintext apiKey
+maskApiKey(key)  → "sk-...aBcD" (display only)
+```
+
+**Resolucion de key (3 niveles):**
+1. Per-org `AiSettings.encryptedApiKey` → decrypt → usar
+2. Global `PlatformSettings[openai_api_key]` → decrypt → usar
+3. `process.env.OPENAI_API_KEY` → fallback
+
+**Seguridad:** Keys encriptadas at rest en DB, nunca enviadas al browser (solo `apiKeyHint`). `ENCRYPTION_KEY` en env var (64 hex chars = 32 bytes). IV aleatorio por operacion.
 
 ### Manejo de Idiomas (i18n)
 
@@ -259,13 +297,16 @@ DATABASE_URL=postgresql://postgres:[password]@db.[project].supabase.co:5432/post
 # Supabase (Auth & Realtime)
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=          # Admin ops (user creation/deletion)
 
-# OpenAI
+# OpenAI (fallback — prefer UI-based key management)
 OPENAI_API_KEY=
+
+# Encryption (API key encryption at rest)
+ENCRYPTION_KEY=                     # 64 hex chars (openssl rand -hex 32)
 
 # App
 NEXT_PUBLIC_APP_URL=https://app.chatflow360.com
-NEXT_PUBLIC_WIDGET_URL=
 
 # Email
 RESEND_API_KEY=
@@ -311,31 +352,41 @@ Los tokens se registran en cada mensaje IA (`Message.tokensUsed`) y se resumen e
 
 ## Alcance del MVP
 
-### Incluido
+### Implementado (v0.3.0)
 
-- Multi-tenant con Super Admin
-- Website widget (embebible)
-- Respuestas IA con RAG (OpenAI + Supabase Vector)
-- Panel de Instrucciones (system prompt) separado de Conocimiento (RAG)
-- Human takeover (keyword-based)
-- Historial de conversaciones
-- Dashboard basico + reportes
-- Bilingue (EN/ES)
-- Notificaciones por email
+- Multi-tenant con Super Admin (CRUD orgs, users, channels)
+- Website widget embebible (vanilla JS, DOM injection, bilingue)
+- Respuestas IA con OpenAI (GPT-4o-mini default)
+- Human takeover (keyword-based, bilateral EN/ES)
+- API key management (AES-256-GCM, 3-tier resolution, UI-based)
+- Conversations page con datos reales (Prisma)
+- Dashboard basico (5 stat cards, top pages, recent conversations — aun mock)
+- AI Settings page (instructions, model config, handoff, preview widget)
+- Autenticacion real (Supabase Auth — login, logout, forgot/update password)
+- Bilingue (EN/ES) — ~360+ strings traducidas
+- Token tracking (Message.tokensUsed + UsageTracking monthly)
+- Security hardened (CSP, HSTS, crypto passwords, transaction atomicity)
 
-### No Incluido (MVP)
+### Pendiente (Post-MVP)
 
-- Push notifications
-- Multiples usuarios por org
+- RAG/Knowledge Base (pgvector) — tab dice "coming soon"
+- WebSocket/SSE realtime (MVP usa polling 5s)
+- Enviar mensajes como agente desde dashboard
+- Rate limiting (@upstash/ratelimit)
+- Dashboard con datos reales (stat cards, charts)
+- Reports page
+- Push notifications / email notifications
+- RBAC enforcement (roles stored but not enforced)
 - Canales WhatsApp / Facebook
-- Flow builder
-- Integraciones n8n
+- File attachments, typing indicators, read receipts
+- Integraciones n8n (automatizaciones laterales)
 
 ### Future-Ready (estructura en DB)
 
-- Roles de usuario (para futuro team management)
+- Roles de usuario (Admin/Agent en OrganizationMember — stored, not enforced)
 - Channel types enum (para WhatsApp, FB)
-- Config JSONB (flexible por tipo de canal)
+- UsageTracking model (monthly summary per org)
+- PlatformSettings model (global config key-value)
 
 ## Estrategia Multi-Canal (WhatsApp, Messenger, etc.)
 
@@ -357,7 +408,7 @@ Cada canal nuevo requiere un **adaptador** que traduce entre el protocolo extern
 
 | Canal | Webhook | Adaptador | Particularidades |
 |-------|---------|-----------|-----------------|
-| Website widget | N/A (directo) | Ya implementado | WebSocket/polling |
+| Website widget | N/A (directo) | `public/widget/chatflow360.js` | REST polling (5s en modo humano) |
 | WhatsApp | `/api/webhooks/whatsapp` | WhatsApp Cloud API (Meta) | Ventana 24hrs, templates, verificacion webhook |
 | Facebook Messenger | `/api/webhooks/messenger` | Messenger Platform API | Page tokens, postbacks |
 | Futuro (Telegram, etc.) | `/api/webhooks/[provider]` | API del proveedor | Varia por plataforma |

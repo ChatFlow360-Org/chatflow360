@@ -35,13 +35,13 @@
 |-----------|-------------|
 | [RAG-KNOWLEDGE.md](./RAG-KNOWLEDGE.md) | Sistema RAG, embeddings, busqueda semantica, instrucciones vs conocimiento |
 
-## Integraciones (futuro)
+## Integraciones
 
 | Documento | Descripcion | Estado |
 |-----------|-------------|--------|
-| AI-AGENTS.md | Configuracion OpenAI, system prompts, handoff | Pendiente |
+| AI-AGENTS.md | Configuracion OpenAI, system prompts, handoff | Implementado en codigo (lib/chat/*, lib/openai/*) |
 | N8N-SETUP.md | Integracion n8n para eventos async | Pendiente |
-| WIDGET.md | Widget embebible, embed.js, configuracion | Pendiente |
+| WIDGET.md | Widget embebible, configuracion | Implementado en codigo (public/widget/chatflow360.js) |
 
 ## Seguridad
 
@@ -58,6 +58,6 @@
 ---
 
 **Proyecto:** ChatFlow360 - Multi-tenant Live Chat SaaS con IA
-**Version actual:** v0.2.3 (MVP)
+**Version actual:** v0.3.0 (MVP)
 **Fase:** MVP Development - Semanas 1-6
 **Produccion:** https://app.chatflow360.com

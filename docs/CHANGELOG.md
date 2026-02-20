@@ -2,6 +2,89 @@
 
 > Historial completo de versiones y cambios del proyecto.
 
+## v0.3.0 (2026-02-20)
+
+### Chat Widget + API Backend + API Key Management
+
+**El producto core:** visitante abre widget en sitio del cliente, escribe un mensaje, recibe respuesta de IA automaticamente. Keywords de handoff transfieren a agente humano.
+
+#### Widget Embebible
+- **Widget vanilla JS** (~770 lineas, IIFE) en `public/widget/chatflow360.js`
+  - DOM injection directa (NO iframe — evita CSP issues), clases prefijadas `.cf360-`
+  - Bilingue EN/ES via `data-lang`, deteccion automatica del browser
+  - Mobile responsive: fullscreen en <480px, teclado-aware
+  - Persistencia: `visitorId` + `conversationId` en localStorage
+  - Polling cada 5s cuando `responderMode="human"` (esperando agente)
+  - Typing indicator (3 dots animados) mientras espera respuesta IA
+  - XSS prevention: solo `textContent`, nunca innerHTML
+  - z-index maximo (2147483647), pulse animation en burbuja, unread badge
+  - Configurable: `data-key`, `data-lang`, `data-color`, `data-position`
+- **Embed snippet:**
+  ```html
+  <script src="https://app.chatflow360.com/widget/chatflow360.js"
+    data-key="PUBLIC_KEY" data-lang="en" defer></script>
+  ```
+
+#### API Backend
+- **`POST /api/chat`** — enviar mensaje + respuesta IA automatica
+  - Zod validation (publicKey UUID, message 1-2000 chars, visitorId)
+  - Busca channel por publicKey, verifica isActive
+  - Crea o recupera conversacion, guarda mensaje visitor
+  - Detecta handoff keywords → cambia responderMode a "human"
+  - Genera respuesta IA con OpenAI (historial de ultimos 20 msgs)
+  - Guarda mensaje IA con tokensUsed, upsert UsageTracking
+- **`GET /api/chat/[id]`** — historial de conversacion
+  - Validacion de ownership via visitorId
+  - Retorna messages[], status, responderMode
+- **CORS separado** en `next.config.ts`: 3 bloques de headers
+  - Dashboard routes: CSP completo + security headers
+  - `/api/chat/*`: CORS abierto + headers minimos
+  - `/widget/*`: CORS + cache (1h browser, 24h CDN)
+
+#### API Key Management (AES-256-GCM)
+- **Encriptacion** en `lib/crypto/encryption.ts`: AES-256-GCM con Node.js crypto nativo
+  - Master key: `ENCRYPTION_KEY` env var (64 hex chars = 32 bytes)
+  - Formato DB: base64 [IV + authTag + ciphertext], IV aleatorio por encrypt
+  - `maskApiKey()`: `sk-...aBcD` (primeros 3 + ultimos 4 chars)
+- **Resolucion 3 niveles** en `lib/openai/client.ts`:
+  1. Per-org encrypted key (AiSettings) → decrypt
+  2. Global platform key (PlatformSettings) → decrypt
+  3. `OPENAI_API_KEY` env var → fallback
+- **API Keys page** (`/settings/api-keys`) — super_admin only
+  - Input type="password" font-mono, badge configured/not configured
+  - Server action `upsertPlatformKey` con encrypt + mask
+- **Per-org key** en AI Settings existente — campo adicional (super_admin only)
+  - Badge con hint actual (ej: `sk-...aBcD`)
+- **Prisma migration** `add_api_key_encryption`:
+  - `encryptedApiKey` + `apiKeyHint` en AiSettings
+  - Nuevo modelo `PlatformSettings` (key unique, value Text, hint)
+- **Seguridad:** API keys NUNCA se envian desencriptadas al browser, solo `apiKeyHint`
+
+#### OpenAI Integration + Chat Utilities
+- **`lib/openai/client.ts`** — factory con resolucion de key 3 niveles
+- **`lib/chat/config.ts`** — `resolveChannelConfig()`: herencia channel → org
+  - Params tecnicos (model, temperature, maxTokens): siempre de AiSettings
+  - Params negocio (systemPrompt, handoff): channel override o fallback
+- **`lib/chat/handoff.ts`** — `detectHandoff()`: case-insensitive partial match + mensajes bilingues
+- **`lib/chat/ai.ts`** — `generateAiResponse()`: system prompt + ultimos 20 msgs + nuevo mensaje
+
+#### Dashboard — Datos Reales
+- **Conversations page** reescrita como server component con Prisma query
+  - Super admin: filtra por selectedOrgId/channelId (cookies)
+  - Regular user: filtra por org membership
+  - Transforma datos Prisma a Conversation[] con contactInfo extraction
+- **Types actualizados:** `ConversationStatus: "open" | "pending" | "resolved" | "closed"`, `ResponderMode: "ai" | "human"`, `senderType` en vez de `sender`
+- **ConversationDetail** fetch mensajes via server action `getConversationMessages`
+- **Mock data** actualizado para coincidir con nuevos tipos
+
+#### Otros
+- **~25 nuevas traducciones** (EN + ES): API keys, widget, conversation statuses
+- **Sidebar**: nuevo item "API Keys" con icono Key (super_admin only)
+- **`npm install openai`** — dependencia para generacion de respuestas IA
+- Verificado con `npm run build` — 0 errores TypeScript, todas las rutas compilan
+
+---
+
 ## Post v0.2.3 — AI Settings Page (2026-02-19)
 
 ### AI Settings — Two-Column Layout + Preview Widget
