@@ -1,0 +1,768 @@
+/**
+ * ChatFlow360 — Embeddable Chat Widget
+ * (c) 2026 ChatFlow360. All rights reserved.
+ *
+ * Embed snippet:
+ * <script src="https://app.chatflow360.com/widget/chatflow360.js"
+ *   data-key="PUBLIC_KEY" data-lang="en" data-color="#2f92ad" defer></script>
+ */
+(function () {
+  "use strict";
+
+  // ─── Prevent double-init ───────────────────────────────────────────
+  if (window.__cf360_loaded) return;
+  window.__cf360_loaded = true;
+
+  // ─── Config from script attributes ────────────────────────────────
+  var scriptTag = document.currentScript || (function () {
+    var scripts = document.getElementsByTagName("script");
+    for (var i = scripts.length - 1; i >= 0; i--) {
+      if (scripts[i].src && scripts[i].src.indexOf("chatflow360.js") !== -1) {
+        return scripts[i];
+      }
+    }
+    return null;
+  })();
+
+  if (!scriptTag) return;
+
+  var publicKey = scriptTag.getAttribute("data-key");
+  if (!publicKey) {
+    console.error("[ChatFlow360] data-key attribute is required.");
+    return;
+  }
+
+  var primaryColor = scriptTag.getAttribute("data-color") || "#2f92ad";
+  var position = scriptTag.getAttribute("data-position") || "right";
+  var lang = scriptTag.getAttribute("data-lang") || detectLanguage();
+
+  // Derive API base from script src
+  var apiBaseUrl = (function () {
+    var src = scriptTag.src || "";
+    var idx = src.indexOf("/widget/chatflow360.js");
+    if (idx === -1) return ""; // relative (local dev)
+    return src.substring(0, idx);
+  })();
+
+  // ─── Language detection ───────────────────────────────────────────
+  function detectLanguage() {
+    var navLang = (navigator.language || navigator.userLanguage || "en").toLowerCase();
+    return navLang.indexOf("es") === 0 ? "es" : "en";
+  }
+
+  // ─── Translations ─────────────────────────────────────────────────
+  var translations = {
+    en: {
+      chatWithUs: "Chat with us",
+      typeMessage: "Type a message\u2026",
+      send: "Send",
+      connecting: "Connecting you with an agent\u2026",
+      powered: "Powered by",
+      newConversation: "New conversation"
+    },
+    es: {
+      chatWithUs: "Chatea con nosotros",
+      typeMessage: "Escribe un mensaje\u2026",
+      send: "Enviar",
+      connecting: "Conect\u00e1ndote con un agente\u2026",
+      powered: "Impulsado por",
+      newConversation: "Nueva conversaci\u00f3n"
+    }
+  };
+
+  function t(key) {
+    var dict = translations[lang] || translations.en;
+    return dict[key] || key;
+  }
+
+  // ─── Visitor ID ───────────────────────────────────────────────────
+  var VISITOR_KEY = "cf360_visitor_id";
+
+  function getVisitorId() {
+    var id = null;
+    try { id = localStorage.getItem(VISITOR_KEY); } catch (e) { /* private browsing */ }
+    if (!id) {
+      id = generateId();
+      try { localStorage.setItem(VISITOR_KEY, id); } catch (e) { /* noop */ }
+    }
+    return id;
+  }
+
+  function generateId() {
+    // Simple UUID-v4-like generator (no crypto dependency for max compat)
+    var d = Date.now();
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+      var r = (d + Math.random() * 16) % 16 | 0;
+      d = Math.floor(d / 16);
+      return (c === "x" ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+  }
+
+  var visitorId = getVisitorId();
+
+  // ─── Conversation persistence ─────────────────────────────────────
+  var CONV_KEY = "cf360_conv_" + publicKey;
+
+  function getConversationId() {
+    try { return localStorage.getItem(CONV_KEY) || null; } catch (e) { return null; }
+  }
+
+  function setConversationId(id) {
+    try { localStorage.setItem(CONV_KEY, id); } catch (e) { /* noop */ }
+  }
+
+  function clearConversationId() {
+    try { localStorage.removeItem(CONV_KEY); } catch (e) { /* noop */ }
+  }
+
+  // ─── State ────────────────────────────────────────────────────────
+  var state = {
+    open: false,
+    conversationId: getConversationId(),
+    sending: false,
+    polling: false,
+    pollingTimer: null,
+    lastMessageId: null,
+    resolved: false
+  };
+
+  // ─── Color helpers ────────────────────────────────────────────────
+  function hexToRgb(hex) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!result) return { r: 47, g: 146, b: 173 }; // fallback to CTA
+    return {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    };
+  }
+
+  var rgb = hexToRgb(primaryColor);
+  var primaryAlpha15 = "rgba(" + rgb.r + "," + rgb.g + "," + rgb.b + ",0.15)";
+  var primaryAlpha80 = "rgba(" + rgb.r + "," + rgb.g + "," + rgb.b + ",0.80)";
+
+  // ─── Styles ───────────────────────────────────────────────────────
+  function injectStyles() {
+    var posRight = position === "right";
+    var css = [
+      // Reset & container
+      ".cf360-reset,.cf360-reset *,.cf360-reset *::before,.cf360-reset *::after{",
+      "  box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;",
+      "  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;line-height:1.5;",
+      "}",
+      ".cf360-container{",
+      "  position:fixed;bottom:24px;" + (posRight ? "right:24px;" : "left:24px;"),
+      "  z-index:2147483647;font-size:14px;",
+      "}",
+
+      // Bubble
+      ".cf360-bubble{",
+      "  width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;",
+      "  background:" + primaryColor + ";color:#fff;display:flex;align-items:center;justify-content:center;",
+      "  box-shadow:0 4px 14px rgba(0,0,0,0.25);transition:transform 0.2s ease,box-shadow 0.2s ease;",
+      "  outline:none;position:relative;",
+      "}",
+      ".cf360-bubble:hover{transform:scale(1.08);box-shadow:0 6px 20px rgba(0,0,0,0.3);}",
+      ".cf360-bubble:active{transform:scale(0.96);}",
+
+      // Bubble pulse
+      "@keyframes cf360-pulse{",
+      "  0%{box-shadow:0 0 0 0 " + primaryAlpha80 + ";}",
+      "  70%{box-shadow:0 0 0 14px rgba(0,0,0,0);}",
+      "  100%{box-shadow:0 0 0 0 rgba(0,0,0,0);}",
+      "}",
+      ".cf360-bubble--pulse{animation:cf360-pulse 2s ease 0s 3;}",
+
+      // Bubble SVG icons
+      ".cf360-bubble svg{width:26px;height:26px;fill:currentColor;transition:transform 0.3s ease,opacity 0.3s ease;}",
+      ".cf360-bubble .cf360-icon-close{position:absolute;transform:rotate(90deg) scale(0);opacity:0;}",
+      ".cf360-bubble--open .cf360-icon-chat{transform:rotate(-90deg) scale(0);opacity:0;}",
+      ".cf360-bubble--open .cf360-icon-close{transform:rotate(0) scale(1);opacity:1;}",
+
+      // Unread badge
+      ".cf360-badge{",
+      "  position:absolute;top:-4px;right:-4px;width:20px;height:20px;border-radius:50%;",
+      "  background:#ef4444;color:#fff;font-size:11px;font-weight:700;display:none;",
+      "  align-items:center;justify-content:center;border:2px solid #fff;",
+      "}",
+      ".cf360-badge--show{display:flex;}",
+
+      // Chat window
+      ".cf360-window{",
+      "  position:absolute;bottom:72px;" + (posRight ? "right:0;" : "left:0;"),
+      "  width:380px;height:520px;border-radius:16px;overflow:hidden;",
+      "  background:#fff;box-shadow:0 12px 40px rgba(0,0,0,0.18);",
+      "  display:flex;flex-direction:column;",
+      "  opacity:0;transform:translateY(16px) scale(0.95);pointer-events:none;",
+      "  transition:opacity 0.25s ease,transform 0.25s ease;",
+      "}",
+      ".cf360-window--open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}",
+
+      // Header
+      ".cf360-header{",
+      "  background:" + primaryColor + ";color:#fff;padding:16px 20px;display:flex;",
+      "  align-items:center;justify-content:space-between;flex-shrink:0;",
+      "}",
+      ".cf360-header-title{font-size:16px;font-weight:600;}",
+      ".cf360-header-btn{background:none;border:none;color:#fff;cursor:pointer;padding:4px;",
+      "  border-radius:6px;display:flex;align-items:center;justify-content:center;opacity:0.85;transition:opacity 0.15s;}",
+      ".cf360-header-btn:hover{opacity:1;}",
+      ".cf360-header-btn svg{width:20px;height:20px;fill:currentColor;}",
+
+      // Messages area
+      ".cf360-messages{",
+      "  flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;",
+      "  background:#fafafa;",
+      "}",
+      ".cf360-messages::-webkit-scrollbar{width:5px;}",
+      ".cf360-messages::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px;}",
+
+      // Message bubbles
+      ".cf360-msg{max-width:80%;padding:10px 14px;border-radius:14px;word-wrap:break-word;font-size:14px;line-height:1.45;}",
+      ".cf360-msg--visitor{",
+      "  align-self:flex-start;background:#e9ecef;color:#1a1a1a;border-bottom-left-radius:4px;",
+      "}",
+      ".cf360-msg--ai,.cf360-msg--agent{",
+      "  align-self:flex-end;background:" + primaryAlpha15 + ";color:#1a1a1a;border-bottom-right-radius:4px;",
+      "}",
+      ".cf360-msg--system{",
+      "  align-self:center;background:transparent;color:#888;font-size:12px;font-style:italic;",
+      "  text-align:center;padding:6px 10px;",
+      "}",
+      ".cf360-msg-time{font-size:11px;color:#999;margin-top:4px;}",
+
+      // Typing indicator
+      ".cf360-typing{align-self:flex-end;display:flex;align-items:center;gap:4px;padding:10px 14px;",
+      "  background:" + primaryAlpha15 + ";border-radius:14px;border-bottom-right-radius:4px;}",
+      "@keyframes cf360-dot{0%,80%,100%{opacity:0.3;transform:scale(0.8);}40%{opacity:1;transform:scale(1);}}",
+      ".cf360-typing-dot{width:7px;height:7px;border-radius:50%;background:" + primaryColor + ";}",
+      ".cf360-typing-dot:nth-child(1){animation:cf360-dot 1.2s 0s infinite;}",
+      ".cf360-typing-dot:nth-child(2){animation:cf360-dot 1.2s 0.2s infinite;}",
+      ".cf360-typing-dot:nth-child(3){animation:cf360-dot 1.2s 0.4s infinite;}",
+
+      // Connecting banner
+      ".cf360-connecting{",
+      "  padding:8px 16px;background:#fef3c7;color:#92400e;font-size:12px;text-align:center;",
+      "  flex-shrink:0;display:none;",
+      "}",
+      ".cf360-connecting--show{display:block;}",
+
+      // Input area
+      ".cf360-input-area{",
+      "  display:flex;align-items:center;padding:12px 16px;gap:8px;border-top:1px solid #e5e5e5;",
+      "  background:#fff;flex-shrink:0;",
+      "}",
+      ".cf360-input{",
+      "  flex:1;border:1px solid #ddd;border-radius:24px;padding:10px 16px;font-size:14px;",
+      "  outline:none;resize:none;font-family:inherit;background:#f9fafb;color:#1a1a1a;",
+      "  transition:border-color 0.15s;",
+      "}",
+      ".cf360-input:focus{border-color:" + primaryColor + ";}",
+      ".cf360-input::placeholder{color:#aaa;}",
+      ".cf360-send-btn{",
+      "  width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;flex-shrink:0;",
+      "  background:" + primaryColor + ";color:#fff;display:flex;align-items:center;justify-content:center;",
+      "  transition:opacity 0.15s,transform 0.15s;outline:none;",
+      "}",
+      ".cf360-send-btn:hover{opacity:0.9;}",
+      ".cf360-send-btn:active{transform:scale(0.92);}",
+      ".cf360-send-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}",
+      ".cf360-send-btn svg{width:18px;height:18px;fill:currentColor;}",
+
+      // New conversation button
+      ".cf360-new-conv{",
+      "  padding:8px 16px;background:#f0f0f0;border:none;cursor:pointer;font-size:13px;",
+      "  color:" + primaryColor + ";font-weight:600;text-align:center;width:100%;",
+      "  transition:background 0.15s;flex-shrink:0;display:none;",
+      "}",
+      ".cf360-new-conv:hover{background:#e4e4e4;}",
+      ".cf360-new-conv--show{display:block;}",
+
+      // Footer
+      ".cf360-footer{",
+      "  padding:8px;text-align:center;font-size:11px;color:#aaa;flex-shrink:0;",
+      "  background:#fff;border-top:1px solid #f0f0f0;",
+      "}",
+      ".cf360-footer a{color:#aaa;text-decoration:none;font-weight:600;transition:color 0.15s;}",
+      ".cf360-footer a:hover{color:" + primaryColor + ";}",
+
+      // Welcome state (empty messages)
+      ".cf360-welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;",
+      "  flex:1;padding:32px;text-align:center;color:#888;gap:12px;}",
+      ".cf360-welcome-icon{width:48px;height:48px;border-radius:50%;background:" + primaryAlpha15 + ";",
+      "  display:flex;align-items:center;justify-content:center;}",
+      ".cf360-welcome-icon svg{width:24px;height:24px;fill:" + primaryColor + ";}",
+      ".cf360-welcome-text{font-size:15px;font-weight:500;color:#555;}",
+      ".cf360-welcome-sub{font-size:13px;color:#999;}",
+
+      // Mobile fullscreen
+      "@media (max-width:480px){",
+      "  .cf360-container{bottom:0 !important;right:0 !important;left:0 !important;}",
+      "  .cf360-window{",
+      "    position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;",
+      "    border-radius:0;max-height:none;",
+      "  }",
+      "  .cf360-bubble{position:fixed;bottom:16px;" + (posRight ? "right:16px;" : "left:16px;") + "}",
+      "}"
+    ].join("\n");
+
+    var style = document.createElement("style");
+    style.id = "cf360-styles";
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
+
+  // ─── SVG Icons ────────────────────────────────────────────────────
+  var ICON_CHAT = '<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>';
+  var ICON_CLOSE = '<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
+  var ICON_SEND = '<svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>';
+  var ICON_MSG = '<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>';
+
+  // ─── DOM Elements ─────────────────────────────────────────────────
+  var container, bubble, badge, chatWindow, messagesArea, inputField, sendBtn;
+  var typingEl, connectingEl, newConvBtn;
+
+  function buildDOM() {
+    // Container
+    container = el("div", "cf360-container cf360-reset");
+    document.body.appendChild(container);
+
+    // Bubble button
+    bubble = el("button", "cf360-bubble cf360-bubble--pulse");
+    bubble.setAttribute("aria-label", t("chatWithUs"));
+    bubble.innerHTML =
+      '<span class="cf360-icon-chat">' + ICON_CHAT + '</span>' +
+      '<span class="cf360-icon-close">' + ICON_CLOSE + '</span>';
+    badge = el("span", "cf360-badge");
+    badge.textContent = "0";
+    bubble.appendChild(badge);
+    container.appendChild(bubble);
+
+    // Chat window
+    chatWindow = el("div", "cf360-window");
+
+    // Header
+    var header = el("div", "cf360-header");
+    var title = el("span", "cf360-header-title");
+    title.textContent = t("chatWithUs");
+    var closeBtn = el("button", "cf360-header-btn");
+    closeBtn.setAttribute("aria-label", "Close");
+    closeBtn.innerHTML = ICON_CLOSE;
+    header.appendChild(title);
+    header.appendChild(closeBtn);
+    chatWindow.appendChild(header);
+
+    // Connecting banner
+    connectingEl = el("div", "cf360-connecting");
+    connectingEl.textContent = t("connecting");
+    chatWindow.appendChild(connectingEl);
+
+    // Messages
+    messagesArea = el("div", "cf360-messages");
+    chatWindow.appendChild(messagesArea);
+
+    // New conversation button
+    newConvBtn = el("button", "cf360-new-conv");
+    newConvBtn.textContent = t("newConversation");
+    chatWindow.appendChild(newConvBtn);
+
+    // Input area
+    var inputArea = el("div", "cf360-input-area");
+    inputField = document.createElement("input");
+    inputField.type = "text";
+    inputField.className = "cf360-input";
+    inputField.placeholder = t("typeMessage");
+    inputField.maxLength = 1000;
+    inputField.setAttribute("autocomplete", "off");
+    sendBtn = el("button", "cf360-send-btn");
+    sendBtn.setAttribute("aria-label", t("send"));
+    sendBtn.innerHTML = ICON_SEND;
+    inputArea.appendChild(inputField);
+    inputArea.appendChild(sendBtn);
+    chatWindow.appendChild(inputArea);
+
+    // Footer
+    var footer = el("div", "cf360-footer");
+    var footerText = document.createTextNode(t("powered") + " ");
+    var footerLink = document.createElement("a");
+    footerLink.href = "https://chatflow360.com";
+    footerLink.target = "_blank";
+    footerLink.rel = "noopener noreferrer";
+    footerLink.textContent = "ChatFlow360";
+    footer.appendChild(footerText);
+    footer.appendChild(footerLink);
+    chatWindow.appendChild(footer);
+
+    container.appendChild(chatWindow);
+
+    // ─── Event listeners ──────────────────────────────────────────
+    bubble.addEventListener("click", toggleWidget);
+    closeBtn.addEventListener("click", closeWidget);
+    sendBtn.addEventListener("click", handleSend);
+    newConvBtn.addEventListener("click", startNewConversation);
+
+    inputField.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+      }
+    });
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && state.open) {
+        closeWidget();
+      }
+    });
+  }
+
+  // ─── DOM helpers ──────────────────────────────────────────────────
+  function el(tag, className) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    return node;
+  }
+
+  function scrollToBottom() {
+    requestAnimationFrame(function () {
+      messagesArea.scrollTop = messagesArea.scrollHeight;
+    });
+  }
+
+  // ─── Widget toggle ────────────────────────────────────────────────
+  function toggleWidget() {
+    if (state.open) {
+      closeWidget();
+    } else {
+      openWidget();
+    }
+  }
+
+  function openWidget() {
+    state.open = true;
+    bubble.classList.add("cf360-bubble--open");
+    bubble.classList.remove("cf360-bubble--pulse");
+    chatWindow.classList.add("cf360-window--open");
+    badge.classList.remove("cf360-badge--show");
+    badge.textContent = "0";
+
+    if (state.conversationId) {
+      fetchHistory(state.conversationId);
+    } else {
+      showWelcome();
+    }
+
+    setTimeout(function () { inputField.focus(); }, 300);
+  }
+
+  function closeWidget() {
+    state.open = false;
+    bubble.classList.remove("cf360-bubble--open");
+    chatWindow.classList.remove("cf360-window--open");
+  }
+
+  // ─── Welcome state ────────────────────────────────────────────────
+  function showWelcome() {
+    messagesArea.innerHTML = "";
+    var welcome = el("div", "cf360-welcome");
+
+    var iconWrap = el("div", "cf360-welcome-icon");
+    iconWrap.innerHTML = ICON_MSG;
+    welcome.appendChild(iconWrap);
+
+    var wText = el("div", "cf360-welcome-text");
+    wText.textContent = t("chatWithUs");
+    welcome.appendChild(wText);
+
+    var wSub = el("div", "cf360-welcome-sub");
+    wSub.textContent = lang === "es"
+      ? "Env\u00edanos un mensaje para comenzar."
+      : "Send us a message to get started.";
+    welcome.appendChild(wSub);
+
+    messagesArea.appendChild(welcome);
+    state.resolved = false;
+    newConvBtn.classList.remove("cf360-new-conv--show");
+    connectingEl.classList.remove("cf360-connecting--show");
+  }
+
+  // ─── Message rendering ────────────────────────────────────────────
+  function renderMessage(msg) {
+    var senderType = (msg.senderType || "visitor").toLowerCase();
+    var wrapper = el("div", "cf360-msg cf360-msg--" + senderType);
+    wrapper.textContent = msg.content || "";
+
+    if (msg.createdAt) {
+      var timeEl = el("div", "cf360-msg-time");
+      timeEl.textContent = formatTime(msg.createdAt);
+      wrapper.appendChild(timeEl);
+    }
+
+    return wrapper;
+  }
+
+  function appendMessage(msg) {
+    // Remove welcome if present
+    var welcome = messagesArea.querySelector(".cf360-welcome");
+    if (welcome) welcome.remove();
+
+    var rendered = renderMessage(msg);
+    messagesArea.appendChild(rendered);
+    scrollToBottom();
+
+    if (msg.id) {
+      state.lastMessageId = msg.id;
+    }
+  }
+
+  function formatTime(dateStr) {
+    try {
+      var d = new Date(dateStr);
+      var hours = d.getHours();
+      var mins = d.getMinutes();
+      return (hours < 10 ? "0" : "") + hours + ":" + (mins < 10 ? "0" : "") + mins;
+    } catch (e) {
+      return "";
+    }
+  }
+
+  // ─── Typing indicator ─────────────────────────────────────────────
+  function showTyping() {
+    if (typingEl) return;
+    typingEl = el("div", "cf360-typing");
+    for (var i = 0; i < 3; i++) {
+      typingEl.appendChild(el("span", "cf360-typing-dot"));
+    }
+    messagesArea.appendChild(typingEl);
+    scrollToBottom();
+  }
+
+  function hideTyping() {
+    if (typingEl && typingEl.parentNode) {
+      typingEl.parentNode.removeChild(typingEl);
+    }
+    typingEl = null;
+  }
+
+  // ─── API calls ────────────────────────────────────────────────────
+  function apiUrl(path) {
+    return apiBaseUrl + path;
+  }
+
+  function sendMessage(text) {
+    if (state.sending) return;
+    state.sending = true;
+    sendBtn.disabled = true;
+
+    // Show visitor message immediately
+    appendMessage({ content: text, senderType: "visitor", createdAt: new Date().toISOString() });
+    inputField.value = "";
+    showTyping();
+
+    var body = {
+      publicKey: publicKey,
+      visitorId: visitorId,
+      message: text
+    };
+
+    if (state.conversationId) {
+      body.conversationId = state.conversationId;
+    }
+
+    fetch(apiUrl("/api/chat"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    })
+      .then(function (res) {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        hideTyping();
+
+        // Store conversationId
+        if (data.conversationId) {
+          state.conversationId = data.conversationId;
+          setConversationId(data.conversationId);
+        }
+
+        // Render AI response
+        if (data.message) {
+          appendMessage(data.message);
+        }
+
+        // Handoff → start polling
+        if (data.handoffTriggered) {
+          connectingEl.classList.add("cf360-connecting--show");
+          startPolling();
+        }
+      })
+      .catch(function (err) {
+        hideTyping();
+        appendMessage({
+          content: lang === "es"
+            ? "Error al enviar el mensaje. Intenta de nuevo."
+            : "Failed to send message. Please try again.",
+          senderType: "system"
+        });
+        console.error("[ChatFlow360] Send error:", err);
+      })
+      .finally(function () {
+        state.sending = false;
+        sendBtn.disabled = false;
+        inputField.focus();
+      });
+  }
+
+  function fetchHistory(conversationId) {
+    messagesArea.innerHTML = "";
+
+    fetch(apiUrl("/api/chat/" + conversationId + "?visitorId=" + encodeURIComponent(visitorId)))
+      .then(function (res) {
+        if (!res.ok) {
+          if (res.status === 404) {
+            clearConversationId();
+            state.conversationId = null;
+            showWelcome();
+            return null;
+          }
+          throw new Error("HTTP " + res.status);
+        }
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data) return;
+
+        // Check if conversation is resolved/closed
+        var convStatus = (data.status || "").toLowerCase();
+        if (convStatus === "resolved" || convStatus === "closed") {
+          state.resolved = true;
+          newConvBtn.classList.add("cf360-new-conv--show");
+        }
+
+        // Render messages
+        var messages = data.messages || [];
+        for (var i = 0; i < messages.length; i++) {
+          appendMessage(messages[i]);
+        }
+
+        // If human mode, start polling
+        if (data.responderMode === "human") {
+          connectingEl.classList.add("cf360-connecting--show");
+          startPolling();
+        }
+      })
+      .catch(function (err) {
+        console.error("[ChatFlow360] Fetch history error:", err);
+        showWelcome();
+      });
+  }
+
+  // ─── Polling (human handoff) ──────────────────────────────────────
+  function startPolling() {
+    if (state.polling) return;
+    state.polling = true;
+    poll();
+  }
+
+  function stopPolling() {
+    state.polling = false;
+    if (state.pollingTimer) {
+      clearTimeout(state.pollingTimer);
+      state.pollingTimer = null;
+    }
+  }
+
+  function poll() {
+    if (!state.polling || !state.conversationId) return;
+
+    fetch(apiUrl("/api/chat/" + state.conversationId + "?visitorId=" + encodeURIComponent(visitorId)))
+      .then(function (res) {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data) return;
+
+        // Find new messages
+        var messages = data.messages || [];
+        var foundLast = !state.lastMessageId;
+        var newMessages = [];
+
+        for (var i = 0; i < messages.length; i++) {
+          if (foundLast) {
+            newMessages.push(messages[i]);
+          } else if (messages[i].id === state.lastMessageId) {
+            foundLast = true;
+          }
+        }
+
+        // Render new messages (skip visitor messages — we already showed them)
+        for (var j = 0; j < newMessages.length; j++) {
+          var sType = (newMessages[j].senderType || "").toLowerCase();
+          if (sType !== "visitor") {
+            appendMessage(newMessages[j]);
+
+            // If it's a badge-worthy message and widget is closed
+            if (!state.open) {
+              var currentCount = parseInt(badge.textContent, 10) || 0;
+              badge.textContent = String(currentCount + 1);
+              badge.classList.add("cf360-badge--show");
+            }
+          }
+        }
+
+        // Check if responder mode changed back to AI or conversation resolved
+        if (data.responderMode === "ai") {
+          connectingEl.classList.remove("cf360-connecting--show");
+          stopPolling();
+        }
+
+        var convStatus = (data.status || "").toLowerCase();
+        if (convStatus === "resolved" || convStatus === "closed") {
+          connectingEl.classList.remove("cf360-connecting--show");
+          state.resolved = true;
+          newConvBtn.classList.add("cf360-new-conv--show");
+          stopPolling();
+        }
+      })
+      .catch(function (err) {
+        console.error("[ChatFlow360] Polling error:", err);
+      })
+      .finally(function () {
+        if (state.polling) {
+          state.pollingTimer = setTimeout(poll, 5000);
+        }
+      });
+  }
+
+  // ─── Handlers ─────────────────────────────────────────────────────
+  function handleSend() {
+    var text = (inputField.value || "").trim();
+    if (!text || state.sending) return;
+    sendMessage(text);
+  }
+
+  function startNewConversation() {
+    stopPolling();
+    clearConversationId();
+    state.conversationId = null;
+    state.lastMessageId = null;
+    state.resolved = false;
+    showWelcome();
+    inputField.focus();
+  }
+
+  // ─── Init ─────────────────────────────────────────────────────────
+  function init() {
+    injectStyles();
+    buildDOM();
+  }
+
+  // Start when DOM is ready
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();

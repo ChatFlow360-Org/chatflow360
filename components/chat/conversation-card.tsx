@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Bot, User } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { formatRelativeTime } from "@/lib/utils/format";
-import type { Conversation, ConversationStatus, MessageSender } from "@/types";
+import type { Conversation, ConversationStatus, ResponderMode } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface ConversationCardProps {
@@ -20,19 +20,19 @@ export function ConversationCard({ conversation, isSelected, onClick }: Conversa
   const locale = useLocale();
 
   const statusConfig: Record<ConversationStatus, { label: string; className: string }> = {
-    active: { label: t("status.active"), className: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
-    waiting: { label: t("status.waiting"), className: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
+    open: { label: t("status.open"), className: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
+    pending: { label: t("status.pending"), className: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
+    resolved: { label: t("status.resolved"), className: "bg-sky-500/10 text-sky-500 border-sky-500/20" },
     closed: { label: t("status.closed"), className: "bg-muted-foreground/10 text-muted-foreground border-muted-foreground/20" },
   };
 
-  const handlerConfig: Record<MessageSender, { label: string; icon: typeof Bot }> = {
+  const handlerConfig: Record<ResponderMode, { label: string; icon: typeof Bot }> = {
     ai: { label: t("handler.ai"), icon: Bot },
-    agent: { label: t("handler.human"), icon: User },
-    visitor: { label: t("handler.visitor"), icon: User },
+    human: { label: t("handler.human"), icon: User },
   };
 
   const status = statusConfig[conversation.status];
-  const handler = handlerConfig[conversation.handledBy];
+  const handler = handlerConfig[conversation.responderMode];
   const HandlerIcon = handler.icon;
 
   return (
@@ -40,7 +40,7 @@ export function ConversationCard({ conversation, isSelected, onClick }: Conversa
       className={cn(
         "cursor-pointer border-border bg-card transition-all hover:-translate-y-0.5 hover:border-cta/30",
         isSelected && "border-cta ring-1 ring-cta/20",
-        conversation.status === "closed" && "opacity-60"
+        (conversation.status === "closed" || conversation.status === "resolved") && "opacity-60"
       )}
       onClick={onClick}
     >

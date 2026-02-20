@@ -11,6 +11,7 @@ import {
   // BarChart3,
   Building2,
   Users,
+  Key,
   X,
   ChevronsUpDown,
 } from "lucide-react";
@@ -39,6 +40,7 @@ const navItems = [
 const adminItems = [
   { labelKey: "organizations" as const, href: "/organizations" as const, icon: Building2 },
   { labelKey: "users" as const, href: "/users" as const, icon: Users },
+  { labelKey: "apiKeys" as const, href: "/settings/api-keys" as const, icon: Key },
 ];
 
 interface SidebarProps {

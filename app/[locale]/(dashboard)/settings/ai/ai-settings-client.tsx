@@ -34,6 +34,7 @@ interface AiSettingsData {
   temperature: number;
   maxTokens: number;
   handoffKeywords: string[];
+  apiKeyHint: string | null;
 }
 
 interface AiSettingsClientProps {
@@ -265,6 +266,40 @@ export function AiSettingsClient({
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Custom API Key (super admin only) */}
+                {isSuperAdmin && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">
+                        {t("apiKey.title")}
+                      </CardTitle>
+                      <CardDescription>{t("apiKey.description")}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {aiSettings?.apiKeyHint && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">
+                            {t("apiKey.currentKey")}:
+                          </span>
+                          <Badge variant="secondary" className="font-mono text-xs">
+                            {aiSettings.apiKeyHint}
+                          </Badge>
+                        </div>
+                      )}
+                      <Input
+                        name="apiKey"
+                        type="password"
+                        placeholder={t("apiKey.placeholder")}
+                        maxLength={200}
+                        className="bg-background font-mono"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        {t("apiKey.helpText")}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Action buttons */}
                 <div className="flex justify-end gap-3">

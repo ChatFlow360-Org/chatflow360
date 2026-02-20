@@ -1,4 +1,5 @@
-export type ConversationStatus = "active" | "waiting" | "closed";
+export type ConversationStatus = "open" | "pending" | "resolved" | "closed";
+export type ResponderMode = "ai" | "human";
 export type MessageSender = "visitor" | "ai" | "agent";
 export type MemberRole = "owner" | "admin" | "agent";
 export type ChannelType = "website" | "whatsapp" | "facebook";
@@ -33,18 +34,19 @@ export interface Conversation {
   visitorName: string;
   visitorEmail?: string;
   status: ConversationStatus;
-  handledBy: MessageSender;
+  responderMode: ResponderMode;
   lastMessage: string;
   lastMessageAt: string;
   messageCount: number;
   createdAt: string;
+  channelName?: string;
 }
 
 export interface Message {
   id: string;
   conversationId: string;
   content: string;
-  sender: MessageSender;
+  senderType: MessageSender;
   senderName: string;
   createdAt: string;
 }

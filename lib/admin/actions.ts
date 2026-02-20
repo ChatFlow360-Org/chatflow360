@@ -342,6 +342,7 @@ const aiSettingsSchema = z.object({
         : [],
     z.array(z.string().max(50)).max(20)
   ),
+  apiKey: z.string().max(200).optional().or(z.literal("")),
 });
 
 export async function upsertAiSettings(
@@ -358,6 +359,7 @@ export async function upsertAiSettings(
       temperature: formData.get("temperature"),
       maxTokens: formData.get("maxTokens"),
       handoffKeywords: formData.get("handoffKeywords"),
+      apiKey: formData.get("apiKey") || "",
     });
 
     if (!parsed.success) {
@@ -372,6 +374,17 @@ export async function upsertAiSettings(
       return { error: "createFailed" };
     }
 
+    // Handle optional per-org API key
+    let encryptedApiKey: string | undefined;
+    let apiKeyHint: string | undefined;
+
+    const rawApiKey = parsed.data.apiKey;
+    if (rawApiKey && rawApiKey.trim() !== "") {
+      const { encrypt, maskApiKey } = await import("@/lib/crypto/encryption");
+      encryptedApiKey = encrypt(rawApiKey.trim());
+      apiKeyHint = maskApiKey(rawApiKey.trim());
+    }
+
     await prisma.aiSettings.upsert({
       where: { organizationId: parsed.data.organizationId },
       update: {
@@ -380,6 +393,7 @@ export async function upsertAiSettings(
         temperature: parsed.data.temperature,
         maxTokens: parsed.data.maxTokens,
         handoffKeywords: parsed.data.handoffKeywords,
+        ...(encryptedApiKey && { encryptedApiKey, apiKeyHint }),
       },
       create: {
         organizationId: parsed.data.organizationId,
@@ -389,6 +403,7 @@ export async function upsertAiSettings(
         temperature: parsed.data.temperature,
         maxTokens: parsed.data.maxTokens,
         handoffKeywords: parsed.data.handoffKeywords,
+        ...(encryptedApiKey && { encryptedApiKey, apiKeyHint }),
       },
     });
 
@@ -512,6 +527,88 @@ export async function deleteChannel(id: string): Promise<AdminActionState> {
     return { success: "channelDeleted" };
   } catch (e) {
     console.error("[deleteChannel]", e instanceof Error ? e.message : e);
+    return { error: "createFailed" };
+  }
+}
+
+// ============================================
+// Conversation Messages (Read-only, any authenticated user)
+// ============================================
+
+export async function getConversationMessages(conversationId: string) {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("Unauthorized");
+
+  z.string().uuid().parse(conversationId);
+
+  const messages = await prisma.message.findMany({
+    where: { conversationId },
+    orderBy: { createdAt: "asc" },
+    select: {
+      id: true,
+      senderType: true,
+      content: true,
+      createdAt: true,
+      sender: { select: { fullName: true } },
+    },
+  });
+
+  return messages.map((m) => ({
+    id: m.id,
+    conversationId,
+    content: m.content,
+    senderType: m.senderType as "visitor" | "ai" | "agent",
+    senderName:
+      m.senderType === "visitor"
+        ? "Visitor"
+        : m.senderType === "ai"
+          ? "AI Assistant"
+          : (m.sender?.fullName || "Agent"),
+    createdAt: m.createdAt.toISOString(),
+  }));
+}
+
+// ============================================
+// Platform Settings (Global Keys)
+// ============================================
+
+const platformKeySchema = z.object({
+  key: z.string().min(1).max(50),
+  value: z.string().min(1).max(200),
+});
+
+export async function upsertPlatformKey(
+  _prevState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    await requireSuperAdmin();
+
+    const parsed = platformKeySchema.safeParse({
+      key: formData.get("key"),
+      value: formData.get("value"),
+    });
+
+    if (!parsed.success) {
+      return { error: "createFailed" };
+    }
+
+    // Import dynamically to avoid loading crypto on every action
+    const { encrypt, maskApiKey } = await import("@/lib/crypto/encryption");
+
+    const encrypted = encrypt(parsed.data.value);
+    const hint = maskApiKey(parsed.data.value);
+
+    await prisma.platformSettings.upsert({
+      where: { key: parsed.data.key },
+      update: { value: encrypted, hint },
+      create: { key: parsed.data.key, value: encrypted, hint },
+    });
+
+    revalidatePath("/settings/api-keys");
+    return { success: "settingsSaved" };
+  } catch (e) {
+    console.error("[upsertPlatformKey]", e instanceof Error ? e.message : e);
     return { error: "createFailed" };
   }
 }

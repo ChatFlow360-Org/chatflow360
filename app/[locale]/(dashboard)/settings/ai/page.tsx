@@ -54,6 +54,7 @@ export default async function AiSettingsPage() {
         temperature: Number(settings.temperature),
         maxTokens: settings.maxTokens,
         handoffKeywords: settings.handoffKeywords,
+        apiKeyHint: settings.apiKeyHint,
       };
     }
   }

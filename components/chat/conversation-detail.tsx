@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Info, X, Send, Bot, User, MessageSquare, Clock, Globe, Calendar } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useLocale } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -17,9 +16,9 @@ import {
   DrawerDescription,
 } from "@/components/ui/drawer";
 import { ChatMessage } from "@/components/chat/chat-message";
-import { mockMessages } from "@/lib/mock/data";
+import { getConversationMessages } from "@/lib/admin/actions";
 import { formatRelativeTime } from "@/lib/utils/format";
-import type { Conversation, ConversationStatus, MessageSender } from "@/types";
+import type { Conversation, ConversationStatus, ResponderMode, Message } from "@/types";
 
 interface ConversationDetailProps {
   conversation: Conversation;
@@ -30,32 +29,48 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
   const t = useTranslations("conversations");
   const locale = useLocale();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch messages when conversation changes
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+
+    getConversationMessages(conversation.id)
+      .then((msgs) => {
+        if (!cancelled) {
+          setMessages(msgs);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [conversation.id]);
 
   const statusConfig: Record<ConversationStatus, { label: string; className: string }> = {
-    active: { label: t("status.active"), className: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
-    waiting: { label: t("status.waiting"), className: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
+    open: { label: t("status.open"), className: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
+    pending: { label: t("status.pending"), className: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
+    resolved: { label: t("status.resolved"), className: "bg-sky-500/10 text-sky-500 border-sky-500/20" },
     closed: { label: t("status.closed"), className: "bg-muted-foreground/10 text-muted-foreground border-muted-foreground/20" },
   };
 
-  const handlerConfig: Record<MessageSender, { label: string; icon: typeof Bot }> = {
+  const handlerConfig: Record<ResponderMode, { label: string; icon: typeof Bot }> = {
     ai: { label: t("handler.ai"), icon: Bot },
-    agent: { label: t("handler.human"), icon: User },
-    visitor: { label: t("handler.visitor"), icon: User },
+    human: { label: t("handler.human"), icon: User },
   };
 
-  const messages = mockMessages[conversation.id] || [];
   const status = statusConfig[conversation.status];
-  const handler = handlerConfig[conversation.handledBy];
+  const handler = handlerConfig[conversation.responderMode];
   const HandlerIcon = handler.icon;
   const initials = conversation.visitorName.split(" ").map((n) => n[0]).join("");
 
-  const channelNames: Record<string, string> = {
-    "ch-1": "Main Website",
-    "ch-2": "Landing Page",
-    "ch-3": "Support Portal",
-  };
-
-  /* ── Lead details content — reused in desktop sidebar & mobile drawer ── */
+  /* -- Lead details content -- reused in desktop sidebar & mobile drawer -- */
   const leadDetailsContent = (
     <>
       {/* Lead Profile */}
@@ -132,7 +147,7 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
             {t("detail.channel")}
           </span>
           <span className="text-foreground font-medium">
-            {channelNames[conversation.channelId] || conversation.channelId}
+            {conversation.channelName || conversation.channelId}
           </span>
         </div>
       </div>
@@ -141,7 +156,7 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
 
       {/* Quick Actions */}
       <div className="space-y-2">
-        {conversation.status !== "closed" ? (
+        {conversation.status !== "closed" && conversation.status !== "resolved" ? (
           <Button variant="outline" size="sm" className="w-full text-xs">
             {t("detail.closeConversation")}
           </Button>
@@ -150,7 +165,7 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
             {t("detail.reopenConversation")}
           </Button>
         )}
-        {conversation.handledBy === "ai" && conversation.status !== "closed" && (
+        {conversation.responderMode === "ai" && conversation.status !== "closed" && (
           <Button variant="outline" size="sm" className="w-full text-xs">
             {t("detail.assignToAgent")}
           </Button>
@@ -166,7 +181,7 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <div className="flex items-center gap-3">
-            {/* Info button — mobile/tablet only → opens lead details drawer */}
+            {/* Info button -- mobile/tablet only -> opens lead details drawer */}
             <Button
               variant="ghost"
               size="icon"
@@ -198,9 +213,15 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
         {/* Messages */}
         <ScrollArea className="min-h-0 flex-1 p-4">
           <div className="space-y-4">
-            {messages.map((msg) => (
-              <ChatMessage key={msg.id} message={msg} />
-            ))}
+            {loading ? (
+              <div className="flex h-32 items-center justify-center">
+                <p className="text-sm text-muted-foreground">...</p>
+              </div>
+            ) : (
+              messages.map((msg) => (
+                <ChatMessage key={msg.id} message={msg} />
+              ))
+            )}
           </div>
         </ScrollArea>
 
@@ -218,7 +239,7 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
         </div>
       </div>
 
-      {/* Lead Details Column — desktop only */}
+      {/* Lead Details Column -- desktop only */}
       <div className="hidden lg:flex w-[320px] shrink-0 flex-col border-l border-border">
         <ScrollArea className="min-h-0 flex-1">
           <div className="p-5 space-y-5">
@@ -227,7 +248,7 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
         </ScrollArea>
       </div>
 
-      {/* Lead Details Drawer — mobile/tablet only */}
+      {/* Lead Details Drawer -- mobile/tablet only */}
       <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
         <DrawerContent>
           <DrawerHeader className="text-center">

@@ -13,8 +13,9 @@ export function RecentConversations() {
   const locale = useLocale();
 
   const statusConfig: Record<ConversationStatus, { label: string; className: string }> = {
-    active: { label: tConv("status.active"), className: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
-    waiting: { label: tConv("status.waiting"), className: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
+    open: { label: tConv("status.open"), className: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
+    pending: { label: tConv("status.pending"), className: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
+    resolved: { label: tConv("status.resolved"), className: "bg-sky-500/10 text-sky-500 border-sky-500/20" },
     closed: { label: tConv("status.closed"), className: "bg-muted-foreground/10 text-muted-foreground border-muted-foreground/20" },
   };
 

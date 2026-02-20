@@ -93,6 +93,8 @@ model AiSettings {
   temperature      Decimal  @default(0.7) @db.Decimal(3, 2)
   maxTokens        Int      @default(500) @map("max_tokens")
   handoffKeywords  String[] @default([]) @map("handoff_keywords")
+  encryptedApiKey  String?  @map("encrypted_api_key") @db.Text
+  apiKeyHint       String?  @map("api_key_hint")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
@@ -198,6 +200,21 @@ model UsageTracking {
 
   @@unique([organizationId, month])
   @@map("usage_tracking")
+}
+
+// ============================================
+// PlatformSettings (global config — SOLO Super Admin)
+// Key-value store for platform-level settings like global API keys
+// ============================================
+
+model PlatformSettings {
+  id        String   @id @default(uuid()) @db.Uuid
+  key       String   @unique
+  value     String   @db.Text
+  hint      String?
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("platform_settings")
 }
 
 // ============================================

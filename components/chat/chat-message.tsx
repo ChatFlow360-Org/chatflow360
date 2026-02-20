@@ -7,7 +7,7 @@ interface ChatMessageProps {
 }
 
 export function ChatMessage({ message }: ChatMessageProps) {
-  const isVisitor = message.sender === "visitor";
+  const isVisitor = message.senderType === "visitor";
 
   return (
     <div className={cn("flex", isVisitor ? "justify-start" : "justify-end")}>

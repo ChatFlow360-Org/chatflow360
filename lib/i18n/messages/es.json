@@ -18,6 +18,7 @@
       "admin": "ADMIN",
       "organizations": "Organizaciones",
       "users": "Usuarios",
+      "apiKeys": "Claves API",
       "context": "CONTEXTO",
       "selectOrg": "Seleccionar organizacion",
       "selectChannel": "Seleccionar canal",
@@ -60,8 +61,9 @@
       "searchPlaceholder": "Buscar conversaciones..."
     },
     "status": {
-      "active": "Activa",
-      "waiting": "En espera",
+      "open": "Abierta",
+      "pending": "Pendiente",
+      "resolved": "Resuelta",
       "closed": "Cerrada"
     },
     "handler": {
@@ -162,6 +164,13 @@
       "titlePlaceholder": "ej. Servicios y Precios",
       "contentLabel": "Contenido",
       "contentPlaceholder": "Ingresa el contenido del conocimiento..."
+    },
+    "apiKey": {
+      "title": "Clave OpenAI Personalizada",
+      "description": "Opcional: usar una clave API separada para esta organizacion",
+      "placeholder": "sk-proj-...",
+      "currentKey": "Clave actual",
+      "helpText": "Dejar vacio para usar la clave global de la plataforma. Solo configurar si esta organizacion usa su propia cuenta de OpenAI."
     }
   },
   "dateRange": {
@@ -280,6 +289,22 @@
       "channelLimitReached": "Limite de canales alcanzado para este plan.",
       "unauthorized": "No tienes permisos para realizar esta accion."
     }
+  },
+  "apiKeys": {
+    "title": "Claves API",
+    "subtitle": "Gestiona las claves API de la plataforma para servicios de IA",
+    "openaiKey": {
+      "title": "Clave API de OpenAI",
+      "description": "Clave API global utilizada por defecto para todas las organizaciones",
+      "placeholder": "sk-proj-...",
+      "configured": "Configurada",
+      "notConfigured": "No configurada",
+      "helpText": "Esta clave se encripta y se usa por defecto para organizaciones sin clave personalizada.",
+      "currentKey": "Clave actual"
+    },
+    "saved": "Clave API guardada exitosamente",
+    "saveKey": "Guardar Clave",
+    "saving": "Guardando..."
   },
   "time": {
     "justNow": "Justo ahora",

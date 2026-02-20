@@ -10,7 +10,6 @@ import { ConversationFilters } from "@/components/chat/conversation-filters";
 import { ConversationDetail } from "@/components/chat/conversation-detail";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { cn } from "@/lib/utils";
-import { mockConversations } from "@/lib/mock/data";
 import type { Conversation } from "@/types";
 
 const defaultRange: DateRange = {
@@ -20,7 +19,11 @@ const defaultRange: DateRange = {
 
 type FilterTab = "all" | "active" | "ai" | "human";
 
-export function ConversationsClient() {
+interface ConversationsClientProps {
+  conversations: Conversation[];
+}
+
+export function ConversationsClient({ conversations }: ConversationsClientProps) {
   const t = useTranslations("conversations");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
@@ -28,14 +31,14 @@ export function ConversationsClient() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(defaultRange);
 
   const filteredConversations = useMemo(() => {
-    let result = mockConversations;
+    let result = conversations;
 
     if (activeFilter === "active") {
-      result = result.filter((c) => c.status === "active" || c.status === "waiting");
+      result = result.filter((c) => c.status === "open" || c.status === "pending");
     } else if (activeFilter === "ai") {
-      result = result.filter((c) => c.handledBy === "ai");
+      result = result.filter((c) => c.responderMode === "ai");
     } else if (activeFilter === "human") {
-      result = result.filter((c) => c.handledBy === "agent");
+      result = result.filter((c) => c.responderMode === "human");
     }
 
     if (searchQuery) {
@@ -48,11 +51,9 @@ export function ConversationsClient() {
     }
 
     return result;
-  }, [activeFilter, searchQuery]);
+  }, [conversations, activeFilter, searchQuery]);
 
-  const selectedConversation: Conversation | undefined = mockConversations.find(
-    (c) => c.id === selectedId
-  );
+  const selectedConversation = conversations.find((c) => c.id === selectedId);
 
   // Keep last conversation for exit animation
   const lastConversationRef = useRef<Conversation | null>(null);
