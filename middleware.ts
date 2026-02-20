@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import createMiddleware from "next-intl/middleware";
-import { routing } from "./lib/i18n/routing";
+import { routing, locales } from "./lib/i18n/routing";
 
 const intlMiddleware = createMiddleware(routing);
+const localePattern = new RegExp(`^\\/(${locales.join("|")})`);
 
 // Routes that don't require authentication (without locale prefix)
 const publicRoutes = ["/login", "/signup", "/forgot-password", "/update-password"];
@@ -12,7 +13,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Strip locale prefix for route matching (e.g., /en/login → /login)
-  const pathnameWithoutLocale = pathname.replace(/^\/(en|es)/, "") || "/";
+  const pathnameWithoutLocale = pathname.replace(localePattern, "") || "/";
 
   const isPublicRoute = publicRoutes.some((route) =>
     pathnameWithoutLocale.startsWith(route)
@@ -52,7 +53,7 @@ export async function middleware(request: NextRequest) {
   // --- Step 3: Auth redirects ---
   if (!isPublicRoute && !user) {
     // Unauthenticated → redirect to login
-    const locale = pathname.match(/^\/(en|es)/)?.[1] || "en";
+    const locale = pathname.match(localePattern)?.[1] || "en";
     const loginUrl = new URL(`/${locale}/login`, request.url);
     const response = NextResponse.redirect(loginUrl);
     supabaseCookies.forEach(({ name, value, options }) => {
@@ -63,7 +64,7 @@ export async function middleware(request: NextRequest) {
 
   if (isPublicRoute && user) {
     // Already authenticated → redirect to dashboard
-    const locale = pathname.match(/^\/(en|es)/)?.[1] || "en";
+    const locale = pathname.match(localePattern)?.[1] || "en";
     const dashboardUrl = new URL(`/${locale}/`, request.url);
     const response = NextResponse.redirect(dashboardUrl);
     supabaseCookies.forEach(({ name, value, options }) => {

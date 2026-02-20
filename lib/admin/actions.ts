@@ -88,7 +88,8 @@ export async function createOrganization(
 
     revalidatePath("/organizations");
     return { success: "organizationCreated" };
-  } catch {
+  } catch (e) {
+    console.error("[createOrganization]", e instanceof Error ? e.message : e);
     return { error: "createFailed" };
   }
 }
@@ -122,7 +123,8 @@ export async function updateOrganization(
 
     revalidatePath("/organizations");
     return { success: "organizationUpdated" };
-  } catch {
+  } catch (e) {
+    console.error("[updateOrganization]", e instanceof Error ? e.message : e);
     return { error: "createFailed" };
   }
 }
@@ -140,7 +142,8 @@ export async function deleteOrganization(id: string): Promise<AdminActionState> 
 
     revalidatePath("/organizations");
     return { success: "organizationDeleted" };
-  } catch {
+  } catch (e) {
+    console.error("[deleteOrganization]", e instanceof Error ? e.message : e);
     return { error: "createFailed" };
   }
 }
@@ -227,15 +230,17 @@ export async function createUser(
           },
         });
       }
-    } catch {
+    } catch (e) {
       // Rollback: delete from Supabase Auth if Prisma fails
+      console.error("[createUser] Prisma step failed, rolling back auth:", e instanceof Error ? e.message : e);
       await supabase.auth.admin.deleteUser(supabaseUserId);
       return { error: "createFailed" };
     }
 
     revalidatePath("/users");
     return { success: "userCreated" };
-  } catch {
+  } catch (e) {
+    console.error("[createUser]", e instanceof Error ? e.message : e);
     return { error: "createFailed" };
   }
 }
@@ -284,7 +289,8 @@ export async function updateUser(
 
     revalidatePath("/users");
     return { success: "userUpdated" };
-  } catch {
+  } catch (e) {
+    console.error("[updateUser]", e instanceof Error ? e.message : e);
     return { error: "createFailed" };
   }
 }
@@ -313,7 +319,8 @@ export async function deleteUser(id: string): Promise<AdminActionState> {
 
     revalidatePath("/users");
     return { success: "userDeleted" };
-  } catch {
+  } catch (e) {
+    console.error("[deleteUser]", e instanceof Error ? e.message : e);
     return { error: "createFailed" };
   }
 }
@@ -376,7 +383,8 @@ export async function createChannel(
 
     revalidatePath("/organizations");
     return { success: "channelCreated" };
-  } catch {
+  } catch (e) {
+    console.error("[createChannel]", e instanceof Error ? e.message : e);
     return { error: "createFailed" };
   }
 }
@@ -408,7 +416,8 @@ export async function updateChannel(
 
     revalidatePath("/organizations");
     return { success: "channelUpdated" };
-  } catch {
+  } catch (e) {
+    console.error("[updateChannel]", e instanceof Error ? e.message : e);
     return { error: "createFailed" };
   }
 }
@@ -426,7 +435,8 @@ export async function deleteChannel(id: string): Promise<AdminActionState> {
 
     revalidatePath("/organizations");
     return { success: "channelDeleted" };
-  } catch {
+  } catch (e) {
+    console.error("[deleteChannel]", e instanceof Error ? e.message : e);
     return { error: "createFailed" };
   }
 }
