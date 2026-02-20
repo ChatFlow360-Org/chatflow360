@@ -81,22 +81,32 @@ export function UsersClient({ users, organizations }: UsersClientProps) {
     const symbols = "!@#$%&*_+-=";
     const all = upper + lower + digits + symbols;
 
+    // Crypto-secure random index
+    const secureRandom = (max: number) => {
+      const array = new Uint32Array(1);
+      crypto.getRandomValues(array);
+      return array[0] % max;
+    };
+
     const required = [
-      upper[Math.floor(Math.random() * upper.length)],
-      lower[Math.floor(Math.random() * lower.length)],
-      digits[Math.floor(Math.random() * digits.length)],
-      symbols[Math.floor(Math.random() * symbols.length)],
+      upper[secureRandom(upper.length)],
+      lower[secureRandom(lower.length)],
+      digits[secureRandom(digits.length)],
+      symbols[secureRandom(symbols.length)],
     ];
 
     const remaining = Array.from({ length: 12 }, () =>
-      all[Math.floor(Math.random() * all.length)]
+      all[secureRandom(all.length)]
     );
 
-    const password = [...required, ...remaining]
-      .sort(() => Math.random() - 0.5)
-      .join("");
+    // Fisher-Yates shuffle (unbiased)
+    const chars = [...required, ...remaining];
+    for (let i = chars.length - 1; i > 0; i--) {
+      const j = secureRandom(i + 1);
+      [chars[i], chars[j]] = [chars[j], chars[i]];
+    }
 
-    setPasswordValue(password);
+    setPasswordValue(chars.join(""));
     setShowPassword(true);
   };
 

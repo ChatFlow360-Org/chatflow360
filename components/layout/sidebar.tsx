@@ -71,15 +71,15 @@ export function Sidebar({ isOpen, onClose, isSuperAdmin, userName, userEmail, ad
     const newOrgId = orgId === "none" ? "" : orgId;
     setSelectedOrg(newOrgId);
     setSelectedChannel("");
-    document.cookie = `selectedOrgId=${newOrgId};path=/;max-age=${60 * 60 * 24 * 90}`;
-    document.cookie = "selectedChannelId=;path=/;max-age=0";
+    document.cookie = `selectedOrgId=${newOrgId};path=/;max-age=${60 * 60 * 24 * 90};SameSite=Lax;Secure`;
+    document.cookie = "selectedChannelId=;path=/;max-age=0;SameSite=Lax;Secure";
     router.refresh();
   };
 
   const handleChannelChange = (channelId: string) => {
     const newChannelId = channelId === "none" ? "" : channelId;
     setSelectedChannel(newChannelId);
-    document.cookie = `selectedChannelId=${newChannelId};path=/;max-age=${60 * 60 * 24 * 90}`;
+    document.cookie = `selectedChannelId=${newChannelId};path=/;max-age=${60 * 60 * 24 * 90};SameSite=Lax;Secure`;
     router.refresh();
   };
 

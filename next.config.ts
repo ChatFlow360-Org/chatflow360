@@ -3,7 +3,25 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin("./lib/i18n/request.ts");
 
+const isDev = process.env.NODE_ENV === "development";
+
+const cspDirectives = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self' data:",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  "frame-ancestors 'self'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join("; ");
+
 const securityHeaders = [
+  {
+    key: "Content-Security-Policy",
+    value: cspDirectives,
+  },
   {
     key: "X-DNS-Prefetch-Control",
     value: "on",

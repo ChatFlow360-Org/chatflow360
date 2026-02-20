@@ -4,6 +4,13 @@ import { z } from "zod";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { locales, defaultLocale } from "@/lib/i18n/routing";
+
+/** Validate locale against allowed list to prevent path injection */
+function sanitizeLocale(raw: unknown): string {
+  const locale = typeof raw === "string" ? raw : defaultLocale;
+  return (locales as readonly string[]).includes(locale) ? locale : defaultLocale;
+}
 
 // --- State type for useActionState ---
 export type AuthState = {
@@ -54,7 +61,7 @@ export async function login(
     return { error: "invalidCredentials" };
   }
 
-  const locale = (formData.get("locale") as string) || "en";
+  const locale = sanitizeLocale(formData.get("locale"));
   revalidatePath("/", "layout");
   redirect(`/${locale}/`);
 }
@@ -120,7 +127,7 @@ export async function updatePassword(
     return { error: "updateFailed" };
   }
 
-  const locale = (formData.get("locale") as string) || "en";
+  const locale = sanitizeLocale(formData.get("locale"));
   revalidatePath("/", "layout");
   redirect(`/${locale}/`);
 }

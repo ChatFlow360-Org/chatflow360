@@ -258,30 +258,29 @@ export async function updateUser(
       return { error: "createFailed" };
     }
 
-    // Update user name
-    await prisma.user.update({
-      where: { id: parsed.data.id },
-      data: { fullName: parsed.data.fullName },
-    });
-
-    // Update organization membership
-    const orgId = parsed.data.organizationId;
-
-    // Remove all existing memberships
-    await prisma.organizationMember.deleteMany({
-      where: { userId: parsed.data.id },
-    });
-
-    // Add new membership if org specified
-    if (orgId && orgId !== "") {
-      await prisma.organizationMember.create({
-        data: {
-          userId: parsed.data.id,
-          organizationId: orgId,
-          role: parsed.data.role || "admin",
-        },
+    // Atomic: update name + membership in a single transaction
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: parsed.data.id },
+        data: { fullName: parsed.data.fullName },
       });
-    }
+
+      const orgId = parsed.data.organizationId;
+
+      await tx.organizationMember.deleteMany({
+        where: { userId: parsed.data.id },
+      });
+
+      if (orgId && orgId !== "") {
+        await tx.organizationMember.create({
+          data: {
+            userId: parsed.data.id,
+            organizationId: orgId,
+            role: parsed.data.role || "admin",
+          },
+        });
+      }
+    });
 
     revalidatePath("/users");
     return { success: "userUpdated" };
@@ -303,14 +302,14 @@ export async function deleteUser(id: string): Promise<AdminActionState> {
       return { error: "createFailed" };
     }
 
-    // Delete from Prisma first
+    // Delete from Supabase Auth first (user can't log in anymore)
+    const supabase = createAdminClient();
+    await supabase.auth.admin.deleteUser(id);
+
+    // Then delete from Prisma (cleanup)
     await prisma.user.delete({
       where: { id },
     });
-
-    // Delete from Supabase Auth
-    const supabase = createAdminClient();
-    await supabase.auth.admin.deleteUser(id);
 
     revalidatePath("/users");
     return { success: "userDeleted" };

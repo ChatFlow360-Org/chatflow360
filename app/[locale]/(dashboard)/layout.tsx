@@ -31,8 +31,11 @@ export default async function DashboardLayout({
     });
 
     const cookieStore = await cookies();
-    const selectedOrgId = cookieStore.get("selectedOrgId")?.value || "";
-    const selectedChannelId = cookieStore.get("selectedChannelId")?.value || "";
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const rawOrgId = cookieStore.get("selectedOrgId")?.value || "";
+    const rawChannelId = cookieStore.get("selectedChannelId")?.value || "";
+    const selectedOrgId = UUID_RE.test(rawOrgId) ? rawOrgId : "";
+    const selectedChannelId = UUID_RE.test(rawChannelId) ? rawChannelId : "";
 
     adminContext = {
       organizations: orgs.map((o) => ({
