@@ -123,7 +123,10 @@ export function ConversationsClient({ conversations }: ConversationsClientProps)
           onSearchChange={setSearchQuery}
         />
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+        <div className={cn(
+          "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 transition-opacity duration-300",
+          isRefreshing && "pointer-events-none opacity-40"
+        )}>
           {filteredConversations.map((conv) => (
             <ConversationCard
               key={conv.id}
