@@ -19,11 +19,35 @@ export const getCurrentUser = cache(async function getCurrentUserImpl() {
 
   if (!user) return null;
 
-  // Use serializable transaction to prevent race condition where
-  // two concurrent requests both read superAdminCount === 0
-  const dbUser = await prisma.$transaction(
+  // Fast path: check if bootstrap already happened (99.9% of requests)
+  const superAdminCount = await prisma.user.count({
+    where: { isSuperAdmin: true },
+  });
+
+  if (superAdminCount > 0) {
+    // Normal case: simple upsert, no transaction needed
+    return prisma.user.upsert({
+      where: { id: user.id },
+      update: { email: user.email! },
+      create: {
+        id: user.id,
+        email: user.email!,
+        fullName: user.user_metadata?.full_name || null,
+        isSuperAdmin: false,
+      },
+      include: {
+        memberships: {
+          include: { organization: true },
+        },
+      },
+    });
+  }
+
+  // Bootstrap path: serializable transaction to prevent race condition
+  // where two concurrent requests both read superAdminCount === 0
+  return prisma.$transaction(
     async (tx) => {
-      const superAdminCount = await tx.user.count({
+      const count = await tx.user.count({
         where: { isSuperAdmin: true },
       });
 
@@ -34,7 +58,7 @@ export const getCurrentUser = cache(async function getCurrentUserImpl() {
           id: user.id,
           email: user.email!,
           fullName: user.user_metadata?.full_name || null,
-          isSuperAdmin: superAdminCount === 0,
+          isSuperAdmin: count === 0,
         },
         include: {
           memberships: {
@@ -43,10 +67,8 @@ export const getCurrentUser = cache(async function getCurrentUserImpl() {
         },
       });
     },
-    { isolationLevel: "Serializable" }
+    { isolationLevel: "Serializable", timeout: 10000 }
   );
-
-  return dbUser;
 });
 
 /** Serializable user data for passing from server to client components */
