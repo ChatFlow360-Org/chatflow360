@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect, useTransition } from "react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "@/lib/i18n/navigation";
 import { createPortal } from "react-dom";
 import { subDays, startOfDay } from "date-fns";
+import { RefreshCw } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 import { ConversationCard } from "@/components/chat/conversation-card";
 import { ConversationFilters } from "@/components/chat/conversation-filters";
@@ -25,10 +27,18 @@ interface ConversationsClientProps {
 
 export function ConversationsClient({ conversations }: ConversationsClientProps) {
   const t = useTranslations("conversations");
+  const router = useRouter();
+  const [isRefreshing, startRefresh] = useTransition();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(defaultRange);
+
+  const handleRefresh = useCallback(() => {
+    startRefresh(() => {
+      router.refresh();
+    });
+  }, [router]);
 
   const filteredConversations = useMemo(() => {
     let result = conversations;
@@ -88,11 +98,20 @@ export function ConversationsClient({ conversations }: ConversationsClientProps)
             {t("subtitle")}
           </p>
         </div>
-        <DateRangePicker
-          dateRange={dateRange}
-          onDateRangeChange={setDateRange}
-          className="self-end sm:self-auto"
-        />
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <DateRangePicker
+            dateRange={dateRange}
+            onDateRangeChange={setDateRange}
+          />
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            title={t("refresh")}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+          >
+            <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+          </button>
+        </div>
       </div>
 
       {/* Grid — always fluid, never changes when panel opens */}

@@ -50,6 +50,7 @@
   "conversations": {
     "title": "Conversaciones",
     "subtitle": "Gestiona y monitorea las conversaciones de tus clientes",
+    "refresh": "Actualizar",
     "noConversations": "No se encontraron conversaciones",
     "typeMessage": "Escribe un mensaje...",
     "msgs": "{count} msgs",
