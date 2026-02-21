@@ -171,13 +171,14 @@
       "  70%{box-shadow:0 0 0 14px rgba(0,0,0,0);}",
       "  100%{box-shadow:0 0 0 0 rgba(0,0,0,0);}",
       "}",
-      ".cf360-bubble--pulse{animation:cf360-pulse 2s ease 0s 3;}",
+      ".cf360-bubble--pulse{animation:cf360-pulse 2s ease infinite;}",
 
       // Bubble SVG icons
       ".cf360-bubble svg{width:26px;height:26px;fill:currentColor;transition:transform 0.3s ease,opacity 0.3s ease;}",
-      ".cf360-bubble .cf360-icon-close{position:absolute;transform:rotate(90deg) scale(0);opacity:0;}",
+      ".cf360-bubble .cf360-icon-chat,.cf360-bubble .cf360-icon-close{display:flex;align-items:center;justify-content:center;}",
+      ".cf360-bubble .cf360-icon-close{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(90deg) scale(0);opacity:0;}",
       ".cf360-bubble--open .cf360-icon-chat{transform:rotate(-90deg) scale(0);opacity:0;}",
-      ".cf360-bubble--open .cf360-icon-close{transform:rotate(0) scale(1);opacity:1;}",
+      ".cf360-bubble--open .cf360-icon-close{transform:translate(-50%,-50%) rotate(0) scale(1);opacity:1;}",
 
       // Unread badge
       ".cf360-badge{",
