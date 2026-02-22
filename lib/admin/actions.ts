@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUser } from "@/lib/auth/user";
+import { DEFAULT_HANDOFF_KEYWORDS } from "@/lib/chat/defaults";
 
 // ============================================
 // Types
@@ -402,7 +403,9 @@ export async function upsertAiSettings(
         systemPrompt: parsed.data.systemPrompt,
         temperature: parsed.data.temperature,
         maxTokens: parsed.data.maxTokens,
-        handoffKeywords: parsed.data.handoffKeywords,
+        handoffKeywords: parsed.data.handoffKeywords.length > 0
+          ? parsed.data.handoffKeywords
+          : [...DEFAULT_HANDOFF_KEYWORDS],
         ...(encryptedApiKey && { encryptedApiKey, apiKeyHint }),
       },
     });

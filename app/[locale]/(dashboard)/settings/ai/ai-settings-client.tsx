@@ -22,6 +22,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { upsertAiSettings } from "@/lib/admin/actions";
+import { DEFAULT_HANDOFF_KEYWORDS } from "@/lib/chat/defaults";
 
 // --- Types ---
 
@@ -68,20 +69,22 @@ export function AiSettingsClient({
   const [systemPrompt, setSystemPrompt] = useState(
     aiSettings?.systemPrompt || ""
   );
-  const [keywords, setKeywords] = useState<string[]>(
-    aiSettings?.handoffKeywords || []
-  );
+  const resolveKeywords = (settings: AiSettingsData | null): string[] => {
+    if (!settings) return [...DEFAULT_HANDOFF_KEYWORDS];
+    return settings.handoffKeywords.length > 0 ? settings.handoffKeywords : [...DEFAULT_HANDOFF_KEYWORDS];
+  };
+
+  const [keywords, setKeywords] = useState<string[]>(resolveKeywords(aiSettings));
   const [keywordInput, setKeywordInput] = useState("");
-  const [handoffEnabled, setHandoffEnabled] = useState(
-    (aiSettings?.handoffKeywords?.length ?? 0) > 0
-  );
+  const [handoffEnabled, setHandoffEnabled] = useState(true);
 
   // Reset form when org changes
   useEffect(() => {
     setSystemPrompt(aiSettings?.systemPrompt || "");
-    setKeywords(aiSettings?.handoffKeywords || []);
+    const resolved = resolveKeywords(aiSettings);
+    setKeywords(resolved);
     setKeywordInput("");
-    setHandoffEnabled((aiSettings?.handoffKeywords?.length ?? 0) > 0);
+    setHandoffEnabled(resolved.length > 0);
   }, [aiSettings]);
 
   // --- No org selected state ---
