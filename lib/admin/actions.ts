@@ -351,7 +351,19 @@ export async function upsertAiSettings(
   formData: FormData
 ): Promise<AdminActionState> {
   try {
-    await requireSuperAdmin();
+    // Allow super_admin OR org member (admin/agent) to edit AI settings
+    const user = await getCurrentUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const orgId = formData.get("organizationId") as string;
+
+    if (!user.isSuperAdmin) {
+      // Verify user belongs to this organization
+      const membership = await prisma.organizationMember.findFirst({
+        where: { userId: user.id, organizationId: orgId },
+      });
+      if (!membership) throw new Error("Unauthorized");
+    }
 
     const parsed = aiSettingsSchema.safeParse({
       organizationId: formData.get("organizationId"),
@@ -375,26 +387,40 @@ export async function upsertAiSettings(
       return { error: "createFailed" };
     }
 
-    // Handle optional per-org API key
+    // Handle optional per-org API key (super_admin only)
     let encryptedApiKey: string | undefined;
     let apiKeyHint: string | undefined;
 
-    const rawApiKey = parsed.data.apiKey;
-    if (rawApiKey && rawApiKey.trim() !== "") {
-      const { encrypt, maskApiKey } = await import("@/lib/crypto/encryption");
-      encryptedApiKey = encrypt(rawApiKey.trim());
-      apiKeyHint = maskApiKey(rawApiKey.trim());
+    if (user.isSuperAdmin) {
+      const rawApiKey = parsed.data.apiKey;
+      if (rawApiKey && rawApiKey.trim() !== "") {
+        const { encrypt, maskApiKey } = await import("@/lib/crypto/encryption");
+        encryptedApiKey = encrypt(rawApiKey.trim());
+        apiKeyHint = maskApiKey(rawApiKey.trim());
+      }
     }
+
+    // Business params: editable by org admin + super_admin
+    const businessUpdate = {
+      systemPrompt: parsed.data.systemPrompt,
+      handoffKeywords: parsed.data.handoffKeywords,
+    };
+
+    // Technical params: editable by super_admin only
+    const technicalUpdate = user.isSuperAdmin
+      ? {
+          model: parsed.data.model,
+          temperature: parsed.data.temperature,
+          maxTokens: parsed.data.maxTokens,
+          ...(encryptedApiKey && { encryptedApiKey, apiKeyHint }),
+        }
+      : {};
 
     await prisma.aiSettings.upsert({
       where: { organizationId: parsed.data.organizationId },
       update: {
-        model: parsed.data.model,
-        systemPrompt: parsed.data.systemPrompt,
-        temperature: parsed.data.temperature,
-        maxTokens: parsed.data.maxTokens,
-        handoffKeywords: parsed.data.handoffKeywords,
-        ...(encryptedApiKey && { encryptedApiKey, apiKeyHint }),
+        ...businessUpdate,
+        ...technicalUpdate,
       },
       create: {
         organizationId: parsed.data.organizationId,
