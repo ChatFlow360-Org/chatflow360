@@ -11,4 +11,8 @@ export const chatHistorySchema = z.object({
   visitorId: z.string().min(1).max(100),
 });
 
+export const closeConversationSchema = z.object({
+  visitorId: z.string().min(1).max(100),
+});
+
 export type ChatMessageInput = z.infer<typeof chatMessageSchema>;

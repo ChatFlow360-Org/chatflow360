@@ -145,7 +145,9 @@
 
   // Check session timeout on init — clear stale conversation
   (function checkSessionTimeout() {
-    if (getConversationId() && isSessionExpired()) {
+    var staleId = getConversationId();
+    if (staleId && isSessionExpired()) {
+      closeConversationApi(staleId);
       clearConversationId();
     }
   })();
@@ -678,6 +680,17 @@
     return apiBaseUrl + path;
   }
 
+  function closeConversationApi(conversationId) {
+    if (!conversationId) return;
+    try {
+      fetch(apiUrl("/api/chat/" + conversationId), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ visitorId: visitorId }),
+      }).catch(function () { /* fire-and-forget */ });
+    } catch (e) { /* noop */ }
+  }
+
   function sendMessage(text) {
     if (state.sending) return;
     state.sending = true;
@@ -896,6 +909,7 @@
 
   function confirmEndConversation() {
     confirmEl.classList.remove("cf360-confirm--show");
+    closeConversationApi(state.conversationId);
     startNewConversation();
   }
 
