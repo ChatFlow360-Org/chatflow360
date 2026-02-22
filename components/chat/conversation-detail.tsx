@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Info, X, Send, Bot, User, MessageSquare, Clock, Globe, Calendar, RefreshCw } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,14 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to bottom of chat
+  const scrollToBottom = useCallback(() => {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 50);
+  }, []);
 
   // Fetch messages (used on mount and for refresh)
   const fetchMessages = useCallback(async (showSpinner = false) => {
@@ -40,13 +48,14 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
     try {
       const msgs = await getConversationMessages(conversation.id);
       setMessages(msgs);
+      scrollToBottom();
     } catch {
       // silently fail
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [conversation.id]);
+  }, [conversation.id, scrollToBottom]);
 
   // Initial fetch when conversation changes
   useEffect(() => {
@@ -241,6 +250,7 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
                 <ChatMessage key={msg.id} message={msg} />
               ))
             )}
+            <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
 
