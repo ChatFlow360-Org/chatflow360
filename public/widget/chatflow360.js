@@ -234,16 +234,25 @@
       "}",
       ".cf360-window--open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}",
 
+      // Expanded panel mode (desktop only)
+      ".cf360-window--expanded{",
+      "  position:fixed;top:0;right:0;bottom:0;width:420px;height:100vh;",
+      "  border-radius:0;box-shadow:-4px 0 24px rgba(0,0,0,0.15);",
+      "}",
+
       // Header
       ".cf360-header{",
       "  background:" + primaryColor + ";color:#fff;padding:16px 20px;display:flex;",
       "  align-items:center;justify-content:space-between;flex-shrink:0;",
       "}",
       ".cf360-header-title{font-size:16px;font-weight:600;}",
+      ".cf360-header-actions{display:flex;align-items:center;gap:4px;}",
       ".cf360-header-btn{background:none;border:none;color:#fff;cursor:pointer;padding:4px;",
       "  border-radius:6px;display:flex;align-items:center;justify-content:center;opacity:0.85;transition:opacity 0.15s;}",
       ".cf360-header-btn:hover{opacity:1;}",
       ".cf360-header-btn svg{width:20px;height:20px;fill:currentColor;}",
+      ".cf360-header-btn--expand{display:none;}",
+      "@media (min-width:481px){.cf360-header-btn--expand{display:flex;}}",
 
       // Messages area
       ".cf360-messages{",
@@ -380,10 +389,13 @@
   var ICON_CLOSE = '<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
   var ICON_SEND = '<svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>';
   var ICON_MSG = '<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>';
+  var ICON_EXPAND = '<svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>';
+  var ICON_COLLAPSE = '<svg viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>';
 
   // ─── DOM Elements ─────────────────────────────────────────────────
   var container, bubble, badge, chatWindow, messagesArea, inputField, sendBtn;
-  var typingEl, connectingEl, newConvBtn, endConvEl, confirmEl;
+  var typingEl, connectingEl, newConvBtn, endConvEl, confirmEl, expandBtn;
+  var isExpanded = false;
 
   function buildDOM() {
     // Container
@@ -408,11 +420,17 @@
     var header = el("div", "cf360-header");
     var title = el("span", "cf360-header-title");
     title.textContent = t("chatWithUs");
+    var headerActions = el("div", "cf360-header-actions");
+    expandBtn = el("button", "cf360-header-btn cf360-header-btn--expand");
+    expandBtn.setAttribute("aria-label", "Expand");
+    expandBtn.innerHTML = ICON_EXPAND;
     var closeBtn = el("button", "cf360-header-btn");
     closeBtn.setAttribute("aria-label", "Close");
     closeBtn.innerHTML = ICON_CLOSE;
+    headerActions.appendChild(expandBtn);
+    headerActions.appendChild(closeBtn);
     header.appendChild(title);
-    header.appendChild(closeBtn);
+    header.appendChild(headerActions);
     chatWindow.appendChild(header);
 
     // Connecting banner
@@ -486,6 +504,7 @@
     // ─── Event listeners ──────────────────────────────────────────
     bubble.addEventListener("click", toggleWidget);
     closeBtn.addEventListener("click", closeWidget);
+    expandBtn.addEventListener("click", toggleExpand);
     sendBtn.addEventListener("click", handleSend);
     newConvBtn.addEventListener("click", startNewConversation);
     endConvBtn.addEventListener("click", showEndConfirm);
@@ -549,6 +568,26 @@
     state.open = false;
     bubble.classList.remove("cf360-bubble--open");
     chatWindow.classList.remove("cf360-window--open");
+    // Collapse back on close so next open is compact
+    if (isExpanded) {
+      isExpanded = false;
+      chatWindow.classList.remove("cf360-window--expanded");
+      expandBtn.innerHTML = ICON_EXPAND;
+      expandBtn.setAttribute("aria-label", "Expand");
+    }
+  }
+
+  function toggleExpand() {
+    isExpanded = !isExpanded;
+    if (isExpanded) {
+      chatWindow.classList.add("cf360-window--expanded");
+      expandBtn.innerHTML = ICON_COLLAPSE;
+      expandBtn.setAttribute("aria-label", "Collapse");
+    } else {
+      chatWindow.classList.remove("cf360-window--expanded");
+      expandBtn.innerHTML = ICON_EXPAND;
+      expandBtn.setAttribute("aria-label", "Expand");
+    }
   }
 
   // ─── Welcome state ────────────────────────────────────────────────
