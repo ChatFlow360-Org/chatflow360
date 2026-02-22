@@ -59,7 +59,10 @@
       connecting: "Connecting you with an agent\u2026",
       powered: "Powered by",
       newConversation: "New conversation",
-      endConversation: "End conversation"
+      endConversation: "End conversation",
+      confirmEnd: "Are you sure you want to end this conversation?",
+      yes: "Yes",
+      no: "No"
     },
     es: {
       chatWithUs: "Chatea con nosotros",
@@ -68,7 +71,10 @@
       connecting: "Conect\u00e1ndote con un agente\u2026",
       powered: "Impulsado por",
       newConversation: "Nueva conversaci\u00f3n",
-      endConversation: "Finalizar conversaci\u00f3n"
+      endConversation: "Finalizar conversaci\u00f3n",
+      confirmEnd: "\u00bfSeguro que deseas finalizar esta conversaci\u00f3n?",
+      yes: "S\u00ed",
+      no: "No"
     }
   };
 
@@ -299,16 +305,32 @@
       ".cf360-send-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}",
       ".cf360-send-btn svg{width:18px;height:18px;fill:currentColor;}",
 
-      // End conversation link
+      // End conversation badge
       ".cf360-end-conv{",
-      "  display:none;padding:4px 16px;text-align:center;flex-shrink:0;background:#fff;",
+      "  display:none;padding:4px 16px 0;flex-shrink:0;background:#fff;",
       "}",
       ".cf360-end-conv--show{display:block;}",
       ".cf360-end-conv button{",
-      "  background:none;border:none;cursor:pointer;font-size:11px;color:#aaa;",
-      "  transition:color 0.15s;padding:0;font-family:inherit;",
+      "  background:#0f1c2e;border:none;cursor:pointer;font-size:10px;color:#fff;",
+      "  padding:3px 10px;border-radius:10px;font-family:inherit;transition:opacity 0.15s;",
       "}",
-      ".cf360-end-conv button:hover{color:" + primaryColor + ";}",
+      ".cf360-end-conv button:hover{opacity:0.8;}",
+
+      // Confirm dialog
+      ".cf360-confirm{",
+      "  display:none;padding:10px 16px;background:#fafafa;border-top:1px solid #e5e5e5;",
+      "  flex-shrink:0;text-align:center;",
+      "}",
+      ".cf360-confirm--show{display:block;}",
+      ".cf360-confirm-text{font-size:12px;color:#555;margin-bottom:8px;}",
+      ".cf360-confirm-actions{display:flex;gap:8px;justify-content:center;}",
+      ".cf360-confirm-btn{",
+      "  border:none;cursor:pointer;font-size:12px;font-family:inherit;",
+      "  padding:5px 16px;border-radius:6px;font-weight:500;transition:opacity 0.15s;",
+      "}",
+      ".cf360-confirm-btn:hover{opacity:0.85;}",
+      ".cf360-confirm-btn--yes{background:#0f1c2e;color:#fff;}",
+      ".cf360-confirm-btn--no{background:#e5e5e5;color:#333;}",
 
       // New conversation button
       ".cf360-new-conv{",
@@ -361,7 +383,7 @@
 
   // ─── DOM Elements ─────────────────────────────────────────────────
   var container, bubble, badge, chatWindow, messagesArea, inputField, sendBtn;
-  var typingEl, connectingEl, newConvBtn, endConvEl;
+  var typingEl, connectingEl, newConvBtn, endConvEl, confirmEl;
 
   function buildDOM() {
     // Container
@@ -422,13 +444,30 @@
     inputArea.appendChild(sendBtn);
     chatWindow.appendChild(inputArea);
 
-    // End conversation link
+    // End conversation badge
     endConvEl = el("div", "cf360-end-conv");
     var endConvBtn = el("button", "");
     endConvBtn.textContent = t("endConversation");
     endConvBtn.type = "button";
     endConvEl.appendChild(endConvBtn);
     chatWindow.appendChild(endConvEl);
+
+    // Confirm dialog
+    confirmEl = el("div", "cf360-confirm");
+    var confirmText = el("div", "cf360-confirm-text");
+    confirmText.textContent = t("confirmEnd");
+    var confirmActions = el("div", "cf360-confirm-actions");
+    var confirmYes = el("button", "cf360-confirm-btn cf360-confirm-btn--yes");
+    confirmYes.textContent = t("yes");
+    confirmYes.type = "button";
+    var confirmNo = el("button", "cf360-confirm-btn cf360-confirm-btn--no");
+    confirmNo.textContent = t("no");
+    confirmNo.type = "button";
+    confirmActions.appendChild(confirmYes);
+    confirmActions.appendChild(confirmNo);
+    confirmEl.appendChild(confirmText);
+    confirmEl.appendChild(confirmActions);
+    chatWindow.appendChild(confirmEl);
 
     // Footer
     var footer = el("div", "cf360-footer");
@@ -449,7 +488,9 @@
     closeBtn.addEventListener("click", closeWidget);
     sendBtn.addEventListener("click", handleSend);
     newConvBtn.addEventListener("click", startNewConversation);
-    endConvBtn.addEventListener("click", endConversation);
+    endConvBtn.addEventListener("click", showEndConfirm);
+    confirmYes.addEventListener("click", confirmEndConversation);
+    confirmNo.addEventListener("click", cancelEndConversation);
 
     inputField.addEventListener("keydown", function (e) {
       if (e.key === "Enter" && !e.shiftKey) {
@@ -804,12 +845,24 @@
     state.lastMessageId = null;
     state.resolved = false;
     endConvEl.classList.remove("cf360-end-conv--show");
+    confirmEl.classList.remove("cf360-confirm--show");
     showWelcome();
     inputField.focus();
   }
 
-  function endConversation() {
+  function showEndConfirm() {
+    endConvEl.classList.remove("cf360-end-conv--show");
+    confirmEl.classList.add("cf360-confirm--show");
+  }
+
+  function confirmEndConversation() {
+    confirmEl.classList.remove("cf360-confirm--show");
     startNewConversation();
+  }
+
+  function cancelEndConversation() {
+    confirmEl.classList.remove("cf360-confirm--show");
+    endConvEl.classList.add("cf360-end-conv--show");
   }
 
   // ─── Init ─────────────────────────────────────────────────────────
