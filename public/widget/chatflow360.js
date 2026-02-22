@@ -285,7 +285,7 @@
 
       // Input area
       ".cf360-input-area{",
-      "  display:flex;align-items:center;padding:12px 16px;gap:8px;border-top:1px solid #e5e5e5;",
+      "  display:flex;align-items:center;padding:12px 16px 6px;gap:8px;border-top:1px solid #e5e5e5;",
       "  background:#fff;flex-shrink:0;",
       "}",
       ".cf360-input{",
@@ -307,7 +307,7 @@
 
       // End conversation badge
       ".cf360-end-conv{",
-      "  display:none;padding:4px 16px 0;flex-shrink:0;background:#fff;",
+      "  display:none;padding:0 16px 0;flex-shrink:0;background:#fff;",
       "}",
       ".cf360-end-conv--show{display:block;}",
       ".cf360-end-conv button{",
