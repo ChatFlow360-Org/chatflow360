@@ -254,6 +254,7 @@ export function AiSettingsClient({
                         placeholder={t("handoff.placeholder")}
                         maxLength={50}
                         disabled={keywords.length >= 20}
+                        autoComplete="off"
                         className="bg-background"
                       />
                       <Button
@@ -292,6 +293,7 @@ export function AiSettingsClient({
                         type="password"
                         placeholder={t("apiKey.placeholder")}
                         maxLength={200}
+                        autoComplete="new-password"
                         className="bg-background font-mono"
                       />
                       <p className="text-xs text-muted-foreground">
