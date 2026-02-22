@@ -58,7 +58,8 @@
       send: "Send",
       connecting: "Connecting you with an agent\u2026",
       powered: "Powered by",
-      newConversation: "New conversation"
+      newConversation: "New conversation",
+      endConversation: "End conversation"
     },
     es: {
       chatWithUs: "Chatea con nosotros",
@@ -66,7 +67,8 @@
       send: "Enviar",
       connecting: "Conect\u00e1ndote con un agente\u2026",
       powered: "Impulsado por",
-      newConversation: "Nueva conversaci\u00f3n"
+      newConversation: "Nueva conversaci\u00f3n",
+      endConversation: "Finalizar conversaci\u00f3n"
     }
   };
 
@@ -102,18 +104,45 @@
 
   // ─── Conversation persistence ─────────────────────────────────────
   var CONV_KEY = "cf360_conv_" + publicKey;
+  var CONV_TS_KEY = "cf360_conv_ts_" + publicKey;
+  var SESSION_TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 hours
 
   function getConversationId() {
     try { return localStorage.getItem(CONV_KEY) || null; } catch (e) { return null; }
   }
 
   function setConversationId(id) {
-    try { localStorage.setItem(CONV_KEY, id); } catch (e) { /* noop */ }
+    try {
+      localStorage.setItem(CONV_KEY, id);
+      localStorage.setItem(CONV_TS_KEY, String(Date.now()));
+    } catch (e) { /* noop */ }
+  }
+
+  function touchConversationTimestamp() {
+    try { localStorage.setItem(CONV_TS_KEY, String(Date.now())); } catch (e) { /* noop */ }
   }
 
   function clearConversationId() {
-    try { localStorage.removeItem(CONV_KEY); } catch (e) { /* noop */ }
+    try {
+      localStorage.removeItem(CONV_KEY);
+      localStorage.removeItem(CONV_TS_KEY);
+    } catch (e) { /* noop */ }
   }
+
+  function isSessionExpired() {
+    try {
+      var ts = localStorage.getItem(CONV_TS_KEY);
+      if (!ts) return false;
+      return (Date.now() - parseInt(ts, 10)) > SESSION_TIMEOUT_MS;
+    } catch (e) { return false; }
+  }
+
+  // Check session timeout on init — clear stale conversation
+  (function checkSessionTimeout() {
+    if (getConversationId() && isSessionExpired()) {
+      clearConversationId();
+    }
+  })();
 
   // ─── State ────────────────────────────────────────────────────────
   var state = {
@@ -270,6 +299,17 @@
       ".cf360-send-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}",
       ".cf360-send-btn svg{width:18px;height:18px;fill:currentColor;}",
 
+      // End conversation link
+      ".cf360-end-conv{",
+      "  display:none;padding:4px 16px;text-align:center;flex-shrink:0;background:#fff;",
+      "}",
+      ".cf360-end-conv--show{display:block;}",
+      ".cf360-end-conv button{",
+      "  background:none;border:none;cursor:pointer;font-size:11px;color:#aaa;",
+      "  transition:color 0.15s;padding:0;font-family:inherit;",
+      "}",
+      ".cf360-end-conv button:hover{color:" + primaryColor + ";}",
+
       // New conversation button
       ".cf360-new-conv{",
       "  padding:8px 16px;background:#f0f0f0;border:none;cursor:pointer;font-size:13px;",
@@ -321,7 +361,7 @@
 
   // ─── DOM Elements ─────────────────────────────────────────────────
   var container, bubble, badge, chatWindow, messagesArea, inputField, sendBtn;
-  var typingEl, connectingEl, newConvBtn;
+  var typingEl, connectingEl, newConvBtn, endConvEl;
 
   function buildDOM() {
     // Container
@@ -382,6 +422,14 @@
     inputArea.appendChild(sendBtn);
     chatWindow.appendChild(inputArea);
 
+    // End conversation link
+    endConvEl = el("div", "cf360-end-conv");
+    var endConvBtn = el("button", "");
+    endConvBtn.textContent = t("endConversation");
+    endConvBtn.type = "button";
+    endConvEl.appendChild(endConvBtn);
+    chatWindow.appendChild(endConvEl);
+
     // Footer
     var footer = el("div", "cf360-footer");
     var footerText = document.createTextNode(t("powered") + " ");
@@ -401,6 +449,7 @@
     closeBtn.addEventListener("click", closeWidget);
     sendBtn.addEventListener("click", handleSend);
     newConvBtn.addEventListener("click", startNewConversation);
+    endConvBtn.addEventListener("click", endConversation);
 
     inputField.addEventListener("keydown", function (e) {
       if (e.key === "Enter" && !e.shiftKey) {
@@ -553,6 +602,7 @@
     if (state.sending) return;
     state.sending = true;
     sendBtn.disabled = true;
+    touchConversationTimestamp();
 
     // Show visitor message immediately
     appendMessage({ content: text, senderType: "visitor", createdAt: new Date().toISOString() });
@@ -585,6 +635,7 @@
         if (data.conversationId) {
           state.conversationId = data.conversationId;
           setConversationId(data.conversationId);
+          endConvEl.classList.add("cf360-end-conv--show");
         }
 
         // Render AI response
@@ -639,6 +690,8 @@
         if (convStatus === "resolved" || convStatus === "closed") {
           state.resolved = true;
           newConvBtn.classList.add("cf360-new-conv--show");
+        } else {
+          endConvEl.classList.add("cf360-end-conv--show");
         }
 
         // Render messages
@@ -750,8 +803,13 @@
     state.conversationId = null;
     state.lastMessageId = null;
     state.resolved = false;
+    endConvEl.classList.remove("cf360-end-conv--show");
     showWelcome();
     inputField.focus();
+  }
+
+  function endConversation() {
+    startNewConversation();
   }
 
   // ─── Init ─────────────────────────────────────────────────────────
