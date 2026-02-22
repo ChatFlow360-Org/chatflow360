@@ -51,6 +51,7 @@
     "title": "Conversations",
     "subtitle": "Manage and monitor your customer conversations",
     "refresh": "Refresh",
+    "live": "Live",
     "noConversations": "No conversations found",
     "typeMessage": "Type a message...",
     "msgs": "{count} msgs",

@@ -126,14 +126,24 @@ chatflow360-dashboard/
 
 ## API Routes
 
-### Publicas (Widget) — Implementadas v0.3.0
+### Publicas (Widget) — Implementadas v0.3.0 / v0.3.1
 
 ```
-POST /api/chat                          # Enviar mensaje + respuesta IA automatica
-GET  /api/chat/[conversationId]         # Historial (validacion visitorId)
+POST  /api/chat                          # Enviar mensaje + respuesta IA automatica
+GET   /api/chat/[conversationId]         # Historial (validacion visitorId)
+PATCH /api/chat/[conversationId]         # Cerrar conversacion desde widget (v0.3.1)
 ```
 
 **Autenticacion:** via `publicKey` (UUID del canal) + `visitorId` (generado por widget). Sin JWT — API publica con CORS abierto.
+
+**PATCH /api/chat/[conversationId]:**
+- Body: `{ visitorId: string (UUID) }` — validado con `closeConversationSchema` (Zod)
+- Valida ownership: la conversacion debe pertenecer al `visitorId` recibido (mismo patron que GET)
+- Idempotente: si ya esta `closed`, retorna `{ id, status: "closed" }` sin modificar
+- Response: `{ id, status: "closed" }`
+- Invocado por el widget en dos momentos: confirmacion "End conversation" + session timeout auto-reset
+
+**CORS:** `lib/api/cors.ts` incluye `PATCH` en `Access-Control-Allow-Methods` (`GET, POST, PATCH, OPTIONS`).
 
 ### Dashboard — Server Actions (Implementadas)
 
@@ -251,6 +261,76 @@ const getChannelConfig = (channel: Channel, orgAiSettings: AiSettings) => ({
 | `data-position` | No | "right" | "right" o "left" |
 
 **Implementacion:** vanilla JS IIFE (~770 lineas), DOM injection directa (no iframe), clases `.cf360-`, z-index maximo. Persistencia via localStorage (visitorId + conversationId). Polling cada 5s en modo humano. Mobile fullscreen <480px.
+
+#### Widget Features (v0.3.1)
+
+**Maximize/Minimize toggle**
+
+- Boton en el header (izquierda de X), solo visible en desktop (hidden en mobile)
+- Modo compacto: 380x520px. Modo expandido: 420px ancho, 100vh alto (panel derecho full height)
+- Icono alterna entre expand y collapse segun estado. Auto-colapso al cerrar el widget.
+
+**End Conversation**
+
+- Badge oscuro (#0f1c2e) debajo del input, alineado izquierda. Padding area input: `12px 16px 6px`; padding badge: `0 16px 0`
+- Click muestra dialogo de confirmacion ("Are you sure?" / "¿Estas seguro?") con Yes/No
+- "Yes" limpia `conversationId` + `visitorId` del localStorage y resetea a welcome screen
+
+**Session Auto-Timeout (2 horas)**
+
+- Timestamp de ultimo mensaje guardado en localStorage: `cf360_conv_ts_` + publicKey
+- Actualizado en cada `sendMessage()`. Verificado al iniciar el widget.
+- Si han pasado mas de 2h, la conversacion expirada se descarta silenciosamente → welcome screen
+
+### Conversation Auto-Cleanup — Modelo de 3 Capas (v0.3.1)
+
+**Enfoque hibrido:** tres capas complementarias para garantizar que las conversaciones cerradas en el widget se reflejen en el dashboard y en la DB. Ninguna capa depende de las otras.
+
+| Capa | Mecanismo | Timing | Proposito |
+|------|-----------|--------|-----------|
+| 1 — Widget PATCH | `closeConversationApi()` → `PATCH /api/chat/[id]` | Inmediato (accion del usuario) | Sincroniza cierre widget → DB al instante |
+| 2 — Client timeout | localStorage timestamp check (`cf360_conv_ts_`) | Al proximo open (2h TTL) | UX: welcome screen si la sesion expiró sin cierre manual |
+| 3 — pg_cron | `close_stale_conversations()` cada 6h | Periodico (safety net) | DB cleanup para convs sin cliente activo (browser cerrado, crash, etc.) |
+
+**Capa 1 — PATCH desde widget:**
+
+```typescript
+// public/widget/chatflow360.js
+async function closeConversationApi(conversationId) {
+  await fetch(`${API_BASE}/api/chat/${conversationId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ visitorId })
+  });
+  // fire-and-forget: no await, no error blocking UX
+}
+```
+
+Invocado en 2 momentos: (a) usuario confirma "End conversation", (b) session timeout auto-reset.
+
+**Capa 3 — pg_cron (safety net):**
+
+```sql
+-- Funcion SQL en Supabase
+CREATE OR REPLACE FUNCTION close_stale_conversations()
+RETURNS void AS $$
+  UPDATE conversations
+  SET status = 'closed', updated_at = NOW()
+  WHERE status IN ('open', 'pending')
+    AND last_message_at < NOW() - INTERVAL '2 hours';
+$$ LANGUAGE sql;
+
+-- Schedule: cada 6 horas
+SELECT cron.schedule('close-stale-conversations', '0 */6 * * *',
+  'SELECT close_stale_conversations()');
+```
+
+Comandos utiles:
+
+```sql
+SELECT * FROM cron.job_run_details ORDER BY start_time DESC LIMIT 5; -- historial
+SELECT cron.unschedule('close-stale-conversations');                  -- desactivar
+```
 
 ### API Key Encryption
 

@@ -13,13 +13,26 @@ export async function OPTIONS() {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    // FIX-5: Body size limit before parsing (16KB for POST)
+    const contentLength = request.headers.get("content-length");
+    if (contentLength && parseInt(contentLength, 10) > 16384) {
+      return errorResponse("Request body too large", 413);
+    }
+
+    // FIX-6: Safe JSON parsing
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return errorResponse("Invalid JSON", 400);
+    }
+
     const parsed = chatMessageSchema.safeParse(body);
 
     if (!parsed.success) {
-      return errorResponse(
-        "Invalid request: " + parsed.error.issues[0]?.message
-      );
+      // FIX-7: Log detailed error server-side, return generic message to client
+      console.warn("[POST /api/chat] validation:", parsed.error.issues);
+      return errorResponse("Invalid request");
     }
 
     const { publicKey, visitorId, message, conversationId } = parsed.data;

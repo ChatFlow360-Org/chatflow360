@@ -97,7 +97,26 @@
   }
 
   function generateId() {
-    // Simple UUID-v4-like generator (no crypto dependency for max compat)
+    // UUID v4 using crypto.getRandomValues() for secure randomness
+    if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+      var bytes = new Uint8Array(16);
+      crypto.getRandomValues(bytes);
+      // Set version 4 (0100) and variant 10xx per RFC 4122
+      bytes[6] = (bytes[6] & 0x0f) | 0x40;
+      bytes[8] = (bytes[8] & 0x3f) | 0x80;
+      var hex = [];
+      for (var i = 0; i < 16; i++) {
+        hex.push(("0" + bytes[i].toString(16)).slice(-2));
+      }
+      return (
+        hex.slice(0, 4).join("") + "-" +
+        hex.slice(4, 6).join("") + "-" +
+        hex.slice(6, 8).join("") + "-" +
+        hex.slice(8, 10).join("") + "-" +
+        hex.slice(10, 16).join("")
+      );
+    }
+    // Fallback for ancient browsers without crypto API
     var d = Date.now();
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
       var r = (d + Math.random() * 16) % 16 | 0;

@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.3.0 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.3.1 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -73,4 +73,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.3.0** - Chat Widget + API Backend: producto core funcional. Widget embebible vanilla JS (public/widget/chatflow360.js) con DOM injection, bilingue, mobile responsive. API routes POST /api/chat (mensaje + respuesta IA) y GET /api/chat/[id] (historial). OpenAI integration con resolucion de key 3 niveles (per-org → global → env), encriptacion AES-256-GCM at rest. API Keys page (super_admin) + per-org key en AI Settings. Conversation lifecycle: open → pending (handoff) → resolved → closed. Token tracking (Message.tokensUsed + UsageTracking). Conversations page con datos reales (Prisma). CORS separado para dashboard vs widget. ~360+ traducciones EN/ES. Pendiente: RAG knowledge base, realtime (WebSocket/SSE), dashboard stats reales, agent messaging.
+**v0.3.1** - Widget UX + Conversation Lifecycle Cleanup: producto core funcional con mejoras de UX, sync de estado widget↔backend, y cleanup automatico en 3 capas. Widget embebible vanilla JS con maximize/minimize toggle (desktop), end conversation badge con confirmacion, y session auto-timeout de 2h via localStorage. PATCH /api/chat/[id] sincroniza cierre al backend inmediatamente (fire-and-forget desde widget). Cleanup hibrido 3 capas: (1) PATCH inmediato en accion del usuario, (2) client-side timeout 2h al proximo open, (3) pg_cron cada 6h safety net. CORS actualizado: PATCH en Access-Control-Allow-Methods. Conversation card UI: badge "closed" rojo + opacity selectiva (isFaded). API routes POST /api/chat, GET /api/chat/[id], PATCH /api/chat/[id]. OpenAI integration con resolucion de key 3 niveles, encriptacion AES-256-GCM at rest. Conversations page con datos reales (Prisma) + refresh button. ~360+ traducciones EN/ES. Pendiente: RAG knowledge base, realtime (WebSocket/SSE), dashboard stats reales, agent messaging.

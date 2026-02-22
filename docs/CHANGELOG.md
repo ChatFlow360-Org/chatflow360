@@ -2,6 +2,80 @@
 
 > Historial completo de versiones y cambios del proyecto.
 
+## v0.3.1 (2026-02-22)
+
+### Widget UX Improvements + Session Timeout + Conversation Auto-Cleanup
+
+#### Widget: Maximize/Minimize Toggle
+- **Expand/collapse button** en el header del widget (izquierda del botón X), solo visible en desktop
+- **Modo compacto:** 380x520px (default). **Modo expandido:** 420px de ancho, 100vh de alto — panel derecho full height
+- Icono cambia entre `expand` y `collapse` según el estado actual
+- Auto-colapso al cerrar el widget: el próximo open siempre inicia en modo compacto
+- Hidden en mobile (<480px) porque ya es fullscreen
+
+#### Widget: End Conversation
+- **Badge oscuro** (#0f1c2e) debajo del input, alineado a la izquierda, con texto "End conversation" / "Finalizar conversación"
+- Click en el badge muestra **diálogo de confirmación** ("Are you sure?" / "¿Estás seguro?") con botones Yes/No
+- "Yes" limpia `conversationId` + `visitorId` del localStorage y resetea el widget al estado de bienvenida (welcome screen)
+- Padding del badge: `0 16px 0`; padding del área de input: `12px 16px 6px`
+
+#### Widget: Session Auto-Timeout
+- **Timeout de 2 horas** por inactividad del visitante
+- Timestamp guardado en localStorage: `cf360_conv_ts_` + publicKey, actualizado en cada `sendMessage()`
+- Al iniciar el widget, se verifica el timestamp: si han pasado más de 2h desde el último mensaje, la conversación expirada se descarta y se muestra welcome screen
+- Comportamiento: silencioso para el visitante (no hay mensaje de error, solo pantalla de inicio limpia)
+
+#### Backend: Limpieza Automática via pg_cron
+- **Función SQL:** `close_stale_conversations()` — cierra conversaciones con status `'open'` o `'pending'` donde `last_message_at` es anterior a 2 horas
+- **Schedule:** `0 */6 * * *` — se ejecuta cada 6 horas via pg_cron en Supabase
+- **Enfoque híbrido:** timeout client-side 2h (UX inmediata) + pg_cron server-side cada 6h (limpieza de DB para conversaciones sin cliente activo)
+- Comandos de administración:
+  ```sql
+  -- Ver historial de ejecuciones
+  SELECT * FROM cron.job_run_details ORDER BY start_time DESC LIMIT 5;
+  -- Desactivar el job
+  SELECT cron.unschedule('close-stale-conversations');
+  ```
+
+#### Backend: PATCH /api/chat/[id] — Close Conversation from Widget
+- **Nuevo endpoint PATCH** en `app/api/chat/[id]/route.ts` — cierra la conversacion desde el widget
+- Valida ownership via `visitorId` (mismo patron que GET)
+- Zod schema `closeConversationSchema` en `lib/api/validate.ts` (`{ visitorId: z.string().uuid() }`)
+- Idempotente: si la conversacion ya esta cerrada, retorna `{ id, status: "closed" }` sin modificar
+- Sets `status = "closed"` en Prisma; respuesta: `{ id, status: "closed" }`
+
+#### Widget: Sync Close al Backend
+- **`closeConversationApi(conversationId)`** — llamada PATCH fire-and-forget al nuevo endpoint
+- Invocada en 2 lugares: confirmacion manual "End conversation" + session timeout auto-reset
+- Elimina la inconsistencia donde el widget mostraba cerrada pero el dashboard mostraba abierta
+
+#### CORS: Metodo PATCH Agregado
+- `Access-Control-Allow-Methods` en `lib/api/cors.ts` actualizado
+- Antes: `GET, POST, OPTIONS` → Ahora: `GET, POST, PATCH, OPTIONS`
+
+#### Dashboard: Conversation Card UI — Closed Badge + Selective Opacity
+- **Badge "closed" ahora es rojo** (color destructive) — antes usaba el mismo color neutral
+- **Selective opacity:** contenido del card a `opacity-40` para status `closed` y `resolved`, pero el badge mantiene opacity completa
+- Variable `isFaded` controla la opacidad por elemento individual en vez de aplicarla a todo el card
+
+#### Cleanup Hibrido: Modelo de 3 Capas
+- **Capa 1:** Widget PATCH al backend — inmediata, en el momento del cierre por accion del usuario
+- **Capa 2:** Client-side session timeout 2h — al proximo open del widget si pasaron 2h sin actividad
+- **Capa 3:** pg_cron `close_stale_conversations()` cada 6h — safety net para conversaciones sin cliente activo
+- Las 3 capas son complementarias; ninguna depende de las otras para funcionar
+
+#### Dashboard: Conversations Page Polish (v0.3.0 post)
+- **Refresh button** con icono RefreshCw — actualiza conversaciones sin navegación completa
+- `useTransition` + `router.refresh()` para refresh no-bloqueante
+- **Loading state visual:** cards bajan a `opacity-40` + `pointer-events-none` durante refresh
+
+#### Widget: Icon + Animation Polish (v0.3.0 post)
+- **Custom SVG icon:** speech bubble + 3 puntos animados (reemplaza icono genérico de chat)
+- **Pulse animation:** `infinite` en la burbuja del widget (no se detiene después de 3 ciclos)
+- **Icon centering fixes:** alineación correcta del SVG dentro del botón de burbuja
+
+---
+
 ## v0.3.0 (2026-02-20)
 
 ### Chat Widget + API Backend + API Key Management

@@ -11,6 +11,7 @@ import { ConversationCard } from "@/components/chat/conversation-card";
 import { ConversationFilters } from "@/components/chat/conversation-filters";
 import { ConversationDetail } from "@/components/chat/conversation-detail";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { useRealtimeConversations } from "@/hooks/use-realtime-conversations";
 import { cn } from "@/lib/utils";
 import type { Conversation } from "@/types";
 
@@ -23,12 +24,17 @@ type FilterTab = "all" | "active" | "ai" | "human";
 
 interface ConversationsClientProps {
   conversations: Conversation[];
+  /** Optional channelId to scope realtime subscription */
+  channelId?: string;
 }
 
-export function ConversationsClient({ conversations }: ConversationsClientProps) {
+export function ConversationsClient({ conversations, channelId }: ConversationsClientProps) {
   const t = useTranslations("conversations");
   const router = useRouter();
   const [isRefreshing, startRefresh] = useTransition();
+
+  // Subscribe to Supabase Realtime — auto-refreshes when new conversations arrive
+  useRealtimeConversations({ channelId });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -99,6 +105,14 @@ export function ConversationsClient({ conversations }: ConversationsClientProps)
           </p>
         </div>
         <div className="flex items-center gap-2 self-end sm:self-auto">
+          {/* Realtime live indicator */}
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+            </span>
+            {t("live")}
+          </span>
           <DateRangePicker
             dateRange={dateRange}
             onDateRangeChange={setDateRange}
