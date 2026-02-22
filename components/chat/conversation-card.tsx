@@ -23,7 +23,7 @@ export function ConversationCard({ conversation, isSelected, onClick }: Conversa
     open: { label: t("status.open"), className: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
     pending: { label: t("status.pending"), className: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
     resolved: { label: t("status.resolved"), className: "bg-sky-500/10 text-sky-500 border-sky-500/20" },
-    closed: { label: t("status.closed"), className: "bg-muted-foreground/10 text-muted-foreground border-muted-foreground/20" },
+    closed: { label: t("status.closed"), className: "bg-destructive/10 text-destructive border-destructive/20" },
   };
 
   const handlerConfig: Record<ResponderMode, { label: string; icon: typeof Bot }> = {
