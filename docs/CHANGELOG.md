@@ -31,6 +31,52 @@
 - **FIX-7: Zod error sanitization** — Zod `ZodError` details (field paths, internal messages) are no longer forwarded to the client response. API routes now return a generic `{ error: "Invalid request" }` to the client while logging full `error.errors` server-side via `console.error("[route]", error.errors)`.
 - **FIX-8: Channel and org `isActive` validation in PATCH** — `PATCH /api/chat/[id]` now verifies that both the channel and its parent organization have `isActive: true` before processing the close request. Returns 403 with `{ error: "Channel not active" }` if either is inactive. Prevents operations on deactivated tenants.
 
+#### Dashboard: Supabase Realtime — Live Conversation Detail
+
+- **`hooks/use-realtime-messages.ts`** — new custom hook for live message updates within an open conversation
+  - Subscribes to Supabase `postgres_changes` on the `messages` table filtered by `conversation_id`
+  - Listens for `INSERT` events only (new messages arriving)
+  - Debounced callback (300ms) to batch rapid consecutive events
+  - `callbackRef` pattern keeps callback fresh without re-subscribing
+  - Cleanup on unmount: clears debounce timer + removes Supabase channel
+  - `enabled` flag to pause/resume subscription
+- **`conversation-detail.tsx`** integrates `useRealtimeMessages` — when a conversation is open, new messages from the AI or agent appear automatically without manual refresh
+- **Auto-scroll chat** — messages container uses `useRef` + `scrollIntoView({ behavior: "smooth" })` after every fetch, keeping the view pinned to the latest message
+
+#### Dashboard: Conversation Detail UI Polish
+
+- **Refresh button** in conversation detail header — RefreshCw icon with spin animation during loading (same pattern as conversations list refresh)
+- **Red closed badge** — closed status badge in detail panel now uses `destructive` colors (red background) matching the card-level badges, instead of the previous neutral style
+- **Removed placeholder buttons** — "Reopen Conversation" and "Assign to Agent" buttons removed from detail panel actions. Only "Close Conversation" button remains, shown only for active (non-closed) conversations
+
+#### Default Handoff Keywords — `lib/chat/defaults.ts`
+
+- **19 bilingual keywords** (10 EN + 9 ES) pre-loaded as defaults for new organizations
+  - EN: human, agent, real person, speak to someone, talk to someone, representative, operator, live agent, supervisor, manager
+  - ES: humano, agente, persona real, hablar con alguien, representante, operador, agente en vivo, supervisor, gerente
+- **AI Settings UI** pre-populates the handoff keywords textarea with these defaults when no custom keywords exist
+- **Server action `createOrganization`** uses `DEFAULT_HANDOFF_KEYWORDS` as fallback when creating AiSettings for a new org
+- `as const` tuple type + `DefaultHandoffKeyword` type for type safety
+
+#### RBAC: Org Admin Access to AI Settings
+
+- **`upsertAiSettings`** server action now allows org members (not just super_admin) to edit **business params**:
+  - `systemPrompt` — AI behavior instructions
+  - `handoffKeywords` — keywords that trigger human takeover
+  - `handoffEnabled` — toggle for human takeover feature
+- **Technical params remain super_admin only:**
+  - `model` — OpenAI model selection (gpt-4o-mini, gpt-4o, etc.)
+  - `temperature` — response creativity slider
+  - `maxTokens` — maximum response length
+  - `encryptedApiKey` / `apiKeyHint` — per-org API key
+- **Quick Settings sidebar** in AI Settings page: made **read-only for org_admin** — switch disabled with lock indicator icon, values visible but not editable
+
+#### Upstash Redis — Deferred
+
+- Rate limiting via `@upstash/ratelimit` officially deferred to production phase
+- Not needed during MVP/testing with known test users
+- Architecture section documents the planned implementation for when production traffic arrives
+
 ---
 
 ## v0.3.1 (2026-02-22)

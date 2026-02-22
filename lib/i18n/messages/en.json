@@ -134,7 +134,8 @@
       "aiModel": "AI Model",
       "temperature": "Temperature",
       "maxTokens": "Max Tokens",
-      "humanTakeover": "Human Takeover"
+      "humanTakeover": "Human Takeover",
+      "readOnly": "Managed by platform admin"
     },
     "systemPrompt": {
       "title": "Default System Prompt",

@@ -134,7 +134,8 @@
       "aiModel": "Modelo de IA",
       "temperature": "Temperatura",
       "maxTokens": "Tokens Maximos",
-      "humanTakeover": "Transferencia a Humano"
+      "humanTakeover": "Transferencia a Humano",
+      "readOnly": "Administrado por el admin de plataforma"
     },
     "systemPrompt": {
       "title": "Prompt del Sistema por Defecto",

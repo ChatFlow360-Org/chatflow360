@@ -88,6 +88,7 @@ chatflow360-dashboard/
 │   ├── chat/
 │   │   ├── ai.ts               # generateAiResponse (OpenAI + context building)
 │   │   ├── config.ts           # resolveChannelConfig (herencia channel → org)
+│   │   ├── defaults.ts         # DEFAULT_HANDOFF_KEYWORDS (19 bilingual EN/ES)
 │   │   └── handoff.ts          # detectHandoff (keyword matching)
 │   ├── crypto/
 │   │   └── encryption.ts       # AES-256-GCM encrypt/decrypt/maskApiKey
@@ -111,7 +112,8 @@ chatflow360-dashboard/
 │   │   └── admin.ts            # Admin client (SERVICE_ROLE_KEY)
 │   └── utils/
 ├── hooks/
-│   └── use-realtime-conversations.ts  # Supabase Realtime subscription hook
+│   ├── use-realtime-conversations.ts  # Supabase Realtime for conversations list
+│   └── use-realtime-messages.ts       # Supabase Realtime for conversation detail messages
 ├── middleware.ts                # Supabase auth + next-intl locale routing
 ├── prisma/
 │   ├── schema.prisma
@@ -247,6 +249,22 @@ const getChannelConfig = (channel: Channel, orgAiSettings: AiSettings) => ({
 | Server action | `upsertAiSettings` en `lib/admin/actions.ts` | Zod validation, upsert en `ai_settings` tabla |
 
 **Layout:** dos columnas — contenido principal (tabs) a la izquierda, Quick Settings sidebar (model, temperature, max tokens, handoff toggle) a la derecha. Preview widget estilo WhatsApp para previsualizar el comportamiento de la IA.
+
+**RBAC Split — Business vs Technical params:**
+
+| Param category | Who can edit | Fields |
+|----------------|-------------|--------|
+| **Business params** | super_admin + org_admin | `systemPrompt`, `handoffKeywords`, `handoffEnabled` |
+| **Technical params** | super_admin only | `model`, `temperature`, `maxTokens`, `encryptedApiKey` / `apiKeyHint` |
+
+- `upsertAiSettings` server action checks `isSuperAdmin` — if false, only business params are written to DB; technical params are silently ignored
+- **Quick Settings sidebar:** read-only for org_admin (switch disabled, lock indicator shown). Super admin sees full edit controls.
+
+**Default handoff keywords** (`lib/chat/defaults.ts`):
+
+- 19 bilingual keywords (10 EN + 9 ES) pre-loaded for new orgs
+- AI Settings UI pre-populates textarea with defaults when no custom keywords exist
+- `createOrganization` server action uses `DEFAULT_HANDOFF_KEYWORDS` when creating initial AiSettings
 
 ### Widget Embed
 
@@ -385,6 +403,62 @@ return () => { supabase.removeChannel(channel); };
 
 **Fallback:** The existing manual refresh button (`useTransition` + `router.refresh()`) remains as a fallback for cases where the Realtime connection drops.
 
+### Supabase Realtime — Live Conversation Detail (Messages)
+
+The Conversation Detail panel uses a second Realtime hook to display new messages in real-time as they arrive (e.g., AI responses, agent messages).
+
+**Architecture:**
+
+```
+Supabase postgres_changes INSERT on messages table
+    → useRealtimeMessages hook (client, filtered by conversation_id)
+        → debounced callback (300ms)
+            → re-fetch messages via server action
+                → React re-renders message list
+                    → auto-scroll to bottom via scrollIntoView
+```
+
+**Hook: `hooks/use-realtime-messages.ts`**
+
+```typescript
+// Subscribes to postgres_changes on the messages table
+// Filtered by conversation_id — only receives messages for the open conversation
+// Debounces callback 300ms to batch rapid events
+const realtimeChannel = supabase
+  .channel(`messages-realtime:${conversationId}`)
+  .on('postgres_changes', {
+    event: 'INSERT',               // Only new messages (not updates/deletes)
+    schema: 'public',
+    table: 'messages',
+    filter: `conversation_id=eq.${conversationId}`
+  }, () => {
+    debouncedCallback();           // Triggers parent's re-fetch
+  })
+  .subscribe();
+
+// Cleanup on unmount
+return () => {
+  clearTimeout(debounceTimerRef.current);
+  supabase.removeChannel(channelRef.current);
+};
+```
+
+**Design decisions:**
+
+| Decision | Rationale |
+|----------|-----------|
+| `INSERT` only (not `*`) | Messages are append-only; no need to listen for UPDATE/DELETE |
+| `callbackRef` pattern | Keeps the callback fresh across re-renders without re-subscribing |
+| `enabled` flag | Allows pausing the subscription (e.g., when panel is closed) |
+| `scrollIntoView({ behavior: "smooth" })` | Auto-scrolls chat to latest message after each fetch |
+
+**Dual Realtime hooks (summary):**
+
+| Hook | Table | Events | Scope | Used in |
+|------|-------|--------|-------|---------|
+| `useRealtimeConversations` | `conversations` | INSERT, UPDATE, DELETE | org-wide or channel-scoped | Conversations list page |
+| `useRealtimeMessages` | `messages` | INSERT only | single conversation_id | Conversation detail panel |
+
 ### API Key Encryption
 
 **Algoritmo:** AES-256-GCM (Node.js crypto nativo, zero dependencies)
@@ -485,31 +559,32 @@ Los tokens se registran en cada mensaje IA (`Message.tokensUsed`) y se resumen e
 
 ## Alcance del MVP
 
-### Implementado (v0.3.0)
+### Implementado (v0.3.2)
 
 - Multi-tenant con Super Admin (CRUD orgs, users, channels)
-- Website widget embebible (vanilla JS, DOM injection, bilingue)
+- Website widget embebible (vanilla JS, DOM injection, bilingue, maximize/minimize, end conversation, session timeout)
 - Respuestas IA con OpenAI (GPT-4o-mini default)
-- Human takeover (keyword-based, bilateral EN/ES)
+- Human takeover (keyword-based, bilateral EN/ES, 19 default keywords)
 - API key management (AES-256-GCM, 3-tier resolution, UI-based)
-- Conversations page con datos reales (Prisma)
+- Conversations page con datos reales (Prisma) + Supabase Realtime (live updates)
+- Conversation detail with Realtime messages (live message updates via postgres_changes)
 - Dashboard basico (5 stat cards, top pages, recent conversations — aun mock)
-- AI Settings page (instructions, model config, handoff, preview widget)
+- AI Settings page (instructions, model config, handoff, preview widget) + RBAC split (business vs technical params)
 - Autenticacion real (Supabase Auth — login, logout, forgot/update password)
 - Bilingue (EN/ES) — ~360+ strings traducidas
 - Token tracking (Message.tokensUsed + UsageTracking monthly)
-- Security hardened (CSP, HSTS, crypto passwords, transaction atomicity)
+- Security hardened (CSP, HSTS, crypto passwords, transaction atomicity, OWASP widget API hardening)
+- 3-layer conversation cleanup (PATCH + client timeout + pg_cron)
 
 ### Pendiente (Post-MVP)
 
 - RAG/Knowledge Base (pgvector) — tab dice "coming soon"
-- WebSocket/SSE realtime (MVP usa polling 5s)
 - Enviar mensajes como agente desde dashboard
-- Rate limiting (@upstash/ratelimit)
+- Rate limiting (@upstash/ratelimit — deferred to production phase)
 - Dashboard con datos reales (stat cards, charts)
 - Reports page
 - Push notifications / email notifications
-- RBAC enforcement (roles stored but not enforced)
+- RBAC enforcement middleware (basic business/technical split done, full RBAC pending)
 - Canales WhatsApp / Facebook
 - File attachments, typing indicators, read receipts
 - Integraciones n8n (automatizaciones laterales)

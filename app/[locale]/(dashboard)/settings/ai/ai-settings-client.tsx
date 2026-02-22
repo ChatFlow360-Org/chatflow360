@@ -6,6 +6,7 @@ import {
   Eye,
   X,
   Building2,
+  Lock,
 } from "lucide-react";
 import {
   Card,
@@ -351,9 +352,19 @@ export function AiSettingsClient({
                 {/* Quick Settings */}
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm">
-                      {t("quickSettings.title")}
-                    </CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm">
+                        {t("quickSettings.title")}
+                      </CardTitle>
+                      {!isSuperAdmin && (
+                        <Lock className="h-3.5 w-3.5 text-muted-foreground/50" />
+                      )}
+                    </div>
+                    {!isSuperAdmin && (
+                      <CardDescription className="text-[10px]">
+                        {t("quickSettings.readOnly")}
+                      </CardDescription>
+                    )}
                   </CardHeader>
                   <CardContent className="space-y-0">
                     {/* AI Model */}
@@ -395,6 +406,7 @@ export function AiSettingsClient({
                       <Switch
                         checked={handoffEnabled}
                         onCheckedChange={setHandoffEnabled}
+                        disabled={!isSuperAdmin}
                       />
                     </div>
                   </CardContent>
