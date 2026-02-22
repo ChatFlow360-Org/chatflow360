@@ -6,7 +6,6 @@ import {
   Eye,
   X,
   Building2,
-  Lock,
 } from "lucide-react";
 import {
   Card,
@@ -349,68 +348,59 @@ export function AiSettingsClient({
                   </CardContent>
                 </Card>
 
-                {/* Quick Settings */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
+                {/* Quick Settings — super_admin only */}
+                {isSuperAdmin && (
+                  <Card>
+                    <CardHeader className="pb-3">
                       <CardTitle className="text-sm">
                         {t("quickSettings.title")}
                       </CardTitle>
-                      {!isSuperAdmin && (
-                        <Lock className="h-3.5 w-3.5 text-muted-foreground/50" />
-                      )}
-                    </div>
-                    {!isSuperAdmin && (
-                      <CardDescription className="text-[10px]">
-                        {t("quickSettings.readOnly")}
-                      </CardDescription>
-                    )}
-                  </CardHeader>
-                  <CardContent className="space-y-0">
-                    {/* AI Model */}
-                    <div className="flex items-center justify-between py-2.5">
-                      <span className="text-xs text-muted-foreground">
-                        {t("quickSettings.aiModel")}
-                      </span>
-                      <span className="text-xs font-medium">
-                        {modelDisplay}
-                      </span>
-                    </div>
-                    <Separator />
+                    </CardHeader>
+                    <CardContent className="space-y-0">
+                      {/* AI Model */}
+                      <div className="flex items-center justify-between py-2.5">
+                        <span className="text-xs text-muted-foreground">
+                          {t("quickSettings.aiModel")}
+                        </span>
+                        <span className="text-xs font-medium">
+                          {modelDisplay}
+                        </span>
+                      </div>
+                      <Separator />
 
-                    {/* Temperature */}
-                    <div className="flex items-center justify-between py-2.5">
-                      <span className="text-xs text-muted-foreground">
-                        {t("quickSettings.temperature")}
-                      </span>
-                      <span className="text-xs font-medium text-cta">
-                        {temperature.toFixed(1)}
-                      </span>
-                    </div>
-                    <Separator />
+                      {/* Temperature */}
+                      <div className="flex items-center justify-between py-2.5">
+                        <span className="text-xs text-muted-foreground">
+                          {t("quickSettings.temperature")}
+                        </span>
+                        <span className="text-xs font-medium text-cta">
+                          {temperature.toFixed(1)}
+                        </span>
+                      </div>
+                      <Separator />
 
-                    {/* Max Tokens */}
-                    <div className="flex items-center justify-between py-2.5">
-                      <span className="text-xs text-muted-foreground">
-                        {t("quickSettings.maxTokens")}
-                      </span>
-                      <span className="text-xs font-medium">{maxTokens}</span>
-                    </div>
-                    <Separator />
+                      {/* Max Tokens */}
+                      <div className="flex items-center justify-between py-2.5">
+                        <span className="text-xs text-muted-foreground">
+                          {t("quickSettings.maxTokens")}
+                        </span>
+                        <span className="text-xs font-medium">{maxTokens}</span>
+                      </div>
+                      <Separator />
 
-                    {/* Human Takeover */}
-                    <div className="flex items-center justify-between py-2.5">
-                      <span className="text-xs text-muted-foreground">
-                        {t("quickSettings.humanTakeover")}
-                      </span>
-                      <Switch
-                        checked={handoffEnabled}
-                        onCheckedChange={setHandoffEnabled}
-                        disabled={!isSuperAdmin}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
+                      {/* Human Takeover */}
+                      <div className="flex items-center justify-between py-2.5">
+                        <span className="text-xs text-muted-foreground">
+                          {t("quickSettings.humanTakeover")}
+                        </span>
+                        <Switch
+                          checked={handoffEnabled}
+                          onCheckedChange={setHandoffEnabled}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </div>
           </form>
