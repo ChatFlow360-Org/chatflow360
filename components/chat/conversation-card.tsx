@@ -34,20 +34,20 @@ export function ConversationCard({ conversation, isSelected, onClick }: Conversa
   const status = statusConfig[conversation.status];
   const handler = handlerConfig[conversation.responderMode];
   const HandlerIcon = handler.icon;
+  const isFaded = conversation.status === "closed" || conversation.status === "resolved";
 
   return (
     <Card
       className={cn(
         "cursor-pointer border-border bg-card transition-all hover:-translate-y-0.5 hover:border-cta/30",
-        isSelected && "border-cta ring-1 ring-cta/20",
-        (conversation.status === "closed" || conversation.status === "resolved") && "opacity-60"
+        isSelected && "border-cta ring-1 ring-cta/20"
       )}
       onClick={onClick}
     >
       <CardContent className="p-4">
         {/* Header: Name + Status */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className={cn("flex items-center gap-2", isFaded && "opacity-60")}>
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-brand-light/10">
               <span className="text-xs font-semibold text-primary-brand-light">
                 {conversation.visitorName.split(" ").map((n) => n[0]).join("")}
@@ -61,14 +61,14 @@ export function ConversationCard({ conversation, isSelected, onClick }: Conversa
         </div>
 
         {/* Message Preview */}
-        <p className="mt-3 line-clamp-2 text-xs text-muted-foreground leading-relaxed">
+        <p className={cn("mt-3 line-clamp-2 text-xs text-muted-foreground leading-relaxed", isFaded && "opacity-60")}>
           {conversation.lastMessage}
         </p>
 
         <Separator className="my-3" />
 
         {/* Footer: Handler + Meta */}
-        <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+        <div className={cn("flex items-center justify-between text-[11px] text-muted-foreground", isFaded && "opacity-60")}>
           <div className="flex items-center gap-1">
             <HandlerIcon className="h-3 w-3" />
             <span>{handler.label}</span>
