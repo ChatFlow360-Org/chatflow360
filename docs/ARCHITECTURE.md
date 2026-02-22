@@ -110,6 +110,8 @@ chatflow360-dashboard/
 │   │   ├── server.ts           # Server client (auth verification)
 │   │   └── admin.ts            # Admin client (SERVICE_ROLE_KEY)
 │   └── utils/
+├── hooks/
+│   └── use-realtime-conversations.ts  # Supabase Realtime subscription hook
 ├── middleware.ts                # Supabase auth + next-intl locale routing
 ├── prisma/
 │   ├── schema.prisma
@@ -332,6 +334,57 @@ SELECT * FROM cron.job_run_details ORDER BY start_time DESC LIMIT 5; -- historia
 SELECT cron.unschedule('close-stale-conversations');                  -- desactivar
 ```
 
+### Supabase Realtime — Live Dashboard Updates
+
+The Conversations page uses Supabase Realtime to reflect new and updated conversations without requiring a full page reload.
+
+**Architecture:**
+
+```
+Supabase postgres_changes event
+    → useRealtimeConversations hook (client)
+        → debounced router.refresh() (300ms)
+            → Next.js triggers server re-fetch
+                → Prisma query returns updated Conversation[]
+                    → React re-renders ConversationsClient
+```
+
+**Hook: `hooks/use-realtime-conversations.ts`**
+
+```typescript
+// Subscribes to postgres_changes on the conversations table
+// Debounces router.refresh() to batch rapid consecutive events
+const channel = supabase
+  .channel('conversations-live')
+  .on('postgres_changes', {
+    event: '*',                  // INSERT, UPDATE, DELETE
+    schema: 'public',
+    table: 'conversations',
+    filter: orgId ? `org_id=eq.${orgId}` : undefined
+  }, () => {
+    // Debounced 300ms to batch rapid changes
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => router.refresh(), 300);
+  })
+  .subscribe();
+
+// Cleanup on unmount
+return () => { supabase.removeChannel(channel); };
+```
+
+**Design decisions:**
+
+| Decision | Rationale |
+|----------|-----------|
+| `router.refresh()` instead of local state update | Server component owns the data; client should not duplicate server logic |
+| 300ms debounce | Prevents multiple rapid refreshes when a conversation + message are both inserted in quick succession |
+| `postgres_changes` (not broadcast) | Works without custom server code — Supabase listens to the DB WAL directly |
+| `useRef` for debounce timer | Avoids stale closure issues with `setTimeout` inside event callbacks |
+
+**Live indicator:** A green pulse dot + "Live" text badge renders in the Conversations page header when the Realtime subscription is active. This gives operators a clear signal that the view is auto-updating.
+
+**Fallback:** The existing manual refresh button (`useTransition` + `router.refresh()`) remains as a fallback for cases where the Realtime connection drops.
+
 ### API Key Encryption
 
 **Algoritmo:** AES-256-GCM (Node.js crypto nativo, zero dependencies)
@@ -529,3 +582,59 @@ Automatizaciones laterales (con n8n, opcional):
 - Keyword detectado → notificar en Slack
 
 **Razon:** El flujo critico (mensaje → IA → respuesta) debe tener la menor latencia posible y cero dependencias externas. n8n agrega un hop adicional y un punto de fallo innecesario para el chat. Solo se justifica para workflows que no son time-sensitive.
+
+## Future Improvements (Post-MVP)
+
+### Rate Limiting — Upstash Redis
+
+> **Status:** Planned for production phase. Not needed during MVP testing.
+
+When real production traffic arrives, the widget API endpoints (`/api/chat`) will need per-IP rate limiting to protect against:
+
+- **API abuse:** automated scripts hammering the chat endpoint
+- **OpenAI token exhaustion:** a single bad actor generating thousands of AI responses
+- **Cost amplification:** overage charges from inflated conversation counts
+
+**Planned implementation:**
+
+```typescript
+// lib/api/rate-limit.ts
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(20, "1 m"), // 20 requests/min per IP
+});
+
+// In POST /api/chat route handler:
+const ip = request.headers.get("x-forwarded-for") ?? "anonymous";
+const { success } = await ratelimit.limit(ip);
+if (!success) return new Response(
+  JSON.stringify({ error: "Too many requests" }),
+  { status: 429, headers: corsHeaders }
+);
+```
+
+**Dependencies:**
+
+```bash
+npm install @upstash/ratelimit @upstash/redis
+```
+
+**Environment variables required:**
+
+```env
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+```
+
+**Limits (proposed):**
+
+| Endpoint | Limit | Window | Strategy |
+|----------|-------|--------|----------|
+| `POST /api/chat` | 20 requests | 1 minute per IP | Sliding window |
+| `GET /api/chat/[id]` | 60 requests | 1 minute per IP | Sliding window |
+| `PATCH /api/chat/[id]` | 10 requests | 1 minute per IP | Sliding window |
+
+**Why deferred:** During MVP/testing phase there are only known test users. Adding Redis introduces an additional paid dependency and cold-start latency on Vercel edge. This should be activated before any public launch or marketing campaign.

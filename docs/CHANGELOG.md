@@ -2,6 +2,37 @@
 
 > Historial completo de versiones y cambios del proyecto.
 
+## v0.3.2 (2026-02-22)
+
+### Supabase Realtime + OWASP Security Hardening (Widget API)
+
+#### Dashboard: Supabase Realtime — Live Conversations
+
+- **`hooks/use-realtime-conversations.ts`** — new custom hook for live conversation updates
+  - Subscribes to Supabase `postgres_changes` on the `conversations` table (channel-scoped or org-scoped)
+  - On any INSERT/UPDATE/DELETE event, triggers a debounced `router.refresh()` (300ms debounce to batch rapid changes)
+  - Cleanup on unmount: removes Supabase channel subscription via `supabase.removeChannel()`
+  - Uses `useRef` for debounce timer to avoid stale closures
+- **Conversations page** (`conversations-client.tsx`) now shows a **Live indicator** badge (green pulse dot + "Live" label) when Realtime is active
+- Data flow: `postgres_changes` event → debounced `router.refresh()` → Next.js server re-fetch → updated `Conversation[]` passed to client component
+- No WebSocket/SSE implementation needed: Supabase Realtime handles the persistent connection; Next.js router.refresh() triggers the server-side Prisma re-fetch
+
+#### OWASP Security Hardening — Widget API Endpoints
+
+- **FIX-1: CORS method sync** — `Access-Control-Allow-Methods` in `lib/api/cors.ts` now matches `next.config.ts` header definition exactly (`GET, POST, PATCH, OPTIONS`). Previously PATCH was missing from one of the two locations, causing inconsistent preflight behavior.
+- **FIX-2: UUID format validation on path params** — `app/api/chat/[id]/route.ts` now validates the `conversationId` path parameter with `z.string().uuid()` before any DB query. Returns 400 with `{ error: "Invalid conversation ID" }` on malformed input. Prevents DB noise and potential injection via path.
+- **FIX-3: visitorId Zod UUID validation** — `closeConversationSchema` and `getHistorySchema` in `lib/api/validate.ts` enforce `z.string().uuid()` for `visitorId`. Rejects any non-UUID format before reaching the database.
+- **FIX-4: Widget uses `crypto.getRandomValues()` for visitorId** — `public/widget/chatflow360.js` now generates `visitorId` using `crypto.getRandomValues()` (Web Crypto API) instead of `Math.random()`. Generates a proper UUID v4 format: `xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx`. Consistent with server-side UUID validation.
+- **FIX-5: Body size limits** — explicit request body size limits enforced in API route handlers:
+  - `POST /api/chat`: 16KB limit (accommodates message 1-2000 chars + metadata with margin)
+  - `PATCH /api/chat/[id]`: 1KB limit (body is only `{ visitorId: UUID }`)
+  - Returns 413 with `{ error: "Request too large" }` if exceeded
+- **FIX-6: Safe JSON parsing** — all API route handlers now wrap `await request.json()` in a `try/catch`. Returns 400 with `{ error: "Invalid JSON" }` on parse failure instead of an unhandled 500 error.
+- **FIX-7: Zod error sanitization** — Zod `ZodError` details (field paths, internal messages) are no longer forwarded to the client response. API routes now return a generic `{ error: "Invalid request" }` to the client while logging full `error.errors` server-side via `console.error("[route]", error.errors)`.
+- **FIX-8: Channel and org `isActive` validation in PATCH** — `PATCH /api/chat/[id]` now verifies that both the channel and its parent organization have `isActive: true` before processing the close request. Returns 403 with `{ error: "Channel not active" }` if either is inactive. Prevents operations on deactivated tenants.
+
+---
+
 ## v0.3.1 (2026-02-22)
 
 ### Widget UX Improvements + Session Timeout + Conversation Auto-Cleanup

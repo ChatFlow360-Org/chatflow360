@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.3.1 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.3.2 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -73,4 +73,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.3.1** - Widget UX + Conversation Lifecycle Cleanup: producto core funcional con mejoras de UX, sync de estado widget↔backend, y cleanup automatico en 3 capas. Widget embebible vanilla JS con maximize/minimize toggle (desktop), end conversation badge con confirmacion, y session auto-timeout de 2h via localStorage. PATCH /api/chat/[id] sincroniza cierre al backend inmediatamente (fire-and-forget desde widget). Cleanup hibrido 3 capas: (1) PATCH inmediato en accion del usuario, (2) client-side timeout 2h al proximo open, (3) pg_cron cada 6h safety net. CORS actualizado: PATCH en Access-Control-Allow-Methods. Conversation card UI: badge "closed" rojo + opacity selectiva (isFaded). API routes POST /api/chat, GET /api/chat/[id], PATCH /api/chat/[id]. OpenAI integration con resolucion de key 3 niveles, encriptacion AES-256-GCM at rest. Conversations page con datos reales (Prisma) + refresh button. ~360+ traducciones EN/ES. Pendiente: RAG knowledge base, realtime (WebSocket/SSE), dashboard stats reales, agent messaging.
+**v0.3.2** - Realtime + OWASP Security Hardening: Supabase Realtime integrado en Conversations page via hook `useRealtimeConversations` (postgres_changes subscription + debounced router.refresh() + Live indicator badge). OWASP hardening en widget API: UUID path param validation, body size limits (16KB POST, 1KB PATCH), safe JSON parsing, Zod error sanitization (generic to client, details logged server-side), crypto.getRandomValues() for widget visitorId, channel/org isActive validation in PATCH, CORS method sync. pg_cron `close_stale_conversations()` activo en Supabase (cada 6h, cierra convs open/pending con 2h+ sin actividad). 3-layer conversation cleanup: PATCH inmediato + client timeout 2h + pg_cron safety net. API routes POST /api/chat, GET /api/chat/[id], PATCH /api/chat/[id]. OpenAI integration con resolucion de key 3 niveles, encriptacion AES-256-GCM at rest. Conversations page con datos reales (Prisma) + refresh button + Live badge. ~360+ traducciones EN/ES. Pendiente: RAG knowledge base, dashboard stats reales, agent messaging, rate limiting (Upstash Redis — deferred a fase produccion).

@@ -1,9 +1,9 @@
 # ChatFlow360 - Security Checklist
 
-> Auditoria de seguridad del proyecto. Actualizado en v0.2.3 (2026-02-19).
+> Auditoria de seguridad del proyecto. Actualizado en v0.3.2 (2026-02-22).
 > Audit completo: `docs/SECURITY-AUDIT-v0.2.2.md` (21 findings, OWASP ASVS v4.0)
 
-## Estado del Frontend (v0.2.3)
+## Estado del Frontend (v0.3.2)
 
 **Dependencias:** 29 paquetes, 0 vulnerabilidades conocidas
 **Buenas practicas implementadas:**
@@ -25,6 +25,13 @@
 - Error logging con `console.error("[functionName]")` en todos los catch blocks
 - Prisma logging: `["error"]` en prod, `["query", "error", "warn"]` en dev
 - `.env.example` creado como template de variables
+- UUID path param validation: `z.string().uuid()` on all widget API route params
+- Body size limits: 16KB (POST /api/chat), 1KB (PATCH /api/chat/[id])
+- Safe JSON parsing: try/catch on all `request.json()` calls, 400 on invalid JSON
+- Zod error sanitization: generic message to client, full details logged server-side only
+- Widget `visitorId` generated with `crypto.getRandomValues()` (Web Crypto API, UUID v4)
+- Channel + org `isActive` validation in PATCH endpoint (403 if either is inactive)
+- CORS method sync: `lib/api/cors.ts` and `next.config.ts` now declare identical allowed methods
 
 ---
 
@@ -59,14 +66,27 @@
 | LOW-05 | Bajo | Catch blocks sin logging | `console.error("[fn]")` en 10 catch blocks |
 | LOW-06 | Bajo | Prisma sin logging | `log: ["error"]` prod, `["query","error","warn"]` dev |
 
+### Resuelto en v0.3.2 (OWASP Hardening — Widget API)
+
+| ID | Severidad | Issue | Solucion |
+|----|-----------|-------|----------|
+| FIX-1 | Medio | CORS method mismatch between `cors.ts` and `next.config.ts` | Synced `Access-Control-Allow-Methods` to `GET, POST, PATCH, OPTIONS` in both locations |
+| FIX-2 | Medio | No UUID validation on `conversationId` path param | `z.string().uuid()` parse before any DB query in `app/api/chat/[id]/route.ts`; returns 400 on invalid input |
+| FIX-3 | Medio | `visitorId` not validated as UUID format | `closeConversationSchema` and `getHistorySchema` in `lib/api/validate.ts` now enforce `z.string().uuid()` |
+| FIX-4 | Alto | Widget used `Math.random()` to generate `visitorId` | Replaced with `crypto.getRandomValues()` (Web Crypto API); produces proper UUID v4 |
+| FIX-5 | Medio | No body size limits on widget API routes | 16KB limit on `POST /api/chat`, 1KB limit on `PATCH /api/chat/[id]`; returns 413 if exceeded |
+| FIX-6 | Bajo | `request.json()` not wrapped in try/catch | All API route handlers now return 400 `{ error: "Invalid JSON" }` on parse failure |
+| FIX-7 | Medio | Zod error details leaked to client | Generic `{ error: "Invalid request" }` returned to client; full `error.errors` logged server-side only |
+| FIX-8 | Medio | PATCH endpoint did not validate channel/org `isActive` | Added `isActive` check for channel and org; returns 403 `{ error: "Channel not active" }` if either is inactive |
+
 ---
 
 ## Pendiente: Phase 2 (Pre-Launch)
 
 | ID | Severidad | Issue | Accion | Esfuerzo |
 |----|-----------|-------|--------|----------|
-| MED-02 | Medio | Sin rate limiting en login | `@upstash/ratelimit` + Redis (Supabase tiene proteccion basica) | 30-60 min |
-| MED-03 | Medio | Sin CORS infrastructure | Crear `lib/api/cors.ts` con allowlist (usar cuando widget API exista) | 20 min |
+| MED-02 | Medio | Sin rate limiting en login y widget API | `@upstash/ratelimit` + Redis — deferred to production phase (not needed during MVP/testing). Will use `@upstash/ratelimit` for per-IP limiting on `/api/chat` endpoints to protect against API abuse and OpenAI token exhaustion. | 30-60 min |
+| ~~MED-03~~ | ~~Medio~~ | ~~Sin CORS infrastructure~~ | **Resuelto en v0.3.1/v0.3.2** — `lib/api/cors.ts` implementado con PATCH support; synced with `next.config.ts` | Done |
 
 ## Pendiente: Phase 3 (Cuando Conecte Backend)
 
