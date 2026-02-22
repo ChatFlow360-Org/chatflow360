@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Info, X, Send, Bot, User, MessageSquare, Clock, Globe, Calendar } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Info, X, Send, Bot, User, MessageSquare, Clock, Globe, Calendar, RefreshCw } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import {
   DrawerDescription,
 } from "@/components/ui/drawer";
 import { ChatMessage } from "@/components/chat/chat-message";
+import { useRealtimeMessages } from "@/hooks/use-realtime-messages";
 import { getConversationMessages } from "@/lib/admin/actions";
 import { formatRelativeTime } from "@/lib/utils/format";
 import type { Conversation, ConversationStatus, ResponderMode, Message } from "@/types";
@@ -31,27 +32,34 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch messages when conversation changes
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-
-    getConversationMessages(conversation.id)
-      .then((msgs) => {
-        if (!cancelled) {
-          setMessages(msgs);
-          setLoading(false);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+  // Fetch messages (used on mount and for refresh)
+  const fetchMessages = useCallback(async (showSpinner = false) => {
+    if (showSpinner) setRefreshing(true);
+    try {
+      const msgs = await getConversationMessages(conversation.id);
+      setMessages(msgs);
+    } catch {
+      // silently fail
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, [conversation.id]);
+
+  // Initial fetch when conversation changes
+  useEffect(() => {
+    setLoading(true);
+    fetchMessages();
+  }, [fetchMessages]);
+
+  // Realtime: auto-refresh when new messages arrive
+  useRealtimeMessages({
+    conversationId: conversation.id,
+    onNewMessage: () => fetchMessages(false),
+    enabled: conversation.status !== "closed",
+  });
 
   const statusConfig: Record<ConversationStatus, { label: string; className: string }> = {
     open: { label: t("status.open"), className: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
@@ -205,9 +213,20 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
               {status.label}
             </Badge>
           </div>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => fetchMessages(true)}
+              disabled={refreshing}
+            >
+              <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Messages */}
