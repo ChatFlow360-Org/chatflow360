@@ -47,7 +47,7 @@ export function ConversationCard({ conversation, isSelected, onClick }: Conversa
       <CardContent className="p-4">
         {/* Header: Name + Status */}
         <div className="flex items-center justify-between">
-          <div className={cn("flex items-center gap-2", isFaded && "opacity-60")}>
+          <div className={cn("flex items-center gap-2", isFaded && "opacity-40")}>
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-brand-light/10">
               <span className="text-xs font-semibold text-primary-brand-light">
                 {conversation.visitorName.split(" ").map((n) => n[0]).join("")}
@@ -61,14 +61,14 @@ export function ConversationCard({ conversation, isSelected, onClick }: Conversa
         </div>
 
         {/* Message Preview */}
-        <p className={cn("mt-3 line-clamp-2 text-xs text-muted-foreground leading-relaxed", isFaded && "opacity-60")}>
+        <p className={cn("mt-3 line-clamp-2 text-xs text-muted-foreground leading-relaxed", isFaded && "opacity-40")}>
           {conversation.lastMessage}
         </p>
 
         <Separator className="my-3" />
 
         {/* Footer: Handler + Meta */}
-        <div className={cn("flex items-center justify-between text-[11px] text-muted-foreground", isFaded && "opacity-60")}>
+        <div className={cn("flex items-center justify-between text-[11px] text-muted-foreground", isFaded && "opacity-40")}>
           <div className="flex items-center gap-1">
             <HandlerIcon className="h-3 w-3" />
             <span>{handler.label}</span>
