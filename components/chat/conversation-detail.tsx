@@ -169,25 +169,16 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
         </div>
       </div>
 
-      <Separator />
-
-      {/* Quick Actions */}
-      <div className="space-y-2">
-        {conversation.status !== "closed" && conversation.status !== "resolved" ? (
-          <Button variant="outline" size="sm" className="w-full text-xs">
-            {t("detail.closeConversation")}
-          </Button>
-        ) : (
-          <Button variant="outline" size="sm" className="w-full text-xs">
-            {t("detail.reopenConversation")}
-          </Button>
-        )}
-        {conversation.responderMode === "ai" && conversation.status !== "closed" && (
-          <Button variant="outline" size="sm" className="w-full text-xs">
-            {t("detail.assignToAgent")}
-          </Button>
-        )}
-      </div>
+      {conversation.status !== "closed" && conversation.status !== "resolved" && (
+        <>
+          <Separator />
+          <div className="space-y-2">
+            <Button variant="outline" size="sm" className="w-full text-xs">
+              {t("detail.closeConversation")}
+            </Button>
+          </div>
+        </>
+      )}
     </>
   );
 
