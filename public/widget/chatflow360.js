@@ -875,7 +875,8 @@
     var body = {
       publicKey: publicKey,
       visitorId: visitorId,
-      message: text
+      message: text,
+      pageUrl: window.location.href
     };
 
     if (state.conversationId) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Info, X, Send, Bot, User, MessageSquare, Clock, Globe, Calendar, RefreshCw } from "lucide-react";
+import { Info, X, Send, Bot, User, MessageSquare, Clock, Globe, Calendar, RefreshCw, ExternalLink } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,7 @@ import {
 import { ChatMessage } from "@/components/chat/chat-message";
 import { useRealtimeMessages } from "@/hooks/use-realtime-messages";
 import { useTypingIndicator } from "@/hooks/use-typing-indicator";
-import { getConversationMessages, sendAgentMessage, getTypingChannel } from "@/lib/admin/actions";
+import { getConversationMessages, sendAgentMessage, getTypingChannel, closeConversation } from "@/lib/admin/actions";
 import { formatRelativeTime } from "@/lib/utils/format";
 import type { Conversation, ConversationStatus, ResponderMode, Message } from "@/types";
 
@@ -36,6 +36,7 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
   const [refreshing, setRefreshing] = useState(false);
   const [agentMessage, setAgentMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [typingChannelName, setTypingChannelName] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isClosed = conversation.status === "closed" || conversation.status === "resolved";
@@ -133,6 +134,22 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
     }
   };
 
+  // Close conversation
+  const handleCloseConversation = useCallback(async () => {
+    if (closing) return;
+    setClosing(true);
+    try {
+      const result = await closeConversation(conversation.id);
+      if (result.success) {
+        onClose();
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setClosing(false);
+    }
+  }, [closing, conversation.id, onClose]);
+
   const statusConfig: Record<ConversationStatus, { label: string; className: string }> = {
     open: { label: t("status.open"), className: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
     pending: { label: t("status.pending"), className: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
@@ -229,6 +246,24 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
           <span className="text-foreground font-medium">
             {conversation.channelName || conversation.channelId}
           </span>
+
+          {conversation.pageUrl && (
+            <>
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <ExternalLink className="h-3.5 w-3.5" />
+                {t("detail.source")}
+              </span>
+              <a
+                href={conversation.pageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="truncate text-cta hover:underline font-medium"
+                title={conversation.pageUrl}
+              >
+                {conversation.pageUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+              </a>
+            </>
+          )}
         </div>
       </div>
 
@@ -236,8 +271,14 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
         <>
           <Separator />
           <div className="space-y-2">
-            <Button variant="outline" size="sm" className="w-full text-xs">
-              {t("detail.closeConversation")}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs"
+              onClick={handleCloseConversation}
+              disabled={closing}
+            >
+              {closing ? "..." : t("detail.closeConversation")}
             </Button>
           </div>
         </>

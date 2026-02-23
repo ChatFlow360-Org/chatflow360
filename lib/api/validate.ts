@@ -5,6 +5,7 @@ export const chatMessageSchema = z.object({
   visitorId: z.string().uuid("Invalid visitor ID"),
   message: z.string().min(1).max(2000),
   conversationId: z.string().uuid().optional(),
+  pageUrl: z.string().url().max(2048).optional(),
 });
 
 export const chatHistorySchema = z.object({

@@ -78,6 +78,7 @@ export default async function ConversationsPage() {
       messageCount: conv._count.messages,
       createdAt: conv.createdAt.toISOString(),
       channelName: conv.channel.name,
+      pageUrl: (conv.metadata as Record<string, unknown>)?.pageUrl as string | undefined,
     };
   });
 

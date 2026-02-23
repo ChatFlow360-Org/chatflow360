@@ -40,6 +40,7 @@ export interface Conversation {
   messageCount: number;
   createdAt: string;
   channelName?: string;
+  pageUrl?: string;
 }
 
 export interface Message {

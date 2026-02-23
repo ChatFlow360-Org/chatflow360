@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       return errorResponse("Invalid request");
     }
 
-    const { publicKey, visitorId, message, conversationId } = parsed.data;
+    const { publicKey, visitorId, message, conversationId, pageUrl } = parsed.data;
 
     // 1. Find channel + org + aiSettings
     const channel = await prisma.channel.findUnique({
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
           status: "open",
           responderMode: "ai",
           contactInfo: {},
-          metadata: {},
+          metadata: pageUrl ? { pageUrl } : {},
         },
       });
       isNewConversation = true;
@@ -111,10 +111,13 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Update lastMessageAt
+    // Update lastMessageAt + pageUrl if provided
     await prisma.conversation.update({
       where: { id: conversation.id },
-      data: { lastMessageAt: new Date() },
+      data: {
+        lastMessageAt: new Date(),
+        ...(pageUrl ? { metadata: { ...((conversation.metadata as Record<string, unknown>) || {}), pageUrl } } : {}),
+      },
     });
 
     // 4. Check handoff
