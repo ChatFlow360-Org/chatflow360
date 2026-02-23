@@ -91,6 +91,7 @@ export async function POST(request: NextRequest) {
       conversation = await prisma.conversation.create({
         data: {
           channelId: channel.id,
+          organizationId: org.id,
           visitorId,
           status: "open",
           responderMode: "ai",

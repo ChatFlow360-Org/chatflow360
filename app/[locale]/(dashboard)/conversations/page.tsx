@@ -38,7 +38,7 @@ export default async function ConversationsPage() {
   if (channelFilter) {
     where.channelId = channelFilter;
   } else if (orgFilter) {
-    where.channel = { organizationId: orgFilter };
+    where.organizationId = orgFilter;
   }
 
   // Fetch conversations with latest message and count

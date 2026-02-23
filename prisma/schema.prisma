@@ -31,6 +31,7 @@ model Organization {
   // Relations
   members       OrganizationMember[]
   channels      Channel[]
+  conversations Conversation[]
   aiSettings    AiSettings?
   usageTracking UsageTracking[]
 
@@ -138,6 +139,7 @@ model Channel {
 model Conversation {
   id             String    @id @default(uuid()) @db.Uuid
   channelId      String    @map("channel_id") @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
   visitorId      String?   @map("visitor_id")
   contactInfo    Json      @default("{}") @map("contact_info")
   status         String    @default("open") // open | pending | resolved | closed
@@ -150,11 +152,13 @@ model Conversation {
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  channel  Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  assignee User?    @relation("AssignedConversations", fields: [assignedTo], references: [id], onDelete: SetNull)
-  messages Message[]
+  channel      Channel      @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  assignee     User?        @relation("AssignedConversations", fields: [assignedTo], references: [id], onDelete: SetNull)
+  messages     Message[]
 
   @@index([channelId, status])
+  @@index([organizationId])
   @@index([lastMessageAt(sort: Desc)])
   @@map("conversations")
 }
