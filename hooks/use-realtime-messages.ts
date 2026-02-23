@@ -57,7 +57,9 @@ export function useRealtimeMessages(options: UseRealtimeMessagesOptions) {
           debouncedCallback();
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        console.log("[Realtime:messages]", status, err ?? "");
+      });
 
     channelRef.current = realtimeChannel;
 

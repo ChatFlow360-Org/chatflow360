@@ -77,7 +77,9 @@ export function useRealtimeConversations(
           debouncedRefresh();
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        console.log("[Realtime:conversations]", status, err ?? "");
+      });
 
     channelRef.current = realtimeChannel;
 
