@@ -4,6 +4,8 @@ import { useEffect, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
+const POLL_INTERVAL = 5_000; // 5 seconds
+
 interface UseRealtimeMessagesOptions {
   /** Conversation ID to scope the subscription */
   conversationId: string;
@@ -14,13 +16,17 @@ interface UseRealtimeMessagesOptions {
 }
 
 /**
- * Subscribes to Supabase Realtime postgres_changes on the "messages" table,
- * filtered by conversation_id. Debounces rapid events to 300ms.
+ * Keeps conversation messages up-to-date via two mechanisms:
+ * 1. Supabase Realtime postgres_changes on "messages" table (instant, when available)
+ * 2. Polling fallback every 5s (reliable, visibility-aware)
+ *
+ * Both trigger the onNewMessage callback. Debounces rapid events to 300ms.
  */
 export function useRealtimeMessages(options: UseRealtimeMessagesOptions) {
   const { conversationId, onNewMessage, enabled = true } = options;
   const channelRef = useRef<RealtimeChannel | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const callbackRef = useRef(onNewMessage);
 
   // Keep callback ref fresh without triggering re-subscriptions
@@ -43,6 +49,7 @@ export function useRealtimeMessages(options: UseRealtimeMessagesOptions) {
 
     const supabase = createClient();
 
+    // --- 1. Supabase Realtime (best-effort) ---
     const realtimeChannel = supabase
       .channel(`messages-realtime:${conversationId}`)
       .on(
@@ -57,15 +64,23 @@ export function useRealtimeMessages(options: UseRealtimeMessagesOptions) {
           debouncedCallback();
         }
       )
-      .subscribe((status, err) => {
-        console.log("[Realtime:messages]", status, err ?? "");
-      });
+      .subscribe();
 
     channelRef.current = realtimeChannel;
+
+    // --- 2. Polling fallback (visibility-aware) ---
+    pollRef.current = setInterval(() => {
+      if (!document.hidden) {
+        callbackRef.current();
+      }
+    }, POLL_INTERVAL);
 
     return () => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
+      }
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
       }
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);

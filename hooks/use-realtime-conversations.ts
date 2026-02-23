@@ -5,6 +5,8 @@ import { useRouter } from "@/lib/i18n/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
+const POLL_INTERVAL = 10_000; // 10 seconds
+
 interface UseRealtimeConversationsOptions {
   /** Optional channel ID to scope the subscription */
   channelId?: string;
@@ -13,9 +15,11 @@ interface UseRealtimeConversationsOptions {
 }
 
 /**
- * Subscribes to Supabase Realtime postgres_changes on the "conversations" table.
- * When INSERT or UPDATE events fire, triggers router.refresh() to re-fetch server data.
- * Debounces rapid events to avoid multiple refreshes within 300ms.
+ * Keeps the conversations list up-to-date via two mechanisms:
+ * 1. Supabase Realtime postgres_changes (instant, when available)
+ * 2. Polling fallback every 10s (reliable, visibility-aware)
+ *
+ * Both trigger router.refresh() to re-fetch server data.
  */
 export function useRealtimeConversations(
   options: UseRealtimeConversationsOptions = {}
@@ -24,6 +28,7 @@ export function useRealtimeConversations(
   const router = useRouter();
   const channelRef = useRef<RealtimeChannel | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const debouncedRefresh = useCallback(() => {
     if (debounceTimerRef.current) {
@@ -40,13 +45,11 @@ export function useRealtimeConversations(
 
     const supabase = createClient();
 
-    // Build the filter for the subscription
-    // If channelId is provided, scope to that channel's conversations
+    // --- 1. Supabase Realtime (best-effort) ---
     const filter = channelId
       ? `channel_id=eq.${channelId}`
       : undefined;
 
-    // Create a unique channel name to avoid collisions
     const realtimeChannelName = channelId
       ? `conversations-realtime:${channelId}`
       : "conversations-realtime";
@@ -77,21 +80,29 @@ export function useRealtimeConversations(
           debouncedRefresh();
         }
       )
-      .subscribe((status, err) => {
-        console.log("[Realtime:conversations]", status, err ?? "");
-      });
+      .subscribe();
 
     channelRef.current = realtimeChannel;
+
+    // --- 2. Polling fallback (visibility-aware) ---
+    pollRef.current = setInterval(() => {
+      if (!document.hidden) {
+        router.refresh();
+      }
+    }, POLL_INTERVAL);
 
     // Cleanup on unmount or when dependencies change
     return () => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+      }
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     };
-  }, [enabled, channelId, debouncedRefresh]);
+  }, [enabled, channelId, debouncedRefresh, router]);
 }
