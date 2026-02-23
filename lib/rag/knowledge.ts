@@ -63,6 +63,41 @@ export async function createKnowledge(
 }
 
 /**
+ * Update a knowledge item with new content and re-generated embedding.
+ * Double-filters by org ID for multi-tenant safety.
+ */
+export async function updateKnowledge(
+  organizationId: string,
+  knowledgeId: string,
+  title: string,
+  content: string,
+  embedding: number[],
+  tokensUsed: number
+): Promise<KnowledgeItem> {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("organization_knowledge")
+    .update({
+      title,
+      content,
+      embedding: JSON.stringify(embedding),
+      tokens_used: tokensUsed,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", knowledgeId)
+    .eq("organization_id", organizationId)
+    .select("id, organization_id, title, content, tokens_used, created_at, updated_at")
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to update knowledge: ${error.message}`);
+  }
+
+  return data as KnowledgeItem;
+}
+
+/**
  * Delete a knowledge item. Double-filters by org ID for multi-tenant safety.
  */
 export async function deleteKnowledge(

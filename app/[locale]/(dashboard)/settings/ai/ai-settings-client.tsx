@@ -11,6 +11,7 @@ import {
   BookOpen,
   FileText,
   Loader2,
+  Pencil,
 } from "lucide-react";
 import {
   Card,
@@ -35,7 +36,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { upsertAiSettings, createKnowledgeItem, deleteKnowledgeItem } from "@/lib/admin/actions";
+import { upsertAiSettings, createKnowledgeItem, updateKnowledgeItem, deleteKnowledgeItem } from "@/lib/admin/actions";
 import { DEFAULT_HANDOFF_KEYWORDS } from "@/lib/chat/defaults";
 import { formatRelativeTime } from "@/lib/utils/format";
 
@@ -99,6 +100,15 @@ export function AiSettingsClient({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeletePending, startDeleteTransition] = useTransition();
 
+  // Edit knowledge state
+  const [updateState, updateAction, isUpdating] = useActionState(
+    updateKnowledgeItem,
+    null
+  );
+  const [editingItem, setEditingItem] = useState<KnowledgeItemData | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+
   // Close dialog on successful create
   useEffect(() => {
     if (createState?.success) {
@@ -107,6 +117,15 @@ export function AiSettingsClient({
       setKnowledgeContent("");
     }
   }, [createState]);
+
+  // Close edit dialog on successful update
+  useEffect(() => {
+    if (updateState?.success) {
+      setEditingItem(null);
+      setEditTitle("");
+      setEditContent("");
+    }
+  }, [updateState]);
 
   // Form state
   const [model] = useState(aiSettings?.model || "gpt-4o-mini");
@@ -178,6 +197,13 @@ export function AiSettingsClient({
     }
   };
 
+  // --- Knowledge edit handler ---
+  const handleEditKnowledge = (item: KnowledgeItemData) => {
+    setEditingItem(item);
+    setEditTitle(item.title);
+    setEditContent(item.content);
+  };
+
   // --- Knowledge delete handler ---
   const handleDeleteKnowledge = (knowledgeId: string) => {
     setDeletingId(knowledgeId);
@@ -225,6 +251,16 @@ export function AiSettingsClient({
       {createState?.error && (
         <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {t("knowledge.createError")}
+        </div>
+      )}
+      {updateState?.success && (
+        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400">
+          {t("knowledge.updated")}
+        </div>
+      )}
+      {updateState?.error && (
+        <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {t("knowledge.updateError")}
         </div>
       )}
 
@@ -538,19 +574,29 @@ export function AiSettingsClient({
                           {formatRelativeTime(item.created_at, locale)}
                         </span>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                        onClick={() => handleDeleteKnowledge(item.id)}
-                        disabled={isDeletePending && deletingId === item.id}
-                      >
-                        {isDeletePending && deletingId === item.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </Button>
+                      <div className="flex shrink-0 gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-cta"
+                          onClick={() => handleEditKnowledge(item)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          onClick={() => handleDeleteKnowledge(item.id)}
+                          disabled={isDeletePending && deletingId === item.id}
+                        >
+                          {isDeletePending && deletingId === item.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -626,6 +672,80 @@ export function AiSettingsClient({
                   </>
                 ) : (
                   t("knowledge.save")
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Edit Knowledge Dialog ── */}
+      <Dialog open={!!editingItem} onOpenChange={(open) => { if (!open) setEditingItem(null); }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("knowledge.editDialogTitle")}</DialogTitle>
+            <DialogDescription>
+              {t("knowledge.editDialogDescription")}
+            </DialogDescription>
+          </DialogHeader>
+          <form action={updateAction}>
+            <input type="hidden" name="organizationId" value={selectedOrgId} />
+            <input type="hidden" name="knowledgeId" value={editingItem?.id || ""} />
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="edit-knowledge-title">
+                  {t("knowledge.titleLabel")}
+                </Label>
+                <Input
+                  id="edit-knowledge-title"
+                  name="title"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder={t("knowledge.titlePlaceholder")}
+                  maxLength={200}
+                  required
+                  className="bg-background"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-knowledge-content">
+                  {t("knowledge.contentLabel")}
+                </Label>
+                <Textarea
+                  id="edit-knowledge-content"
+                  name="content"
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  placeholder={t("knowledge.contentPlaceholder")}
+                  rows={8}
+                  maxLength={4000}
+                  required
+                  className="resize-none bg-background"
+                />
+                <p className="text-right text-[10px] text-muted-foreground/60">
+                  {t("knowledge.charCount", { count: editContent.length })}
+                </p>
+              </div>
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditingItem(null)}
+              >
+                {tCommon("cancel")}
+              </Button>
+              <Button
+                type="submit"
+                disabled={isUpdating || !editTitle.trim() || editContent.length < 10}
+              >
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                    {t("knowledge.updating")}
+                  </>
+                ) : (
+                  t("knowledge.update")
                 )}
               </Button>
             </DialogFooter>

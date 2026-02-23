@@ -172,10 +172,16 @@
       "emptyTitle": "No knowledge items yet",
       "emptyDescription": "Add information about your business, services, FAQs, and pricing so the AI can provide accurate answers.",
       "created": "Knowledge item added successfully",
+      "updated": "Knowledge item updated successfully",
       "deleted": "Knowledge item deleted",
       "createError": "Failed to add knowledge item",
+      "updateError": "Failed to update knowledge item",
       "deleteError": "Failed to delete knowledge item",
-      "itemCount": "{count} items"
+      "itemCount": "{count} items",
+      "editDialogTitle": "Edit Knowledge Item",
+      "editDialogDescription": "Update the information for this knowledge item. The AI embedding will be regenerated automatically.",
+      "updating": "Updating...",
+      "update": "Update"
     },
     "apiKey": {
       "title": "Custom OpenAI Key",
