@@ -582,31 +582,41 @@ export async function getConversationMessages(conversationId: string) {
 
   z.string().uuid().parse(conversationId);
 
-  const messages = await prisma.message.findMany({
-    where: { conversationId },
-    orderBy: { createdAt: "asc" },
-    select: {
-      id: true,
-      senderType: true,
-      content: true,
-      createdAt: true,
-      sender: { select: { fullName: true } },
-    },
-  });
+  const [conversation, messages] = await Promise.all([
+    prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: { status: true, responderMode: true },
+    }),
+    prisma.message.findMany({
+      where: { conversationId },
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        senderType: true,
+        content: true,
+        createdAt: true,
+        sender: { select: { fullName: true } },
+      },
+    }),
+  ]);
 
-  return messages.map((m) => ({
-    id: m.id,
-    conversationId,
-    content: m.content,
-    senderType: m.senderType as "visitor" | "ai" | "agent",
-    senderName:
-      m.senderType === "visitor"
-        ? "Visitor"
-        : m.senderType === "ai"
-          ? "AI Assistant"
-          : (m.sender?.fullName || "Agent"),
-    createdAt: m.createdAt.toISOString(),
-  }));
+  return {
+    status: (conversation?.status || "open") as "open" | "pending" | "resolved" | "closed",
+    responderMode: (conversation?.responderMode || "ai") as "ai" | "human",
+    messages: messages.map((m) => ({
+      id: m.id,
+      conversationId,
+      content: m.content,
+      senderType: m.senderType as "visitor" | "ai" | "agent",
+      senderName:
+        m.senderType === "visitor"
+          ? "Visitor"
+          : m.senderType === "ai"
+            ? "AI Assistant"
+            : (m.sender?.fullName || "Agent"),
+      createdAt: m.createdAt.toISOString(),
+    })),
+  };
 }
 
 // ============================================

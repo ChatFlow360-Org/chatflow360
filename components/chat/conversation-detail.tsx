@@ -38,8 +38,16 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
   const [sending, setSending] = useState(false);
   const [closing, setClosing] = useState(false);
   const [typingChannelName, setTypingChannelName] = useState<string | null>(null);
+  const [liveStatus, setLiveStatus] = useState(conversation.status);
+  const [liveResponderMode, setLiveResponderMode] = useState(conversation.responderMode);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const isClosed = conversation.status === "closed" || conversation.status === "resolved";
+  const isClosed = liveStatus === "closed" || liveStatus === "resolved";
+
+  // Sync live state when parent prop updates
+  useEffect(() => {
+    setLiveStatus(conversation.status);
+    setLiveResponderMode(conversation.responderMode);
+  }, [conversation.status, conversation.responderMode]);
 
   // Fetch HMAC-derived typing channel name
   useEffect(() => {
@@ -69,12 +77,14 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
     if (isRemoteTyping) scrollToBottom();
   }, [isRemoteTyping, scrollToBottom]);
 
-  // Fetch messages (used on mount and for refresh)
+  // Fetch messages + live metadata (used on mount and for refresh)
   const fetchMessages = useCallback(async (showSpinner = false) => {
     if (showSpinner) setRefreshing(true);
     try {
-      const msgs = await getConversationMessages(conversation.id);
-      setMessages(msgs);
+      const data = await getConversationMessages(conversation.id);
+      setMessages(data.messages);
+      setLiveStatus(data.status);
+      setLiveResponderMode(data.responderMode);
       scrollToBottom();
     } catch {
       // silently fail
@@ -94,7 +104,7 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
   useRealtimeMessages({
     conversationId: conversation.id,
     onNewMessage: () => fetchMessages(false),
-    enabled: conversation.status !== "closed",
+    enabled: liveStatus !== "closed",
   });
 
   // Send agent message
@@ -162,8 +172,8 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
     human: { label: t("handler.human"), icon: User },
   };
 
-  const status = statusConfig[conversation.status];
-  const handler = handlerConfig[conversation.responderMode];
+  const status = statusConfig[liveStatus];
+  const handler = handlerConfig[liveResponderMode];
   const HandlerIcon = handler.icon;
   const initials = conversation.visitorName.split(" ").map((n) => n[0]).join("");
 
@@ -267,7 +277,7 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
         </div>
       </div>
 
-      {conversation.responderMode === "human" && conversation.status !== "closed" && conversation.status !== "resolved" && (
+      {liveResponderMode === "human" && liveStatus !== "closed" && liveStatus !== "resolved" && (
         <>
           <Separator />
           <div className="space-y-2">
@@ -367,7 +377,7 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
           <div className="flex items-center justify-center p-3">
             <p className="text-sm text-muted-foreground">{t("conversationClosed")}</p>
           </div>
-        ) : conversation.responderMode === "human" ? (
+        ) : liveResponderMode === "human" ? (
           <div className="flex items-center gap-2 p-3">
             <Input
               placeholder={t("typeMessage")}
