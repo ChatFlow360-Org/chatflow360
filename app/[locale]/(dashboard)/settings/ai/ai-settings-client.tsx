@@ -24,7 +24,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -149,7 +148,6 @@ export function AiSettingsClient({
 
   const [keywords, setKeywords] = useState<string[]>(resolveKeywords(aiSettings));
   const [keywordInput, setKeywordInput] = useState("");
-  const [handoffEnabled, setHandoffEnabled] = useState(true);
 
   // Reset form when org changes
   useEffect(() => {
@@ -160,7 +158,6 @@ export function AiSettingsClient({
     const resolved = resolveKeywords(aiSettings);
     setKeywords(resolved);
     setKeywordInput("");
-    setHandoffEnabled(resolved.length > 0);
   }, [aiSettings]);
 
   // --- No org selected state ---
@@ -541,18 +538,6 @@ export function AiSettingsClient({
                         </p>
                       </div>
 
-                      <Separator />
-
-                      {/* Human Takeover */}
-                      <div className="flex items-center justify-between">
-                        <Label className="text-xs text-muted-foreground">
-                          {t("quickSettings.humanTakeover")}
-                        </Label>
-                        <Switch
-                          checked={handoffEnabled}
-                          onCheckedChange={setHandoffEnabled}
-                        />
-                      </div>
                     </CardContent>
                   </Card>
                 )}
