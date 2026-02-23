@@ -267,7 +267,7 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
         </div>
       </div>
 
-      {conversation.status !== "closed" && conversation.status !== "resolved" && (
+      {conversation.responderMode === "human" && conversation.status !== "closed" && conversation.status !== "resolved" && (
         <>
           <Separator />
           <div className="space-y-2">
