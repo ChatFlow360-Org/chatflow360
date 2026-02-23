@@ -3,13 +3,24 @@
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export function AiPerformance() {
+interface AiPerformanceProps {
+  performance: {
+    aiHandled: number;
+    humanEscalated: number;
+    totalConversations: number;
+  };
+}
+
+export function AiPerformance({ performance }: AiPerformanceProps) {
   const t = useTranslations("dashboard");
 
+  const total = performance.totalConversations || 1;
+  const aiPercent = Math.round((performance.aiHandled / total) * 100);
+  const humanPercent = 100 - aiPercent;
+
   const metrics = [
-    { label: t("handledByAi"), value: "87%", percent: 87, color: "bg-emerald-400", textColor: "text-emerald-400" },
-    { label: t("escalatedToHuman"), value: "13%", percent: 13, color: "bg-amber-400", textColor: "text-amber-400" },
-    { label: t("satisfactionRate"), value: "4.8/5", percent: 96, color: "bg-primary-brand-light", textColor: "text-primary-brand-light" },
+    { label: t("handledByAi"), value: `${aiPercent}%`, percent: aiPercent, color: "bg-emerald-400", textColor: "text-emerald-400" },
+    { label: t("escalatedToHuman"), value: `${humanPercent}%`, percent: humanPercent, color: "bg-amber-400", textColor: "text-amber-400" },
   ];
 
   return (
