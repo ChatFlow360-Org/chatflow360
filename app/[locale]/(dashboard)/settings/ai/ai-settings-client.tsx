@@ -1,11 +1,16 @@
 "use client";
 
-import { useState, useActionState, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import { useState, useActionState, useEffect, useTransition } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import {
   Eye,
   X,
   Building2,
+  Plus,
+  Trash2,
+  BookOpen,
+  FileText,
+  Loader2,
 } from "lucide-react";
 import {
   Card,
@@ -19,10 +24,20 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { upsertAiSettings } from "@/lib/admin/actions";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { upsertAiSettings, createKnowledgeItem, deleteKnowledgeItem } from "@/lib/admin/actions";
 import { DEFAULT_HANDOFF_KEYWORDS } from "@/lib/chat/defaults";
+import { formatRelativeTime } from "@/lib/utils/format";
 
 // --- Types ---
 
@@ -38,11 +53,20 @@ interface AiSettingsData {
   apiKeyHint: string | null;
 }
 
+interface KnowledgeItemData {
+  id: string;
+  title: string;
+  content: string;
+  tokens_used: number;
+  created_at: string;
+}
+
 interface AiSettingsClientProps {
   selectedOrgId: string;
   organizationName: string;
   aiSettings: AiSettingsData | null;
   isSuperAdmin: boolean;
+  knowledgeItems: KnowledgeItemData[];
 }
 
 // --- Component ---
@@ -52,15 +76,37 @@ export function AiSettingsClient({
   organizationName,
   aiSettings,
   isSuperAdmin,
+  knowledgeItems,
 }: AiSettingsClientProps) {
   const t = useTranslations("settings");
   const tCommon = useTranslations("common");
   const tAdmin = useTranslations("admin.errors");
+  const locale = useLocale();
 
   const [state, formAction, isPending] = useActionState(
     upsertAiSettings,
     null
   );
+
+  // Knowledge state
+  const [createState, createAction, isCreating] = useActionState(
+    createKnowledgeItem,
+    null
+  );
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [knowledgeTitle, setKnowledgeTitle] = useState("");
+  const [knowledgeContent, setKnowledgeContent] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeletePending, startDeleteTransition] = useTransition();
+
+  // Close dialog on successful create
+  useEffect(() => {
+    if (createState?.success) {
+      setShowAddDialog(false);
+      setKnowledgeTitle("");
+      setKnowledgeContent("");
+    }
+  }, [createState]);
 
   // Form state
   const [model] = useState(aiSettings?.model || "gpt-4o-mini");
@@ -132,6 +178,15 @@ export function AiSettingsClient({
     }
   };
 
+  // --- Knowledge delete handler ---
+  const handleDeleteKnowledge = (knowledgeId: string) => {
+    setDeletingId(knowledgeId);
+    startDeleteTransition(async () => {
+      await deleteKnowledgeItem(selectedOrgId, knowledgeId);
+      setDeletingId(null);
+    });
+  };
+
   // --- Model display name ---
   const modelDisplay =
     model === "gpt-4o-mini"
@@ -158,6 +213,18 @@ export function AiSettingsClient({
       {state?.error && (
         <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {tAdmin(state.error)}
+        </div>
+      )}
+
+      {/* Knowledge feedback */}
+      {createState?.success && (
+        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400">
+          {t("knowledge.created")}
+        </div>
+      )}
+      {createState?.error && (
+        <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {t("knowledge.createError")}
         </div>
       )}
 
@@ -409,17 +476,162 @@ export function AiSettingsClient({
         {/* ── Knowledge Base Tab ── */}
         <TabsContent value="knowledge" className="mt-6">
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16">
-              <p className="text-sm font-medium text-muted-foreground">
-                {t("knowledge.comingSoon")}
-              </p>
-              <p className="mt-1 max-w-sm text-center text-xs text-muted-foreground/70">
-                {t("knowledge.comingSoonDescription")}
-              </p>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-base">
+                    {t("knowledge.title")}
+                  </CardTitle>
+                  <CardDescription className="mt-1">
+                    {t("knowledge.description")}
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-3">
+                  {knowledgeItems.length > 0 && (
+                    <Badge variant="secondary" className="text-xs">
+                      {t("knowledge.itemCount", { count: knowledgeItems.length })}
+                    </Badge>
+                  )}
+                  <Button
+                    size="sm"
+                    onClick={() => setShowAddDialog(true)}
+                  >
+                    <Plus className="mr-1.5 h-4 w-4" />
+                    {t("knowledge.addKnowledge")}
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {knowledgeItems.length === 0 ? (
+                /* Empty state */
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="rounded-full bg-muted p-4">
+                    <BookOpen className="h-8 w-8 text-muted-foreground/50" />
+                  </div>
+                  <p className="mt-4 text-sm font-medium text-muted-foreground">
+                    {t("knowledge.emptyTitle")}
+                  </p>
+                  <p className="mt-1 max-w-sm text-center text-xs text-muted-foreground/70">
+                    {t("knowledge.emptyDescription")}
+                  </p>
+                </div>
+              ) : (
+                /* Knowledge items list */
+                <div className="space-y-3">
+                  {knowledgeItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-start justify-between gap-4 rounded-lg border bg-background p-4"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 shrink-0 text-cta" />
+                          <h4 className="truncate text-sm font-medium">
+                            {item.title}
+                          </h4>
+                        </div>
+                        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                          {item.content}
+                        </p>
+                        <span className="mt-2 block text-[10px] text-muted-foreground/60">
+                          {formatRelativeTime(item.created_at, locale)}
+                        </span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                        onClick={() => handleDeleteKnowledge(item.id)}
+                        disabled={isDeletePending && deletingId === item.id}
+                      >
+                        {isDeletePending && deletingId === item.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* ── Add Knowledge Dialog ── */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("knowledge.dialogTitle")}</DialogTitle>
+            <DialogDescription>
+              {t("knowledge.dialogDescription")}
+            </DialogDescription>
+          </DialogHeader>
+          <form action={createAction}>
+            <input type="hidden" name="organizationId" value={selectedOrgId} />
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="knowledge-title">
+                  {t("knowledge.titleLabel")}
+                </Label>
+                <Input
+                  id="knowledge-title"
+                  name="title"
+                  value={knowledgeTitle}
+                  onChange={(e) => setKnowledgeTitle(e.target.value)}
+                  placeholder={t("knowledge.titlePlaceholder")}
+                  maxLength={200}
+                  required
+                  className="bg-background"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="knowledge-content">
+                  {t("knowledge.contentLabel")}
+                </Label>
+                <Textarea
+                  id="knowledge-content"
+                  name="content"
+                  value={knowledgeContent}
+                  onChange={(e) => setKnowledgeContent(e.target.value)}
+                  placeholder={t("knowledge.contentPlaceholder")}
+                  rows={8}
+                  maxLength={4000}
+                  required
+                  className="resize-none bg-background"
+                />
+                <p className="text-right text-[10px] text-muted-foreground/60">
+                  {t("knowledge.charCount", { count: knowledgeContent.length })}
+                </p>
+              </div>
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowAddDialog(false)}
+              >
+                {tCommon("cancel")}
+              </Button>
+              <Button
+                type="submit"
+                disabled={isCreating || !knowledgeTitle.trim() || knowledgeContent.length < 10}
+              >
+                {isCreating ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                    {t("knowledge.saving")}
+                  </>
+                ) : (
+                  t("knowledge.save")
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

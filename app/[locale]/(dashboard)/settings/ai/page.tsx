@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/user";
 import { prisma } from "@/lib/db/prisma";
+import { listKnowledge } from "@/lib/rag/knowledge";
 import { AiSettingsClient } from "./ai-settings-client";
 
 const UUID_RE =
@@ -59,12 +60,23 @@ export default async function AiSettingsPage() {
     }
   }
 
+  // Fetch knowledge items for this org
+  let knowledgeItems: { id: string; title: string; content: string; tokens_used: number; created_at: string }[] = [];
+  if (selectedOrgId) {
+    try {
+      knowledgeItems = await listKnowledge(selectedOrgId);
+    } catch (e) {
+      console.error("[AiSettingsPage] Failed to fetch knowledge:", e);
+    }
+  }
+
   return (
     <AiSettingsClient
       selectedOrgId={selectedOrgId}
       organizationName={organizationName}
       aiSettings={aiSettings}
       isSuperAdmin={user.isSuperAdmin}
+      knowledgeItems={knowledgeItems}
     />
   );
 }

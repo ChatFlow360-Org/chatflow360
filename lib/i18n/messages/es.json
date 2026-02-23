@@ -159,14 +159,23 @@
     "knowledge": {
       "title": "Base de Conocimiento",
       "description": "Informacion que la IA usa para responder preguntas (RAG)",
-      "comingSoon": "Gestion de base de conocimiento proximamente",
-      "comingSoonDescription": "Podras subir documentos, preguntas frecuentes y contenido personalizado para que tu IA consulte.",
       "addKnowledge": "Agregar Conocimiento",
       "dialogTitle": "Agregar Elemento de Conocimiento",
+      "dialogDescription": "Agrega informacion factual para que tu IA consulte al responder preguntas de visitantes.",
       "titleLabel": "Titulo",
       "titlePlaceholder": "ej. Servicios y Precios",
       "contentLabel": "Contenido",
-      "contentPlaceholder": "Ingresa el contenido del conocimiento..."
+      "contentPlaceholder": "Ingresa el contenido del conocimiento que la IA debe usar para responder preguntas...",
+      "charCount": "{count}/4000 caracteres",
+      "saving": "Guardando...",
+      "save": "Guardar",
+      "emptyTitle": "Aun no hay elementos de conocimiento",
+      "emptyDescription": "Agrega informacion sobre tu negocio, servicios, preguntas frecuentes y precios para que la IA pueda dar respuestas precisas.",
+      "created": "Elemento de conocimiento agregado exitosamente",
+      "deleted": "Elemento de conocimiento eliminado",
+      "createError": "Error al agregar elemento de conocimiento",
+      "deleteError": "Error al eliminar elemento de conocimiento",
+      "itemCount": "{count} elementos"
     },
     "apiKey": {
       "title": "Clave OpenAI Personalizada",

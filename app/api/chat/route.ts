@@ -4,8 +4,10 @@ import { chatMessageSchema } from "@/lib/api/validate";
 import { handleOptions, jsonResponse, errorResponse } from "@/lib/api/cors";
 import { resolveChannelConfig } from "@/lib/chat/config";
 import { detectHandoff, getHandoffMessage } from "@/lib/chat/handoff";
-import { generateAiResponse } from "@/lib/chat/ai";
+import { generateAiResponse, type RagContext } from "@/lib/chat/ai";
 import { createOpenAIClient } from "@/lib/openai/client";
+import { generateEmbedding } from "@/lib/rag/embedding";
+import { searchKnowledge } from "@/lib/rag/search";
 
 export async function OPTIONS() {
   return handleOptions();
@@ -155,15 +157,27 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 6. Generate AI response
+    // 6. RAG: search knowledge base for relevant context
+    const client = await createOpenAIClient(org.id);
+    let ragContext: RagContext[] = [];
+
+    try {
+      const { embedding } = await generateEmbedding(client, message);
+      ragContext = await searchKnowledge(org.id, embedding);
+    } catch (ragError) {
+      // RAG failure is non-blocking — chat continues without context
+      console.error("[POST /api/chat] RAG search failed:",
+        ragError instanceof Error ? ragError.message : ragError);
+    }
+
+    // 7. Generate AI response (with RAG context)
     const history = await prisma.message.findMany({
       where: { conversationId: conversation.id },
       orderBy: { createdAt: "asc" },
       select: { senderType: true, content: true },
     });
 
-    const client = await createOpenAIClient(org.id);
-    const aiResult = await generateAiResponse(client, config, history, message);
+    const aiResult = await generateAiResponse(client, config, history, message, ragContext);
 
     // 7. Save AI message
     const aiMessage = await prisma.message.create({

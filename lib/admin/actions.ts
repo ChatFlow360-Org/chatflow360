@@ -641,3 +641,98 @@ export async function upsertPlatformKey(
     return { error: "createFailed" };
   }
 }
+
+// ============================================
+// Knowledge Base (RAG)
+// ============================================
+
+const createKnowledgeSchema = z.object({
+  organizationId: z.string().uuid(),
+  title: z.string().min(1).max(200),
+  content: z.string().min(10).max(4000),
+});
+
+export async function createKnowledgeItem(
+  _prevState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const parsed = createKnowledgeSchema.safeParse({
+      organizationId: formData.get("organizationId"),
+      title: formData.get("title"),
+      content: formData.get("content"),
+    });
+
+    if (!parsed.success) {
+      return { error: "createFailed" };
+    }
+
+    const orgId = parsed.data.organizationId;
+
+    // Auth: super_admin or org member
+    if (!user.isSuperAdmin) {
+      const membership = await prisma.organizationMember.findFirst({
+        where: { userId: user.id, organizationId: orgId },
+      });
+      if (!membership) throw new Error("Unauthorized");
+    }
+
+    // Generate embedding
+    const { createOpenAIClient } = await import("@/lib/openai/client");
+    const { generateEmbedding } = await import("@/lib/rag/embedding");
+    const { createKnowledge } = await import("@/lib/rag/knowledge");
+
+    const client = await createOpenAIClient(orgId);
+    const { embedding, tokensUsed } = await generateEmbedding(
+      client,
+      `${parsed.data.title}\n\n${parsed.data.content}`
+    );
+
+    await createKnowledge(orgId, parsed.data.title, parsed.data.content, embedding, tokensUsed);
+
+    revalidatePath("/settings/ai");
+    return { success: "knowledgeCreated" };
+  } catch (e) {
+    console.error("[createKnowledgeItem]", e instanceof Error ? e.message : e);
+    if (e instanceof Error && e.message === "Unauthorized") {
+      return { error: "unauthorized" };
+    }
+    return { error: "createFailed" };
+  }
+}
+
+export async function deleteKnowledgeItem(
+  organizationId: string,
+  knowledgeId: string
+): Promise<AdminActionState> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error("Unauthorized");
+
+    z.string().uuid().parse(organizationId);
+    z.string().uuid().parse(knowledgeId);
+
+    // Auth: super_admin or org member
+    if (!user.isSuperAdmin) {
+      const membership = await prisma.organizationMember.findFirst({
+        where: { userId: user.id, organizationId },
+      });
+      if (!membership) throw new Error("Unauthorized");
+    }
+
+    const { deleteKnowledge } = await import("@/lib/rag/knowledge");
+    await deleteKnowledge(organizationId, knowledgeId);
+
+    revalidatePath("/settings/ai");
+    return { success: "knowledgeDeleted" };
+  } catch (e) {
+    console.error("[deleteKnowledgeItem]", e instanceof Error ? e.message : e);
+    if (e instanceof Error && e.message === "Unauthorized") {
+      return { error: "unauthorized" };
+    }
+    return { error: "deleteFailed" };
+  }
+}

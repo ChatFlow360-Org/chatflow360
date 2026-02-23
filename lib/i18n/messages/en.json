@@ -159,14 +159,23 @@
     "knowledge": {
       "title": "Knowledge Base",
       "description": "Information the AI uses to answer questions (RAG)",
-      "comingSoon": "Knowledge base management coming soon",
-      "comingSoonDescription": "You'll be able to upload documents, FAQs, and custom content for your AI to reference.",
       "addKnowledge": "Add Knowledge",
       "dialogTitle": "Add Knowledge Item",
+      "dialogDescription": "Add factual information for your AI to reference when answering visitor questions.",
       "titleLabel": "Title",
       "titlePlaceholder": "e.g. Services and Pricing",
       "contentLabel": "Content",
-      "contentPlaceholder": "Enter the knowledge content..."
+      "contentPlaceholder": "Enter the knowledge content that the AI should use to answer questions...",
+      "charCount": "{count}/4000 characters",
+      "saving": "Saving...",
+      "save": "Save",
+      "emptyTitle": "No knowledge items yet",
+      "emptyDescription": "Add information about your business, services, FAQs, and pricing so the AI can provide accurate answers.",
+      "created": "Knowledge item added successfully",
+      "deleted": "Knowledge item deleted",
+      "createError": "Failed to add knowledge item",
+      "deleteError": "Failed to delete knowledge item",
+      "itemCount": "{count} items"
     },
     "apiKey": {
       "title": "Custom OpenAI Key",

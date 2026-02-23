@@ -11,6 +11,12 @@ interface AiResponse {
   tokensUsed: number;
 }
 
+export interface RagContext {
+  title: string;
+  content: string;
+  similarity: number;
+}
+
 /**
  * Build OpenAI messages array from conversation history.
  * Maps senderType to OpenAI roles: visitor->user, ai/agent->assistant
@@ -18,13 +24,24 @@ interface AiResponse {
 function buildMessages(
   config: ResolvedChatConfig,
   history: ChatMessage[],
-  newMessage: string
+  newMessage: string,
+  ragContext?: RagContext[]
 ): OpenAI.ChatCompletionMessageParam[] {
   const messages: OpenAI.ChatCompletionMessageParam[] = [];
 
-  // System prompt
-  if (config.systemPrompt) {
-    messages.push({ role: "system", content: config.systemPrompt });
+  // System prompt + RAG context injection
+  let systemContent = config.systemPrompt || "";
+
+  if (ragContext && ragContext.length > 0) {
+    const contextBlock = ragContext
+      .map((item) => `[${item.title}]\n${item.content}`)
+      .join("\n\n");
+
+    systemContent += `\n\n---\nKNOWLEDGE BASE CONTEXT:\nUse the following information to answer the visitor's question accurately. If the information doesn't match the question, rely on your general knowledge.\n\n${contextBlock}\n---`;
+  }
+
+  if (systemContent) {
+    messages.push({ role: "system", content: systemContent });
   }
 
   // Last 20 messages for context (avoid token overflow)
@@ -49,9 +66,10 @@ export async function generateAiResponse(
   client: OpenAI,
   config: ResolvedChatConfig,
   history: ChatMessage[],
-  visitorMessage: string
+  visitorMessage: string,
+  ragContext?: RagContext[]
 ): Promise<AiResponse> {
-  const messages = buildMessages(config, history, visitorMessage);
+  const messages = buildMessages(config, history, visitorMessage, ragContext);
 
   const completion = await client.chat.completions.create({
     model: config.model,
