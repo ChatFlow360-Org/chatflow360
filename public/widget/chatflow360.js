@@ -57,6 +57,7 @@
       typeMessage: "Type a message\u2026",
       send: "Send",
       connecting: "Connecting you with an agent\u2026",
+      connectedAgent: "Chatting with a specialized human agent",
       powered: "Powered by",
       newConversation: "New conversation",
       endConversation: "End conversation",
@@ -69,6 +70,7 @@
       typeMessage: "Escribe un mensaje\u2026",
       send: "Enviar",
       connecting: "Conect\u00e1ndote con un agente\u2026",
+      connectedAgent: "Chateando con un agente humano especializado",
       powered: "Impulsado por",
       newConversation: "Nueva conversaci\u00f3n",
       endConversation: "Finalizar conversaci\u00f3n",
@@ -443,6 +445,7 @@
       "  flex-shrink:0;display:none;",
       "}",
       ".cf360-connecting--show{display:block;}",
+      ".cf360-connecting--connected{background:#e0f5f5;color:#0d6e6e;}",
 
       // Input area
       ".cf360-input-area{",
@@ -775,7 +778,8 @@
     messagesArea.appendChild(welcome);
     state.resolved = false;
     newConvBtn.classList.remove("cf360-new-conv--show");
-    connectingEl.classList.remove("cf360-connecting--show");
+    connectingEl.textContent = t("connecting");
+    connectingEl.classList.remove("cf360-connecting--show", "cf360-connecting--connected");
   }
 
   // ─── Message rendering ────────────────────────────────────────────
@@ -827,6 +831,11 @@
     }
     messagesArea.appendChild(typingEl);
     scrollToBottom();
+  }
+
+  function switchToConnectedBanner() {
+    connectingEl.textContent = t("connectedAgent");
+    connectingEl.classList.add("cf360-connecting--show", "cf360-connecting--connected");
   }
 
   function hideTyping() {
@@ -960,9 +969,19 @@
           appendMessage(messages[i]);
         }
 
-        // If human mode, start polling
+        // If human mode, start polling and show correct banner
         if (data.responderMode === "human") {
-          connectingEl.classList.add("cf360-connecting--show");
+          // Check if agent already replied (any agent message in history)
+          var hasAgentReply = messages.some(function (m) {
+            return (m.senderType || "").toLowerCase() === "agent";
+          });
+          if (hasAgentReply) {
+            switchToConnectedBanner();
+          } else {
+            connectingEl.textContent = t("connecting");
+            connectingEl.classList.remove("cf360-connecting--connected");
+            connectingEl.classList.add("cf360-connecting--show");
+          }
           startPolling();
         }
       })
@@ -1018,6 +1037,11 @@
             hideTyping();
             appendMessage(newMessages[j]);
 
+            // Agent replied → switch banner from "connecting" to "connected"
+            if (sType === "agent") {
+              switchToConnectedBanner();
+            }
+
             // If it's a badge-worthy message and widget is closed
             if (!state.open) {
               var currentCount = parseInt(badge.textContent, 10) || 0;
@@ -1029,13 +1053,15 @@
 
         // Check if responder mode changed back to AI or conversation resolved
         if (data.responderMode === "ai") {
-          connectingEl.classList.remove("cf360-connecting--show");
+          connectingEl.textContent = t("connecting");
+          connectingEl.classList.remove("cf360-connecting--show", "cf360-connecting--connected");
           stopPolling();
         }
 
         var convStatus = (data.status || "").toLowerCase();
         if (convStatus === "resolved" || convStatus === "closed") {
-          connectingEl.classList.remove("cf360-connecting--show");
+          connectingEl.textContent = t("connecting");
+          connectingEl.classList.remove("cf360-connecting--show", "cf360-connecting--connected");
           state.resolved = true;
           newConvBtn.classList.add("cf360-new-conv--show");
           stopPolling();
