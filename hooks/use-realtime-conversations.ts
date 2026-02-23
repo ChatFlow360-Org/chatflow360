@@ -5,7 +5,7 @@ import { useRouter } from "@/lib/i18n/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
-const POLL_INTERVAL = 10_000; // 10 seconds
+const POLL_INTERVAL = 30_000; // 30s safety-net (setAuth handles instant updates)
 
 interface UseRealtimeConversationsOptions {
   /** Optional channel ID to scope the subscription */
@@ -16,10 +16,8 @@ interface UseRealtimeConversationsOptions {
 
 /**
  * Keeps the conversations list up-to-date via two mechanisms:
- * 1. Supabase Realtime postgres_changes (instant, when available)
- * 2. Polling fallback every 10s (reliable, visibility-aware)
- *
- * Both trigger router.refresh() to re-fetch server data.
+ * 1. Supabase Realtime postgres_changes with explicit setAuth (instant)
+ * 2. Polling fallback every 30s as safety net (visibility-aware)
  */
 export function useRealtimeConversations(
   options: UseRealtimeConversationsOptions = {}
@@ -43,56 +41,73 @@ export function useRealtimeConversations(
   useEffect(() => {
     if (!enabled) return;
 
+    let cancelled = false;
     const supabase = createClient();
 
-    // --- 1. Supabase Realtime (best-effort) ---
-    const filter = channelId
-      ? `channel_id=eq.${channelId}`
-      : undefined;
+    // --- 1. Supabase Realtime with explicit auth for RLS ---
+    (async () => {
+      // Propagate auth token so Realtime evaluates RLS as "authenticated"
+      const { data: { session } } = await supabase.auth.getSession();
+      if (cancelled) return;
 
-    const realtimeChannelName = channelId
-      ? `conversations-realtime:${channelId}`
-      : "conversations-realtime";
+      if (session?.access_token) {
+        supabase.realtime.setAuth(session.access_token);
+      }
 
-    const realtimeChannel = supabase
-      .channel(realtimeChannelName)
-      .on(
-        "postgres_changes" as const,
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "conversations",
-          ...(filter ? { filter } : {}),
-        },
-        () => {
-          debouncedRefresh();
-        }
-      )
-      .on(
-        "postgres_changes" as const,
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "conversations",
-          ...(filter ? { filter } : {}),
-        },
-        () => {
-          debouncedRefresh();
-        }
-      )
-      .subscribe();
+      const filter = channelId
+        ? `channel_id=eq.${channelId}`
+        : undefined;
 
-    channelRef.current = realtimeChannel;
+      const realtimeChannelName = channelId
+        ? `conversations-realtime:${channelId}`
+        : "conversations-realtime";
 
-    // --- 2. Polling fallback (visibility-aware) ---
+      const realtimeChannel = supabase
+        .channel(realtimeChannelName)
+        .on(
+          "postgres_changes" as const,
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "conversations",
+            ...(filter ? { filter } : {}),
+          },
+          () => {
+            debouncedRefresh();
+          }
+        )
+        .on(
+          "postgres_changes" as const,
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "conversations",
+            ...(filter ? { filter } : {}),
+          },
+          () => {
+            debouncedRefresh();
+          }
+        )
+        .subscribe();
+
+      if (cancelled) {
+        supabase.removeChannel(realtimeChannel);
+        return;
+      }
+
+      channelRef.current = realtimeChannel;
+    })();
+
+    // --- 2. Polling safety net (visibility-aware) ---
     pollRef.current = setInterval(() => {
       if (!document.hidden) {
         router.refresh();
       }
     }, POLL_INTERVAL);
 
-    // Cleanup on unmount or when dependencies change
+    // Cleanup
     return () => {
+      cancelled = true;
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }

@@ -4,7 +4,7 @@ import { useEffect, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
-const POLL_INTERVAL = 5_000; // 5 seconds
+const POLL_INTERVAL = 30_000; // 30s safety-net (setAuth handles instant updates)
 
 interface UseRealtimeMessagesOptions {
   /** Conversation ID to scope the subscription */
@@ -17,10 +17,8 @@ interface UseRealtimeMessagesOptions {
 
 /**
  * Keeps conversation messages up-to-date via two mechanisms:
- * 1. Supabase Realtime postgres_changes on "messages" table (instant, when available)
- * 2. Polling fallback every 5s (reliable, visibility-aware)
- *
- * Both trigger the onNewMessage callback. Debounces rapid events to 300ms.
+ * 1. Supabase Realtime postgres_changes with explicit setAuth (instant)
+ * 2. Polling fallback every 30s as safety net (visibility-aware)
  */
 export function useRealtimeMessages(options: UseRealtimeMessagesOptions) {
   const { conversationId, onNewMessage, enabled = true } = options;
@@ -47,28 +45,43 @@ export function useRealtimeMessages(options: UseRealtimeMessagesOptions) {
   useEffect(() => {
     if (!enabled || !conversationId) return;
 
+    let cancelled = false;
     const supabase = createClient();
 
-    // --- 1. Supabase Realtime (best-effort) ---
-    const realtimeChannel = supabase
-      .channel(`messages-realtime:${conversationId}`)
-      .on(
-        "postgres_changes" as const,
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        () => {
-          debouncedCallback();
-        }
-      )
-      .subscribe();
+    // --- 1. Supabase Realtime with explicit auth for RLS ---
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (cancelled) return;
 
-    channelRef.current = realtimeChannel;
+      if (session?.access_token) {
+        supabase.realtime.setAuth(session.access_token);
+      }
 
-    // --- 2. Polling fallback (visibility-aware) ---
+      const realtimeChannel = supabase
+        .channel(`messages-realtime:${conversationId}`)
+        .on(
+          "postgres_changes" as const,
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "messages",
+            filter: `conversation_id=eq.${conversationId}`,
+          },
+          () => {
+            debouncedCallback();
+          }
+        )
+        .subscribe();
+
+      if (cancelled) {
+        supabase.removeChannel(realtimeChannel);
+        return;
+      }
+
+      channelRef.current = realtimeChannel;
+    })();
+
+    // --- 2. Polling safety net (visibility-aware) ---
     pollRef.current = setInterval(() => {
       if (!document.hidden) {
         callbackRef.current();
@@ -76,6 +89,7 @@ export function useRealtimeMessages(options: UseRealtimeMessagesOptions) {
     }, POLL_INTERVAL);
 
     return () => {
+      cancelled = true;
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
