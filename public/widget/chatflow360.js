@@ -179,8 +179,130 @@
     polling: false,
     pollingTimer: null,
     lastMessageId: null,
-    resolved: false
+    resolved: false,
+    realtimeConfig: null
   };
+
+  // ─── Realtime Typing via Supabase Broadcast (Phoenix Channels) ──
+  var realtime = {
+    ws: null,
+    ref: 0,
+    heartbeatTimer: null,
+    channelJoined: false,
+    typingTimeout: null,
+    lastTypingSent: 0,
+    THROTTLE_MS: 2000,
+    TYPING_TIMEOUT_MS: 3000
+  };
+
+  function rtConnect(config) {
+    if (!config || !config.url || !config.key || !config.channel) return;
+    state.realtimeConfig = config;
+
+    try {
+      var wsUrl = config.url.replace(/^http/, "ws") +
+        "/realtime/v1/websocket?apikey=" + config.key + "&vsn=1.0.0";
+      var ws = new WebSocket(wsUrl);
+      realtime.ws = ws;
+
+      ws.onopen = function () {
+        // Join the typing channel
+        realtime.ref++;
+        ws.send(JSON.stringify({
+          topic: "realtime:" + config.channel,
+          event: "phx_join",
+          payload: { config: { broadcast: { self: false } } },
+          ref: String(realtime.ref)
+        }));
+
+        // Start heartbeat every 30s
+        realtime.heartbeatTimer = setInterval(function () {
+          if (ws.readyState === 1) {
+            realtime.ref++;
+            ws.send(JSON.stringify({
+              topic: "phoenix",
+              event: "heartbeat",
+              payload: {},
+              ref: String(realtime.ref)
+            }));
+          }
+        }, 30000);
+      };
+
+      ws.onmessage = function (evt) {
+        try {
+          var msg = JSON.parse(evt.data);
+          if (msg.event === "phx_reply" && msg.payload && msg.payload.status === "ok") {
+            realtime.channelJoined = true;
+          }
+          // Receive typing event from agent
+          if (msg.event === "broadcast" && msg.payload && msg.payload.event === "typing") {
+            var payload = msg.payload.payload || {};
+            if (payload.role === "agent" && payload.isTyping) {
+              showTyping();
+              // Auto-hide after timeout
+              clearTimeout(realtime.typingTimeout);
+              realtime.typingTimeout = setTimeout(hideTyping, realtime.TYPING_TIMEOUT_MS);
+            } else if (payload.role === "agent" && !payload.isTyping) {
+              clearTimeout(realtime.typingTimeout);
+              hideTyping();
+            }
+          }
+        } catch (e) { /* ignore malformed */ }
+      };
+
+      ws.onclose = function () {
+        rtCleanup();
+        // Reconnect after 5s if conversation still active
+        if (state.conversationId && !state.resolved) {
+          setTimeout(function () {
+            if (state.realtimeConfig) rtConnect(state.realtimeConfig);
+          }, 5000);
+        }
+      };
+
+      ws.onerror = function () {
+        // onclose will fire after onerror
+      };
+    } catch (e) {
+      console.error("[ChatFlow360] Realtime error:", e);
+    }
+  }
+
+  function rtSendTyping(isTyping) {
+    if (!realtime.ws || realtime.ws.readyState !== 1 || !realtime.channelJoined) return;
+    if (!state.realtimeConfig) return;
+
+    // Throttle: max 1 event per THROTTLE_MS
+    var now = Date.now();
+    if (isTyping && (now - realtime.lastTypingSent) < realtime.THROTTLE_MS) return;
+    realtime.lastTypingSent = now;
+
+    realtime.ref++;
+    realtime.ws.send(JSON.stringify({
+      topic: "realtime:" + state.realtimeConfig.channel,
+      event: "broadcast",
+      payload: {
+        type: "broadcast",
+        event: "typing",
+        payload: { role: "visitor", isTyping: isTyping }
+      },
+      ref: String(realtime.ref)
+    }));
+  }
+
+  function rtCleanup() {
+    if (realtime.heartbeatTimer) {
+      clearInterval(realtime.heartbeatTimer);
+      realtime.heartbeatTimer = null;
+    }
+    clearTimeout(realtime.typingTimeout);
+    realtime.channelJoined = false;
+    if (realtime.ws) {
+      try { realtime.ws.close(); } catch (e) { /* noop */ }
+      realtime.ws = null;
+    }
+  }
 
   // ─── Color helpers ────────────────────────────────────────────────
   function hexToRgb(hex) {
@@ -535,8 +657,19 @@
     inputField.addEventListener("keydown", function (e) {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
+        rtSendTyping(false);
         handleSend();
       }
+    });
+
+    // Broadcast visitor typing on input
+    var typingStopTimer = null;
+    inputField.addEventListener("input", function () {
+      rtSendTyping(true);
+      clearTimeout(typingStopTimer);
+      typingStopTimer = setTimeout(function () {
+        rtSendTyping(false);
+      }, 2000);
     });
 
     document.addEventListener("keydown", function (e) {
@@ -748,6 +881,11 @@
           endConvEl.classList.add("cf360-end-conv--show");
         }
 
+        // Connect realtime if config provided
+        if (data.realtimeConfig && !realtime.ws) {
+          rtConnect(data.realtimeConfig);
+        }
+
         // Render AI response
         if (data.message) {
           hideTyping();
@@ -913,6 +1051,8 @@
 
   function startNewConversation() {
     stopPolling();
+    rtCleanup();
+    state.realtimeConfig = null;
     clearConversationId();
     state.conversationId = null;
     state.lastMessageId = null;

@@ -8,6 +8,15 @@ import { generateAiResponse, type RagContext } from "@/lib/chat/ai";
 import { createOpenAIClient } from "@/lib/openai/client";
 import { generateEmbedding } from "@/lib/rag/embedding";
 import { searchKnowledge } from "@/lib/rag/search";
+import { deriveTypingChannel } from "@/lib/crypto/channel";
+
+/** Build realtimeConfig for the widget (typing indicators via Supabase Broadcast) */
+function buildRealtimeConfig(conversationId: string) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return undefined;
+  return { url, key, channel: deriveTypingChannel(conversationId) };
+}
 
 export async function OPTIONS() {
   return handleOptions();
@@ -144,6 +153,7 @@ export async function POST(request: NextRequest) {
           createdAt: aiMessage.createdAt.toISOString(),
         },
         handoffTriggered: true,
+        realtimeConfig: buildRealtimeConfig(conversation.id),
       });
     }
 
@@ -154,6 +164,7 @@ export async function POST(request: NextRequest) {
         message: null,
         awaitingAgent: true,
         handoffTriggered: false,
+        realtimeConfig: buildRealtimeConfig(conversation.id),
       });
     }
 
@@ -206,6 +217,7 @@ export async function POST(request: NextRequest) {
           createdAt: aiMessage.createdAt.toISOString(),
         },
         handoffTriggered: true,
+        realtimeConfig: buildRealtimeConfig(conversation.id),
       });
     }
 
@@ -241,6 +253,7 @@ export async function POST(request: NextRequest) {
         createdAt: aiMessage.createdAt.toISOString(),
       },
       handoffTriggered: false,
+      realtimeConfig: buildRealtimeConfig(conversation.id),
     });
   } catch (error) {
     console.error(

@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/drawer";
 import { ChatMessage } from "@/components/chat/chat-message";
 import { useRealtimeMessages } from "@/hooks/use-realtime-messages";
-import { getConversationMessages, sendAgentMessage } from "@/lib/admin/actions";
+import { useTypingIndicator } from "@/hooks/use-typing-indicator";
+import { getConversationMessages, sendAgentMessage, getTypingChannel } from "@/lib/admin/actions";
 import { formatRelativeTime } from "@/lib/utils/format";
 import type { Conversation, ConversationStatus, ResponderMode, Message } from "@/types";
 
@@ -35,7 +36,25 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
   const [refreshing, setRefreshing] = useState(false);
   const [agentMessage, setAgentMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [typingChannelName, setTypingChannelName] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isClosed = conversation.status === "closed" || conversation.status === "resolved";
+
+  // Fetch HMAC-derived typing channel name
+  useEffect(() => {
+    let cancelled = false;
+    getTypingChannel(conversation.id)
+      .then((name) => { if (!cancelled) setTypingChannelName(name); })
+      .catch(() => { /* non-critical */ });
+    return () => { cancelled = true; };
+  }, [conversation.id]);
+
+  // Bidirectional typing indicator
+  const { isRemoteTyping, sendTyping, sendStopTyping } = useTypingIndicator({
+    channelName: typingChannelName,
+    role: "agent",
+    enabled: !isClosed && !!typingChannelName,
+  });
 
   // Scroll to bottom of chat
   const scrollToBottom = useCallback(() => {
@@ -94,11 +113,20 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
+      sendStopTyping();
       handleSendMessage();
     }
   };
 
-  const isClosed = conversation.status === "closed" || conversation.status === "resolved";
+  // Broadcast agent typing on input change
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAgentMessage(e.target.value);
+    if (e.target.value.trim()) {
+      sendTyping();
+    } else {
+      sendStopTyping();
+    }
+  };
 
   const statusConfig: Record<ConversationStatus, { label: string; className: string }> = {
     open: { label: t("status.open"), className: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
@@ -271,6 +299,15 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
                 <ChatMessage key={msg.id} message={msg} />
               ))
             )}
+            {isRemoteTyping && (
+              <div className="flex items-center gap-1 px-2 py-1">
+                <div className="flex items-center gap-1 rounded-full bg-muted px-3 py-1.5">
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:0ms]" />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:150ms]" />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:300ms]" />
+                </div>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
@@ -288,7 +325,7 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
               placeholder={t("typeMessage")}
               className="flex-1 text-sm"
               value={agentMessage}
-              onChange={(e) => setAgentMessage(e.target.value)}
+              onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               disabled={sending}
               maxLength={2000}

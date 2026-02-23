@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db/prisma";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUser } from "@/lib/auth/user";
 import { DEFAULT_HANDOFF_KEYWORDS } from "@/lib/chat/defaults";
+import { deriveTypingChannel } from "@/lib/crypto/channel";
 
 // ============================================
 // Types
@@ -558,6 +559,17 @@ export async function deleteChannel(id: string): Promise<AdminActionState> {
     console.error("[deleteChannel]", e instanceof Error ? e.message : e);
     return { error: "createFailed" };
   }
+}
+
+// ============================================
+// Typing Channel (HMAC-signed for Supabase Broadcast)
+// ============================================
+
+export async function getTypingChannel(conversationId: string): Promise<string> {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("Unauthorized");
+  z.string().uuid().parse(conversationId);
+  return deriveTypingChannel(conversationId);
 }
 
 // ============================================
