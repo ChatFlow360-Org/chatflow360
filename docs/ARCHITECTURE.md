@@ -258,7 +258,7 @@ const getChannelConfig = (channel: Channel, orgAiSettings: AiSettings) => ({
 | **Technical params** | super_admin only | `model`, `temperature`, `maxTokens`, `encryptedApiKey` / `apiKeyHint` |
 
 - `upsertAiSettings` server action checks `isSuperAdmin` — if false, only business params are written to DB; technical params are silently ignored
-- **Quick Settings sidebar:** read-only for org_admin (switch disabled, lock indicator shown). Super admin sees full edit controls.
+- **Quick Settings sidebar:** hidden for org_admin. Only super_admin can see and edit this section (model, temperature, max tokens, human takeover switch).
 
 **Default handoff keywords** (`lib/chat/defaults.ts`):
 

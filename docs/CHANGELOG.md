@@ -69,7 +69,7 @@
   - `temperature` — response creativity slider
   - `maxTokens` — maximum response length
   - `encryptedApiKey` / `apiKeyHint` — per-org API key
-- **Quick Settings sidebar** in AI Settings page: made **read-only for org_admin** — switch disabled with lock indicator icon, values visible but not editable
+- **Quick Settings sidebar** in AI Settings page: **hidden for org_admin** — only super_admin can see and edit (model, temperature, max tokens, human takeover switch). No read-only state for org_admin.
 
 #### Upstash Redis — Deferred
 
