@@ -359,35 +359,63 @@ The Conversations page uses Supabase Realtime to reflect new and updated convers
 **Architecture:**
 
 ```
-Supabase postgres_changes event
-    → useRealtimeConversations hook (client)
+Supabase postgres_changes event (RLS-filtered)
+    → useRealtimeConversations hook (client, with setAuth JWT)
         → debounced router.refresh() (300ms)
             → Next.js triggers server re-fetch
                 → Prisma query returns updated Conversation[]
                     → React re-renders ConversationsClient
+
+Safety net: 30s polling timer (visibility-aware)
+    → router.refresh() every 30s while tab is visible
 ```
+
+**Dual mechanism: Realtime + Polling safety net**
+
+Supabase Realtime is the primary update path, but a 30-second polling timer runs alongside as a safety net. The polling timer is visibility-aware: it pauses when the tab is hidden (`document.visibilitychange`) and resumes when the tab regains focus. This ensures the dashboard stays current even if the WebSocket connection silently drops.
+
+**RLS compatibility: setAuth + Denormalization**
+
+Supabase Realtime uses an internal engine called **walrus** to evaluate RLS policies on each event before delivering it to the subscriber. Two critical constraints apply:
+
+1. **`@supabase/ssr`'s `createBrowserClient` does not propagate the auth JWT to the Realtime WebSocket** (supabase-js Issue #1304). The fix is to call `supabase.realtime.setAuth(session.access_token)` explicitly.
+2. **Walrus cannot evaluate complex RLS policies with JOINs.** A policy like `conversations.channel_id IN (SELECT id FROM channels WHERE organization_id IN (...))` silently drops events. The fix is to **denormalize `organization_id` directly onto the `conversations` table**, enabling a simple column-level check: `organization_id = ANY(SELECT get_user_org_ids())`.
 
 **Hook: `hooks/use-realtime-conversations.ts`**
 
 ```typescript
-// Subscribes to postgres_changes on the conversations table
-// Debounces router.refresh() to batch rapid consecutive events
+// 1. Set JWT on Realtime WebSocket
+const { data: { session } } = await supabase.auth.getSession();
+if (session) supabase.realtime.setAuth(session.access_token);
+
+// 2. Re-set auth on token refresh, cleanup on sign out
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'TOKEN_REFRESHED' && session) {
+    supabase.realtime.setAuth(session.access_token);
+  }
+  if (event === 'SIGNED_OUT') {
+    supabase.removeAllChannels();
+  }
+});
+
+// 3. Subscribe with UUID-validated filter
 const channel = supabase
   .channel('conversations-live')
   .on('postgres_changes', {
-    event: '*',                  // INSERT, UPDATE, DELETE
+    event: '*',
     schema: 'public',
     table: 'conversations',
-    filter: orgId ? `org_id=eq.${orgId}` : undefined
+    filter: orgId ? `organization_id=eq.${orgId}` : undefined
   }, () => {
-    // Debounced 300ms to batch rapid changes
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => router.refresh(), 300);
   })
   .subscribe();
 
-// Cleanup on unmount
-return () => { supabase.removeChannel(channel); };
+// 4. 30s polling safety net (visibility-aware)
+const poll = setInterval(() => {
+  if (!document.hidden) router.refresh();
+}, 30000);
 ```
 
 **Design decisions:**
@@ -398,32 +426,39 @@ return () => { supabase.removeChannel(channel); };
 | 300ms debounce | Prevents multiple rapid refreshes when a conversation + message are both inserted in quick succession |
 | `postgres_changes` (not broadcast) | Works without custom server code — Supabase listens to the DB WAL directly |
 | `useRef` for debounce timer | Avoids stale closure issues with `setTimeout` inside event callbacks |
+| `setAuth()` on mount + token refresh | `@supabase/ssr` does not propagate JWT to Realtime WebSocket (supabase-js #1304) |
+| Denormalized `organization_id` on conversations | Walrus silently drops events when RLS policy requires JOINs |
+| 30s polling safety net | Guards against silent WebSocket drops; pauses when tab is hidden |
+| UUID validation on filter IDs | Prevents injection in Supabase channel filter strings |
 
 **Live indicator:** A green pulse dot + "Live" text badge renders in the Conversations page header when the Realtime subscription is active. This gives operators a clear signal that the view is auto-updating.
 
-**Fallback:** The existing manual refresh button (`useTransition` + `router.refresh()`) remains as a fallback for cases where the Realtime connection drops.
+**Fallback:** The existing manual refresh button (`useTransition` + `router.refresh()`) remains as an immediate fallback. The 30s polling timer provides automatic recovery.
 
 ### Supabase Realtime — Live Conversation Detail (Messages)
 
-The Conversation Detail panel uses a second Realtime hook to display new messages in real-time as they arrive (e.g., AI responses, agent messages).
+The Conversation Detail panel uses a second Realtime hook to display new messages in real-time as they arrive (e.g., AI responses, agent messages). Uses the same setAuth + polling safety net pattern as the conversations hook.
 
 **Architecture:**
 
 ```
-Supabase postgres_changes INSERT on messages table
-    → useRealtimeMessages hook (client, filtered by conversation_id)
+Supabase postgres_changes INSERT on messages table (RLS-filtered)
+    → useRealtimeMessages hook (client, setAuth JWT, filtered by conversation_id)
         → debounced callback (300ms)
             → re-fetch messages via server action
                 → React re-renders message list
                     → auto-scroll to bottom via scrollIntoView
+
+Safety net: 30s polling (visibility-aware, same as conversations)
 ```
 
 **Hook: `hooks/use-realtime-messages.ts`**
 
 ```typescript
-// Subscribes to postgres_changes on the messages table
-// Filtered by conversation_id — only receives messages for the open conversation
-// Debounces callback 300ms to batch rapid events
+// Same setAuth + onAuthStateChange pattern as conversations hook
+const { data: { session } } = await supabase.auth.getSession();
+if (session) supabase.realtime.setAuth(session.access_token);
+
 const realtimeChannel = supabase
   .channel(`messages-realtime:${conversationId}`)
   .on('postgres_changes', {
@@ -436,11 +471,7 @@ const realtimeChannel = supabase
   })
   .subscribe();
 
-// Cleanup on unmount
-return () => {
-  clearTimeout(debounceTimerRef.current);
-  supabase.removeChannel(channelRef.current);
-};
+// 30s polling safety net + cleanup on unmount
 ```
 
 **Design decisions:**
@@ -451,6 +482,8 @@ return () => {
 | `callbackRef` pattern | Keeps the callback fresh across re-renders without re-subscribing |
 | `enabled` flag | Allows pausing the subscription (e.g., when panel is closed) |
 | `scrollIntoView({ behavior: "smooth" })` | Auto-scrolls chat to latest message after each fetch |
+| `setAuth()` + `onAuthStateChange` | Same RLS compatibility pattern as conversations hook |
+| 30s polling safety net | Ensures messages appear even if WebSocket silently disconnects |
 
 **Dual Realtime hooks (summary):**
 
@@ -458,6 +491,8 @@ return () => {
 |------|-------|--------|-------|---------|
 | `useRealtimeConversations` | `conversations` | INSERT, UPDATE, DELETE | org-wide or channel-scoped | Conversations list page |
 | `useRealtimeMessages` | `messages` | INSERT only | single conversation_id | Conversation detail panel |
+
+Both hooks share the same pattern: `setAuth()` on mount, `onAuthStateChange` for token refresh, UUID validation on filter IDs, and a 30s visibility-aware polling safety net.
 
 ### API Key Encryption
 
@@ -559,7 +594,7 @@ Los tokens se registran en cada mensaje IA (`Message.tokensUsed`) y se resumen e
 
 ## Alcance del MVP
 
-### Implementado (v0.3.2)
+### Implementado (v0.3.3)
 
 - Multi-tenant con Super Admin (CRUD orgs, users, channels)
 - Website widget embebible (vanilla JS, DOM injection, bilingue, maximize/minimize, end conversation, session timeout)
@@ -568,6 +603,8 @@ Los tokens se registran en cada mensaje IA (`Message.tokensUsed`) y se resumen e
 - API key management (AES-256-GCM, 3-tier resolution, UI-based)
 - Conversations page con datos reales (Prisma) + Supabase Realtime (live updates)
 - Conversation detail with Realtime messages (live message updates via postgres_changes)
+- Supabase Realtime with RLS: setAuth + denormalized `organization_id` + token refresh + 30s polling safety net
+- RLS policies on `conversations` and `messages` tables (org-scoped tenant isolation)
 - Dashboard basico (5 stat cards, top pages, recent conversations — aun mock)
 - AI Settings page (instructions, model config, handoff, preview widget) + RBAC split (business vs technical params)
 - Autenticacion real (Supabase Auth — login, logout, forgot/update password)
@@ -575,6 +612,7 @@ Los tokens se registran en cada mensaje IA (`Message.tokensUsed`) y se resumen e
 - Token tracking (Message.tokensUsed + UsageTracking monthly)
 - Security hardened (CSP, HSTS, crypto passwords, transaction atomicity, OWASP widget API hardening)
 - 3-layer conversation cleanup (PATCH + client timeout + pg_cron)
+- 3-layer security model: RLS (Realtime), Server Actions (dashboard), publicKey+visitorId (widget API)
 
 ### Pendiente (Post-MVP)
 

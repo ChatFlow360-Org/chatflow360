@@ -137,12 +137,17 @@
       "charCount": "{count}/4000 caracteres"
     },
     "quickSettings": {
-      "title": "Ajustes Rapidos",
+      "title": "Ajustes Tecnicos",
+      "description": "Configuracion del modelo y respuestas",
       "aiModel": "Modelo de IA",
+      "modelFast": "Rapido",
+      "modelBalanced": "Equilibrado",
+      "modelPremium": "Premium",
       "temperature": "Temperatura",
+      "temperatureHint": "Menor = preciso, Mayor = creativo",
       "maxTokens": "Tokens Maximos",
-      "humanTakeover": "Transferencia a Humano",
-      "readOnly": "Administrado por el admin de plataforma"
+      "maxTokensHint": "100–4000. Limita la longitud de respuesta",
+      "humanTakeover": "Transferencia a Humano"
     },
     "systemPrompt": {
       "title": "Prompt del Sistema por Defecto",

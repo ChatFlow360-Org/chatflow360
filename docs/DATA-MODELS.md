@@ -9,6 +9,7 @@ Organization (1)
     ├── AiSettings (1:1) ─── Config IA por org (SOLO super_admin)
     ├── OrganizationMember (1:N) ─── User (N:1)
     ├── UsageTracking (1:N) ─── Resumen mensual de uso
+    ├── Conversation (1:N) ─── denormalized FK for RLS (v0.3.3)
     └── Channel (1:N)
             ├── AI overrides (systemPrompt, handoff) ─── Org admin configura
             ├── ChannelKnowledge (1:N) ─── Conocimiento RAG (pgvector)
@@ -163,6 +164,7 @@ const handoffKeywords = channel.handoffKeywords.length > 0
 |-------|------|---------|-------------|
 | id | UUID | auto | PK |
 | channelId | UUID | - | FK Channel |
+| organizationId | UUID | - | FK Organization (denormalized, v0.3.3) |
 | visitorId | String? | null | ID unico del visitante |
 | contactInfo | Json | {} | Info de contacto |
 | status | String | "open" | 'open' / 'pending' / 'resolved' / 'closed' |
@@ -172,7 +174,9 @@ const handoffKeywords = channel.handoffKeywords.length > 0
 | lastMessageAt | DateTime | now() | Ultimo mensaje |
 | resolvedAt | DateTime? | null | Cuando se resolvio |
 
-**Relaciones:** channel, assignee (User), messages
+**Relaciones:** channel, organization, assignee (User), messages
+
+**Denormalization note (`organizationId`):** This field is intentionally denormalized from `Channel.organizationId`. The canonical relationship is `Conversation -> Channel -> Organization`, but Supabase Realtime's policy evaluation engine (walrus) cannot evaluate RLS policies that require JOINs across tables. By storing `organization_id` directly on conversations, the RLS policy becomes a simple column check (`organization_id = ANY(SELECT get_user_org_ids())`) that walrus can evaluate. The field is set at conversation creation time in `POST /api/chat` and never changes (a conversation always belongs to the same org). This also simplifies dashboard queries that filter by organization (direct `WHERE organization_id = ?` instead of `WHERE channel_id IN (SELECT id FROM channels WHERE organization_id = ?)`).
 
 ### Message
 

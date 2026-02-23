@@ -2,6 +2,96 @@
 
 > Historial completo de versiones y cambios del proyecto.
 
+## v0.3.4 (2026-02-23)
+
+### Dashboard Real Stats + Editable AI Technical Settings
+
+#### Dashboard: Real Prisma Queries (replaces mock data)
+
+- **`lib/dashboard/stats.ts`** — new `fetchDashboardData` server action with 6 parallel Prisma queries:
+  - `totalConversations` (count, date-filtered)
+  - `activeNow` (count where status open/pending, NO date filter — real-time metric)
+  - `aiConversations` (count where responderMode=ai, date-filtered)
+  - `uniqueVisitors` (groupBy visitorId, date-filtered)
+  - `recentConversations` (top 5 by lastMessageAt, NO date filter)
+  - `avgResponseTimeSec` (raw SQL: EXTRACT EPOCH between first visitor msg and first AI/agent response)
+  - `topPages` (extracted from conversation metadata.pageUrl)
+- **Org scoping:** super_admin uses cookie-based org selection, regular user uses membership org
+- **Date range filter:** `from`/`to` params filter totalConversations, aiConversations, uniqueVisitors, avgResponseTime, topPages
+- **`dashboard-client.tsx`** — `useTransition` for non-blocking date range re-fetch
+
+#### StatCard: Accent Color System
+
+- **`components/dashboard/stat-card.tsx`** — new `AccentColor` type (`"cta"` | `"emerald"`) with per-accent border, icon bg, icon text, and card background
+- **Active Now** moved to first position with emerald accent (green border, green icon, subtle green card background)
+
+#### AI Settings: Editable Technical Parameters (super_admin only)
+
+- **Model selector** — Select dropdown with gpt-4o-mini (Fast), gpt-4o (Balanced), gpt-4-turbo (Premium)
+- **Temperature slider** — Slider 0.0–2.0, step 0.1, with teal accent color and live value display
+- **Max Tokens input** — Number input 100–4000, step 50, with validation
+- **Human Takeover toggle** — Switch (already existed, now in same card)
+- Previously these values were hidden inputs with fixed defaults — now fully editable per organization
+- Server action `upsertAiSettings` already supported per-org technical params (model, temperature, maxTokens) — only UI was missing
+- RBAC unchanged: only super_admin sees Technical Settings card; org admin sees only business params (system prompt, handoff keywords)
+
+#### i18n
+
+- Added 6 new translation keys in `settings.quickSettings` namespace (EN + ES): description, modelFast, modelBalanced, modelPremium, temperatureHint, maxTokensHint
+- Renamed title: "Quick Settings" → "Technical Settings" / "Ajustes Tecnicos"
+
+---
+
+## v0.3.3 (2026-02-23)
+
+### Supabase Realtime RLS Security Fix + Denormalization
+
+#### Problem: Realtime Events Blocked by RLS
+
+After enabling Row Level Security on `conversations` and `messages` tables, Supabase Realtime stopped delivering events. Root cause was two-fold:
+1. `@supabase/ssr`'s `createBrowserClient` does not propagate auth JWT to the Realtime WebSocket (supabase-js Issue #1304)
+2. Complex RLS policies with JOINs (conversations -> channels -> organization_members) caused walrus (Supabase's Realtime policy evaluation engine) to silently drop events
+
+#### Solution: setAuth + Denormalization
+
+- **`supabase.realtime.setAuth(session.access_token)`** — explicitly sets JWT on Realtime WebSocket connection, bypassing the `@supabase/ssr` limitation
+- **Token refresh listener** — `onAuthStateChange` re-sets auth on `TOKEN_REFRESHED` event, cleans up on `SIGNED_OUT`
+- **Denormalized `organizationId` onto `conversations` table** — enables simple RLS policy (`organization_id = ANY(SELECT get_user_org_ids())`) without JOINs, which walrus can evaluate
+- **30s polling safety net** — visibility-aware fallback timer (pauses when tab is hidden, resumes on focus)
+- **UUID validation** — sanitizes all IDs before passing to Supabase channel filters
+
+#### Files Modified
+
+- **`prisma/schema.prisma`** — Added `organizationId` to Conversation model with `@relation` to Organization
+- **`app/api/chat/route.ts`** — Sets `organizationId: org.id` when creating new conversations
+- **`app/[locale]/(dashboard)/conversations/page.tsx`** — Simplified org filter (direct `organizationId` instead of JOIN through channel)
+- **`hooks/use-realtime-conversations.ts`** — `setAuth`, `onAuthStateChange`, UUID validation, 30s polling safety net
+- **`hooks/use-realtime-messages.ts`** — Same pattern as conversations hook (setAuth + token refresh + polling)
+
+#### Security Fixes — Cascade, TOCTOU, AutoComplete
+
+- **MED-05: deleteOrganization cascade check** — `deleteOrganization` en `lib/admin/actions.ts` ahora verifica `_count.members > 0` antes de borrar. Retorna error i18n `orgHasMembers` si la org tiene miembros activos. Previene borrado accidental en cascada de channels, conversations, messages, AI settings, etc.
+- **LOW-02: Slug TOCTOU race condition fix** — `createOrganization` ya no hace `findUnique` check previo al `create`. Crea directamente y captura error Prisma `P2002` (unique constraint violation), retornando `slugExists`. Atomico — sin race condition entre check y create.
+- **LOW-04: autoComplete="off" en admin forms** — Agregado `autoComplete="off"` en 3 inputs de `organizations-client.tsx`: org name, org slug, channel name. Users form y AI Settings ya lo tenian verificado.
+- **Audit progress:** CRITICAL 1/1, HIGH 2/2 (renumbered from original audit), MEDIUM 5/6, LOW 5/6 resueltos. Pendiente: MED-02 (rate limiting, Upstash Redis), LOW-03 (translation key safelist, riesgo teorico).
+
+#### RLS Policies (applied in Supabase)
+
+- **`tenant_select_conversations`:** `USING (organization_id = ANY(SELECT get_user_org_ids()))` — simple column check, no JOINs
+- **`tenant_select_messages`:** `USING (conversation_id IN (SELECT id FROM conversations WHERE organization_id = ANY(SELECT get_user_org_ids())))` — single JOIN only
+- **`get_user_org_ids()`:** `SECURITY DEFINER` function returning org IDs for current user (super admin sees all, regular user sees membership orgs)
+- **REPLICA IDENTITY FULL** enabled on both `conversations` and `messages` tables
+
+#### Security Model — 3 Layers
+
+| Layer | Mechanism | Scope |
+|-------|-----------|-------|
+| RLS | Supabase Realtime event filtering (org-scoped SELECT policies) | Tenant isolation for live events |
+| Server Actions | Prisma with auth guards (`getCurrentUser`, `requireSuperAdmin`) | Dashboard CRUD operations |
+| Widget API | `publicKey` + `visitorId` validation | Public chat endpoints |
+
+---
+
 ## v0.3.2 (2026-02-22)
 
 ### Supabase Realtime + OWASP Security Hardening (Widget API)

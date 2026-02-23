@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.3.2 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.3.4 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -73,4 +73,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.3.2** - Realtime + RBAC + OWASP Security Hardening: Supabase Realtime en dos niveles — conversations list (`useRealtimeConversations`) y conversation detail (`useRealtimeMessages`, postgres_changes on messages table filtered by conversation_id, debounced 300ms). Auto-scroll chat via useRef + scrollIntoView. Refresh button en detail header con spin animation. Red closed badge (destructive colors). Removed placeholder buttons (Reopen/Assign) del detail panel. Default handoff keywords (`lib/chat/defaults.ts`, 19 bilingual EN/ES) pre-loaded en AI Settings UI y usado como fallback en server actions. RBAC split en AI Settings: business params (systemPrompt, handoffKeywords) editables por org_admin, technical params (model, temperature, maxTokens, apiKey) solo super_admin. Quick Settings sidebar hidden para org_admin (sin visibilidad de config técnica). OWASP hardening en widget API: UUID path param validation, body size limits, safe JSON parsing, Zod error sanitization, crypto.getRandomValues() for visitorId, channel/org isActive validation. pg_cron cleanup activo. 3-layer conversation cleanup. API routes POST/GET/PATCH /api/chat. OpenAI 3-tier key resolution + AES-256-GCM. ~360+ traducciones EN/ES. Pendiente: RAG knowledge base, dashboard stats reales, agent messaging, rate limiting (Upstash Redis — deferred a produccion).
+**v0.3.4** - Dashboard real stats + Editable AI Technical Settings. Dashboard stat cards now use real Prisma aggregation queries (6 parallel queries via `lib/dashboard/stats.ts`) with date range filtering. Active Now card moved to first position with emerald accent. AI Settings Technical Settings panel (super_admin only) now editable: model Select (gpt-4o-mini/gpt-4o/gpt-4-turbo), temperature Slider (0-2), maxTokens Input (100-4000). Previously these were hidden fixed values. Server action already supported per-org config — only UI was missing. Supabase Realtime + RLS (v0.3.3), Agent Messaging, RAG Knowledge Base, OWASP hardening, 3-layer conversation cleanup all complete. Pendiente: rate limiting (Upstash Redis — deferred a produccion), mock data removal, typing indicators.

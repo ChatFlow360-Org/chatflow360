@@ -28,6 +28,14 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -127,10 +135,10 @@ export function AiSettingsClient({
     }
   }, [updateState]);
 
-  // Form state
-  const [model] = useState(aiSettings?.model || "gpt-4o-mini");
-  const [temperature] = useState(aiSettings?.temperature ?? 0.7);
-  const [maxTokens] = useState(aiSettings?.maxTokens || 500);
+  // Form state — technical params (editable by super_admin)
+  const [model, setModel] = useState(aiSettings?.model || "gpt-4o-mini");
+  const [temperature, setTemperature] = useState(aiSettings?.temperature ?? 0.7);
+  const [maxTokens, setMaxTokens] = useState(aiSettings?.maxTokens || 500);
   const [systemPrompt, setSystemPrompt] = useState(
     aiSettings?.systemPrompt || ""
   );
@@ -146,6 +154,9 @@ export function AiSettingsClient({
   // Reset form when org changes
   useEffect(() => {
     setSystemPrompt(aiSettings?.systemPrompt || "");
+    setModel(aiSettings?.model || "gpt-4o-mini");
+    setTemperature(aiSettings?.temperature ?? 0.7);
+    setMaxTokens(aiSettings?.maxTokens || 500);
     const resolved = resolveKeywords(aiSettings);
     setKeywords(resolved);
     setKeywordInput("");
@@ -212,14 +223,6 @@ export function AiSettingsClient({
       setDeletingId(null);
     });
   };
-
-  // --- Model display name ---
-  const modelDisplay =
-    model === "gpt-4o-mini"
-      ? "gpt-4o-mini"
-      : model === "gpt-4o"
-        ? "gpt-4o"
-        : "gpt-4-turbo";
 
   // --- Render ---
   return (
@@ -451,51 +454,100 @@ export function AiSettingsClient({
                   </CardContent>
                 </Card>
 
-                {/* Quick Settings — super_admin only */}
+                {/* Technical Settings — super_admin only */}
                 {isSuperAdmin && (
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm">
                         {t("quickSettings.title")}
                       </CardTitle>
+                      <CardDescription className="text-xs">
+                        {t("quickSettings.description")}
+                      </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-0">
+                    <CardContent className="space-y-4">
                       {/* AI Model */}
-                      <div className="flex items-center justify-between py-2.5">
-                        <span className="text-xs text-muted-foreground">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-muted-foreground">
                           {t("quickSettings.aiModel")}
-                        </span>
-                        <span className="text-xs font-medium">
-                          {modelDisplay}
-                        </span>
+                        </Label>
+                        <Select value={model} onValueChange={setModel}>
+                          <SelectTrigger className="w-full bg-background text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="gpt-4o-mini">
+                              gpt-4o-mini
+                              <span className="ml-1 text-[10px] text-muted-foreground">{t("quickSettings.modelFast")}</span>
+                            </SelectItem>
+                            <SelectItem value="gpt-4o">
+                              gpt-4o
+                              <span className="ml-1 text-[10px] text-muted-foreground">{t("quickSettings.modelBalanced")}</span>
+                            </SelectItem>
+                            <SelectItem value="gpt-4-turbo">
+                              gpt-4-turbo
+                              <span className="ml-1 text-[10px] text-muted-foreground">{t("quickSettings.modelPremium")}</span>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
+
                       <Separator />
 
                       {/* Temperature */}
-                      <div className="flex items-center justify-between py-2.5">
-                        <span className="text-xs text-muted-foreground">
-                          {t("quickSettings.temperature")}
-                        </span>
-                        <span className="text-xs font-medium text-cta">
-                          {temperature.toFixed(1)}
-                        </span>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs text-muted-foreground">
+                            {t("quickSettings.temperature")}
+                          </Label>
+                          <span className="text-xs font-semibold text-cta">
+                            {temperature.toFixed(1)}
+                          </span>
+                        </div>
+                        <Slider
+                          value={[temperature]}
+                          onValueChange={([v]) => setTemperature(v)}
+                          min={0}
+                          max={2}
+                          step={0.1}
+                          className="**:data-[slot=slider-range]:bg-cta **:data-[slot=slider-thumb]:border-cta"
+                        />
+                        <p className="text-[10px] text-muted-foreground/70">
+                          {t("quickSettings.temperatureHint")}
+                        </p>
                       </div>
+
                       <Separator />
 
                       {/* Max Tokens */}
-                      <div className="flex items-center justify-between py-2.5">
-                        <span className="text-xs text-muted-foreground">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-muted-foreground">
                           {t("quickSettings.maxTokens")}
-                        </span>
-                        <span className="text-xs font-medium">{maxTokens}</span>
+                        </Label>
+                        <Input
+                          type="number"
+                          value={maxTokens}
+                          onChange={(e) => {
+                            const v = parseInt(e.target.value, 10);
+                            if (!isNaN(v) && v >= 100 && v <= 4000) setMaxTokens(v);
+                          }}
+                          min={100}
+                          max={4000}
+                          step={50}
+                          className="bg-background text-xs"
+                        />
+                        <p className="text-[10px] text-muted-foreground/70">
+                          {t("quickSettings.maxTokensHint")}
+                        </p>
                       </div>
+
                       <Separator />
 
                       {/* Human Takeover */}
-                      <div className="flex items-center justify-between py-2.5">
-                        <span className="text-xs text-muted-foreground">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs text-muted-foreground">
                           {t("quickSettings.humanTakeover")}
-                        </span>
+                        </Label>
                         <Switch
                           checked={handoffEnabled}
                           onCheckedChange={setHandoffEnabled}

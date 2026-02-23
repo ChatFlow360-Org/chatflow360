@@ -137,12 +137,17 @@
       "charCount": "{count}/4000 characters"
     },
     "quickSettings": {
-      "title": "Quick Settings",
+      "title": "Technical Settings",
+      "description": "Model and response configuration",
       "aiModel": "AI Model",
+      "modelFast": "Fast",
+      "modelBalanced": "Balanced",
+      "modelPremium": "Premium",
       "temperature": "Temperature",
+      "temperatureHint": "Lower = precise, Higher = creative",
       "maxTokens": "Max Tokens",
-      "humanTakeover": "Human Takeover",
-      "readOnly": "Managed by platform admin"
+      "maxTokensHint": "100–4000. Limits AI response length",
+      "humanTakeover": "Human Takeover"
     },
     "systemPrompt": {
       "title": "Default System Prompt",

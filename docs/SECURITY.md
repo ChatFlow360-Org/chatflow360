@@ -1,9 +1,63 @@
 # ChatFlow360 - Security Checklist
 
-> Auditoria de seguridad del proyecto. Actualizado en v0.3.2 (2026-02-22).
+> Auditoria de seguridad del proyecto. Actualizado en v0.3.3 (2026-02-23).
 > Audit completo: `docs/SECURITY-AUDIT-v0.2.2.md` (21 findings, OWASP ASVS v4.0)
 
-## Estado del Frontend (v0.3.2)
+## Security Model — 3 Layers (v0.3.3)
+
+ChatFlow360 uses three complementary security layers, each protecting a different surface:
+
+| Layer | Mechanism | Scope | What it protects |
+|-------|-----------|-------|-----------------|
+| **RLS** | Supabase Row Level Security (org-scoped SELECT policies) | Realtime events + direct DB access | Tenant isolation — org A cannot see org B's data in live updates |
+| **Server Actions** | Prisma with auth guards (`getCurrentUser`, `requireSuperAdmin`) | Dashboard CRUD operations | Admin operations — only authorized users can create/update/delete |
+| **Widget API** | `publicKey` (channel UUID) + `visitorId` (crypto UUID v4) validation | Public chat endpoints (`/api/chat`) | Widget interactions — visitor can only access their own conversation |
+
+### RLS Policies (applied in Supabase)
+
+**`conversations` table:**
+
+- **Policy:** `tenant_select_conversations`
+- **Command:** SELECT
+- **Expression:** `USING (organization_id = ANY(SELECT get_user_org_ids()))`
+- Uses denormalized `organization_id` column (no JOINs) — required for walrus compatibility
+
+**`messages` table:**
+
+- **Policy:** `tenant_select_messages`
+- **Command:** SELECT
+- **Expression:** `USING (conversation_id IN (SELECT id FROM conversations WHERE organization_id = ANY(SELECT get_user_org_ids())))`
+- Single JOIN through conversations (walrus can handle one level)
+
+**`get_user_org_ids()` function:**
+
+```sql
+CREATE OR REPLACE FUNCTION get_user_org_ids()
+RETURNS uuid[] AS $$
+  -- Super admin: returns ALL org IDs
+  -- Regular user: returns org IDs from organization_members
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+```
+
+- `SECURITY DEFINER` — executes with function owner's privileges, not caller's
+- `STABLE` — can be cached within a transaction
+- Handles super admin (sees all orgs) vs regular user (sees membership orgs only)
+
+**REPLICA IDENTITY FULL** enabled on both `conversations` and `messages` tables (required for Supabase Realtime to include all column values in change events).
+
+### Realtime Auth (setAuth pattern)
+
+`@supabase/ssr`'s `createBrowserClient` does not propagate the auth JWT to the Realtime WebSocket (supabase-js Issue #1304). To fix this:
+
+1. On mount: `supabase.realtime.setAuth(session.access_token)` — explicitly sets JWT
+2. On token refresh: `onAuthStateChange('TOKEN_REFRESHED')` re-sets auth
+3. On sign out: `onAuthStateChange('SIGNED_OUT')` removes all channels
+
+Without `setAuth`, all Realtime subscriptions on RLS-enabled tables silently receive zero events.
+
+---
+
+## Estado del Frontend (v0.3.3)
 
 **Dependencias:** 29 paquetes, 0 vulnerabilidades conocidas
 **Buenas practicas implementadas:**
@@ -32,6 +86,9 @@
 - Widget `visitorId` generated with `crypto.getRandomValues()` (Web Crypto API, UUID v4)
 - Channel + org `isActive` validation in PATCH endpoint (403 if either is inactive)
 - CORS method sync: `lib/api/cors.ts` and `next.config.ts` now declare identical allowed methods
+- Cascade check: `deleteOrganization` verifica `_count.members > 0` antes de borrar (previene cascade accidental)
+- TOCTOU fix: `createOrganization` captura P2002 en vez de findUnique + create (atomico, sin race condition)
+- `autoComplete="off"` en inputs administrativos de organizations (name, slug, channel name)
 
 ---
 
@@ -88,16 +145,21 @@
 | MED-02 | Medio | Sin rate limiting en login y widget API | `@upstash/ratelimit` + Redis — deferred to production phase (not needed during MVP/testing). Will use `@upstash/ratelimit` for per-IP limiting on `/api/chat` endpoints to protect against API abuse and OpenAI token exhaustion. | 30-60 min |
 | ~~MED-03~~ | ~~Medio~~ | ~~Sin CORS infrastructure~~ | **Resuelto en v0.3.1/v0.3.2** — `lib/api/cors.ts` implementado con PATCH support; synced with `next.config.ts` | Done |
 
+### Resuelto en v0.3.3 (Security Fixes — Cascade, TOCTOU, AutoComplete)
+
+| ID | Severidad | Issue | Solucion |
+|----|-----------|-------|----------|
+| MED-05 | Medio | deleteOrg sin cascade check | `deleteOrganization` ahora verifica `_count.members > 0` antes de borrar. Retorna error `orgHasMembers` si la org tiene miembros activos. Previene borrado accidental en cascada de channels, conversations, messages, AI settings, etc. |
+| LOW-02 | Bajo | Slug TOCTOU race condition | `createOrganization` eliminado el `findUnique` check previo. Crea directamente y captura error Prisma `P2002` (unique constraint violation). Atomico — sin race condition posible. |
+| LOW-04 | Bajo | autoComplete en admin forms | `autoComplete="off"` agregado en 3 inputs de organizations: org name, org slug, channel name. Users form y AI Settings ya lo tenian. |
+
 ## Pendiente: Phase 3 (Cuando Conecte Backend)
 
 | ID | Severidad | Issue | Accion | Esfuerzo |
 |----|-----------|-------|--------|----------|
 | MED-04 | Medio | Mock data en bundles cliente | Eliminar `lib/mock/data.ts`, reemplazar con server-fetched data | Parte del backend |
-| MED-05 | Medio | deleteOrg sin cascade check | Verificar members/channels antes de borrar | 15 min |
 | MED-06 | Medio | Channel update sin ownership check | Verificar org membership cuando RBAC exista | 15 min |
-| LOW-02 | Bajo | Slug TOCTOU race | Catch P2002 en vez de findUnique + create | 10 min |
-| LOW-03 | Bajo | Translation keys dinamicas | Set de error keys conocidos como safeguard | 10 min |
-| LOW-04 | Bajo | autoComplete en admin forms | `autoComplete="off"` en 3 inputs | 5 min |
+| LOW-03 | Bajo | Translation keys dinamicas | Set de error keys conocidos como safeguard (riesgo teorico — keys hardcodeadas en server actions) | 10 min |
 
 ## Pendiente: Backend Original (de v0.1.8)
 
@@ -124,10 +186,11 @@
 
 ### Row Level Security (RLS)
 
-- [ ] Habilitar RLS en TODAS las tablas de Supabase
-- [ ] Policies por `organization_id` (multi-tenant isolation)
-- [ ] Verificar que un usuario de org-A NUNCA pueda ver datos de org-B
-- [ ] Test: intentar acceder a datos de otra organizacion (debe fallar)
+- [x] Habilitar RLS en `conversations` y `messages` tables (v0.3.3)
+- [x] Policies por `organization_id` (multi-tenant isolation via `get_user_org_ids()`)
+- [x] Verificar que un usuario de org-A NUNCA pueda ver datos de org-B (Realtime events filtered by RLS)
+- [ ] Test: intentar acceder a datos de otra organizacion (debe fallar) — manual verification pending
+- [ ] Habilitar RLS en tablas restantes (channels, organizations, ai_settings, etc.)
 
 ### API Routes / Server Actions
 
