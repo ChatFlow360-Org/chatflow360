@@ -1,19 +1,29 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { type LucideIcon } from "lucide-react";
 
+type AccentColor = "cta" | "emerald";
+
+const accentStyles: Record<AccentColor, { border: string; bg: string; text: string }> = {
+  cta: { border: "border-l-cta", bg: "bg-cta/10", text: "text-cta" },
+  emerald: { border: "border-l-emerald-500", bg: "bg-emerald-500/10", text: "text-emerald-500" },
+};
+
 interface StatCardProps {
   title: string;
   value: string;
   icon: LucideIcon;
   trend?: string;
+  accent?: AccentColor;
 }
 
-export function StatCard({ title, value, icon: Icon, trend }: StatCardProps) {
+export function StatCard({ title, value, icon: Icon, trend, accent = "cta" }: StatCardProps) {
+  const s = accentStyles[accent];
+
   return (
-    <Card className="border-border border-l-[3px] border-l-cta bg-card">
+    <Card className={`border-border border-l-[3px] ${s.border} bg-card`}>
       <CardContent className="flex items-center gap-4 p-5">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cta/10">
-          <Icon className="h-5 w-5 text-cta" />
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${s.bg}`}>
+          <Icon className={`h-5 w-5 ${s.text}`} />
         </div>
         <div className="min-w-0">
           <p className="text-xs font-medium text-muted-foreground">{title}</p>

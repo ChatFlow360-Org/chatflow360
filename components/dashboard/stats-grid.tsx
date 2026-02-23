@@ -28,14 +28,15 @@ export function StatsGrid({ stats }: StatsGridProps) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
       <StatCard
-        title={t("totalConversations")}
-        value={formatNumber(stats.totalConversations)}
-        icon={MessageSquare}
-      />
-      <StatCard
         title={t("activeNow")}
         value={stats.activeNow.toString()}
         icon={Users}
+        accent="emerald"
+      />
+      <StatCard
+        title={t("totalConversations")}
+        value={formatNumber(stats.totalConversations)}
+        icon={MessageSquare}
       />
       <StatCard
         title={t("avgResponseTime")}
