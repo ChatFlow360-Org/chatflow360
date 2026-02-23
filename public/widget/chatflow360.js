@@ -445,7 +445,7 @@
       "  flex-shrink:0;display:none;",
       "}",
       ".cf360-connecting--show{display:block;}",
-      ".cf360-connecting--connected{background:#e0f5f5;color:#0d6e6e;}",
+      ".cf360-connecting--connected{background:#dcfce7;color:#166534;}",
 
       // Input area
       ".cf360-input-area{",
