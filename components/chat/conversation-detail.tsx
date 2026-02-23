@@ -362,12 +362,12 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
 
         <Separator />
 
-        {/* Input */}
+        {/* Input — only visible in human mode */}
         {isClosed ? (
           <div className="flex items-center justify-center p-3">
             <p className="text-sm text-muted-foreground">{t("conversationClosed")}</p>
           </div>
-        ) : (
+        ) : conversation.responderMode === "human" ? (
           <div className="flex items-center gap-2 p-3">
             <Input
               placeholder={t("typeMessage")}
@@ -386,6 +386,11 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
             >
               <Send className="h-4 w-4" />
             </Button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center gap-2 p-3">
+            <Bot className="h-4 w-4 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">{t("aiHandling")}</p>
           </div>
         )}
       </div>

@@ -55,6 +55,7 @@
     "noConversations": "No se encontraron conversaciones",
     "typeMessage": "Escribe un mensaje...",
     "conversationClosed": "Esta conversacion esta cerrada",
+    "aiHandling": "La IA esta manejando esta conversacion",
     "sendFailed": "Error al enviar mensaje",
     "msgs": "{count} msgs",
     "filters": {
