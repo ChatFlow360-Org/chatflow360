@@ -30,10 +30,17 @@
 - **Model selector** — Select dropdown with gpt-4o-mini (Fast), gpt-4o (Balanced), gpt-4-turbo (Premium)
 - **Temperature slider** — Slider 0.0–2.0, step 0.1, with teal accent color and live value display
 - **Max Tokens input** — Number input 100–4000, step 50, with validation
-- **Human Takeover toggle** — Switch (already existed, now in same card)
+- **Human Takeover toggle removed** — was cosmetic only (not connected to backend logic), caused confusion. Handoff keywords section remains functional.
 - Previously these values were hidden inputs with fixed defaults — now fully editable per organization
 - Server action `upsertAiSettings` already supported per-org technical params (model, temperature, maxTokens) — only UI was missing
 - RBAC unchanged: only super_admin sees Technical Settings card; org admin sees only business params (system prompt, handoff keywords)
+
+#### API Key Resolution — No Automatic Fallback
+
+- 3-tier resolution: per-org key → global platform key → env `OPENAI_API_KEY`
+- Selection by **priority at client creation**, NOT retry on failure
+- If per-org key runs out of quota, calls fail — does NOT automatically fall back to global key
+- Future consideration: try/catch with fallback to next tier (has billing implications — would subsidize org consumption)
 
 #### i18n
 
