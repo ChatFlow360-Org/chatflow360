@@ -3,9 +3,10 @@
 import { useEffect, useRef, useCallback } from "react";
 import { useRouter } from "@/lib/i18n/navigation";
 import { createClient } from "@/lib/supabase/client";
-import type { RealtimeChannel } from "@supabase/supabase-js";
+import type { RealtimeChannel, Subscription } from "@supabase/supabase-js";
 
-const POLL_INTERVAL = 30_000; // 30s safety-net (setAuth handles instant updates)
+const POLL_INTERVAL = 30_000; // 30s safety-net
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 interface UseRealtimeConversationsOptions {
   /** Optional channel ID to scope the subscription */
@@ -25,8 +26,12 @@ export function useRealtimeConversations(
   const { channelId, enabled = true } = options;
   const router = useRouter();
   const channelRef = useRef<RealtimeChannel | null>(null);
+  const authSubRef = useRef<Subscription | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // MED-03: Sanitize channelId to prevent filter injection
+  const safeChannelId = channelId && UUID_RE.test(channelId) ? channelId : undefined;
 
   const debouncedRefresh = useCallback(() => {
     if (debounceTimerRef.current) {
@@ -44,22 +49,38 @@ export function useRealtimeConversations(
     let cancelled = false;
     const supabase = createClient();
 
+    // HIGH-01: Listen for token refresh + sign out
+    const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === "TOKEN_REFRESHED" && session?.access_token) {
+          supabase.realtime.setAuth(session.access_token);
+        }
+        if (event === "SIGNED_OUT" && channelRef.current) {
+          supabase.removeChannel(channelRef.current);
+          channelRef.current = null;
+        }
+      }
+    );
+    authSubRef.current = authSub;
+
     // --- 1. Supabase Realtime with explicit auth for RLS ---
     (async () => {
-      // Propagate auth token so Realtime evaluates RLS as "authenticated"
-      const { data: { session } } = await supabase.auth.getSession();
+      // HIGH-02: Validate session server-side, then get fresh token
+      const { error } = await supabase.auth.getUser();
       if (cancelled) return;
+      if (error) return; // Session invalid — polling still works
 
-      if (session?.access_token) {
-        supabase.realtime.setAuth(session.access_token);
-      }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (cancelled || !session?.access_token) return;
 
-      const filter = channelId
-        ? `channel_id=eq.${channelId}`
+      supabase.realtime.setAuth(session.access_token);
+
+      const filter = safeChannelId
+        ? `channel_id=eq.${safeChannelId}`
         : undefined;
 
-      const realtimeChannelName = channelId
-        ? `conversations-realtime:${channelId}`
+      const realtimeChannelName = safeChannelId
+        ? `conversations-realtime:${safeChannelId}`
         : "conversations-realtime";
 
       const realtimeChannel = supabase
@@ -108,6 +129,10 @@ export function useRealtimeConversations(
     // Cleanup
     return () => {
       cancelled = true;
+      if (authSubRef.current) {
+        authSubRef.current.unsubscribe();
+        authSubRef.current = null;
+      }
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
@@ -119,5 +144,5 @@ export function useRealtimeConversations(
         channelRef.current = null;
       }
     };
-  }, [enabled, channelId, debouncedRefresh, router]);
+  }, [enabled, safeChannelId, debouncedRefresh, router]);
 }
