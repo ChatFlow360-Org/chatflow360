@@ -9,6 +9,7 @@ interface ChatMessage {
 interface AiResponse {
   content: string;
   tokensUsed: number;
+  handoffRequested: boolean;
 }
 
 export interface RagContext {
@@ -38,6 +39,11 @@ function buildMessages(
       .join("\n\n");
 
     systemContent += `\n\n---\nKNOWLEDGE BASE CONTEXT:\nUse the following information to answer the visitor's question accurately. If the information doesn't match the question, rely on your general knowledge.\n\n${contextBlock}\n---`;
+  }
+
+  // Handoff instruction — always appended so AI can trigger transfer
+  if (config.handoffEnabled) {
+    systemContent += `\n\n---\nHANDOFF RULE:\nWhen the visitor clearly wants to speak with a human agent (e.g., they confirm "yes" after you offered, or explicitly request a person), append the exact tag [HANDOFF] at the very end of your message. Write a brief transfer message to the visitor BEFORE the tag. Do NOT include [HANDOFF] unless the visitor has clearly expressed intent to be connected with a human.\n---`;
   }
 
   if (systemContent) {
@@ -79,8 +85,12 @@ export async function generateAiResponse(
   });
 
   const choice = completion.choices[0];
-  const content = choice?.message?.content || "I'm sorry, I couldn't generate a response.";
+  const rawContent = choice?.message?.content || "I'm sorry, I couldn't generate a response.";
   const tokensUsed = completion.usage?.total_tokens || 0;
 
-  return { content, tokensUsed };
+  // Detect and strip [HANDOFF] tag from AI response
+  const handoffRequested = rawContent.includes("[HANDOFF]");
+  const content = rawContent.replace(/\s*\[HANDOFF\]\s*/g, "").trim();
+
+  return { content, tokensUsed, handoffRequested };
 }

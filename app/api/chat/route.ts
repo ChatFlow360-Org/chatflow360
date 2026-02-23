@@ -190,6 +190,25 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // 7b. AI-driven handoff — if AI included [HANDOFF] tag, switch to human mode
+    if (aiResult.handoffRequested) {
+      await prisma.conversation.update({
+        where: { id: conversation.id },
+        data: { responderMode: "human", status: "pending" },
+      });
+
+      return jsonResponse({
+        conversationId: conversation.id,
+        message: {
+          id: aiMessage.id,
+          content: aiMessage.content,
+          senderType: "ai",
+          createdAt: aiMessage.createdAt.toISOString(),
+        },
+        handoffTriggered: true,
+      });
+    }
+
     // 8. Update UsageTracking
     const now = new Date();
     const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
