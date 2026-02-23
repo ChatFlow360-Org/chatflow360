@@ -741,8 +741,6 @@
         return res.json();
       })
       .then(function (data) {
-        hideTyping();
-
         // Store conversationId
         if (data.conversationId) {
           state.conversationId = data.conversationId;
@@ -752,13 +750,16 @@
 
         // Render AI response
         if (data.message) {
+          hideTyping();
           appendMessage(data.message);
         }
 
-        // Handoff → start polling
-        if (data.handoffTriggered) {
+        // Handoff or awaiting agent → keep typing dots visible, start polling
+        if (data.handoffTriggered || data.awaitingAgent) {
           connectingEl.classList.add("cf360-connecting--show");
           startPolling();
+        } else {
+          hideTyping();
         }
       })
       .catch(function (err) {
@@ -867,6 +868,7 @@
         for (var j = 0; j < newMessages.length; j++) {
           var sType = (newMessages[j].senderType || "").toLowerCase();
           if (sType !== "visitor") {
+            hideTyping();
             appendMessage(newMessages[j]);
 
             // If it's a badge-worthy message and widget is closed
