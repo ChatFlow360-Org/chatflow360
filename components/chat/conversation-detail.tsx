@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/drawer";
 import { ChatMessage } from "@/components/chat/chat-message";
 import { useRealtimeMessages } from "@/hooks/use-realtime-messages";
-import { getConversationMessages } from "@/lib/admin/actions";
+import { getConversationMessages, sendAgentMessage } from "@/lib/admin/actions";
 import { formatRelativeTime } from "@/lib/utils/format";
 import type { Conversation, ConversationStatus, ResponderMode, Message } from "@/types";
 
@@ -33,6 +33,8 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [agentMessage, setAgentMessage] = useState("");
+  const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Scroll to bottom of chat
@@ -69,6 +71,34 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
     onNewMessage: () => fetchMessages(false),
     enabled: conversation.status !== "closed",
   });
+
+  // Send agent message
+  const handleSendMessage = useCallback(async () => {
+    const text = agentMessage.trim();
+    if (!text || sending) return;
+
+    setSending(true);
+    try {
+      const result = await sendAgentMessage(conversation.id, text);
+      if (result.success) {
+        setAgentMessage("");
+        scrollToBottom();
+      }
+    } catch {
+      // handled by realtime refresh
+    } finally {
+      setSending(false);
+    }
+  }, [agentMessage, sending, conversation.id, scrollToBottom]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const isClosed = conversation.status === "closed" || conversation.status === "resolved";
 
   const statusConfig: Record<ConversationStatus, { label: string; className: string }> = {
     open: { label: t("status.open"), className: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
@@ -248,15 +278,31 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
         <Separator />
 
         {/* Input */}
-        <div className="flex items-center gap-2 p-3">
-          <Input
-            placeholder={t("typeMessage")}
-            className="flex-1 text-sm"
-          />
-          <Button size="icon" className="h-9 w-9 bg-cta text-cta-foreground hover:bg-cta/90">
-            <Send className="h-4 w-4" />
-          </Button>
-        </div>
+        {isClosed ? (
+          <div className="flex items-center justify-center p-3">
+            <p className="text-sm text-muted-foreground">{t("conversationClosed")}</p>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 p-3">
+            <Input
+              placeholder={t("typeMessage")}
+              className="flex-1 text-sm"
+              value={agentMessage}
+              onChange={(e) => setAgentMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={sending}
+              maxLength={2000}
+            />
+            <Button
+              size="icon"
+              className="h-9 w-9 bg-cta text-cta-foreground hover:bg-cta/90"
+              onClick={handleSendMessage}
+              disabled={sending || !agentMessage.trim()}
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Lead Details Column -- desktop only */}

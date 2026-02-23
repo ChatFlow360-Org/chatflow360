@@ -598,6 +598,64 @@ export async function getConversationMessages(conversationId: string) {
 }
 
 // ============================================
+// Agent Messaging (Human Takeover)
+// ============================================
+
+const sendAgentMessageSchema = z.object({
+  conversationId: z.string().uuid(),
+  content: z.string().min(1).max(2000),
+});
+
+export async function sendAgentMessage(
+  conversationId: string,
+  content: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const parsed = sendAgentMessageSchema.safeParse({ conversationId, content });
+    if (!parsed.success) return { success: false, error: "Invalid input" };
+
+    // Verify conversation exists
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: parsed.data.conversationId },
+      select: { id: true, status: true, responderMode: true },
+    });
+
+    if (!conversation) return { success: false, error: "Conversation not found" };
+    if (conversation.status === "closed") return { success: false, error: "Conversation is closed" };
+
+    // Create agent message
+    await prisma.message.create({
+      data: {
+        conversationId: parsed.data.conversationId,
+        senderType: "agent",
+        senderId: user.id,
+        content: parsed.data.content,
+        contentType: "text",
+      },
+    });
+
+    // Update conversation: lastMessageAt + switch to "open" if pending
+    await prisma.conversation.update({
+      where: { id: parsed.data.conversationId },
+      data: {
+        lastMessageAt: new Date(),
+        ...(conversation.status === "pending" ? { status: "open" } : {}),
+        responderMode: "human",
+      },
+    });
+
+    revalidatePath("/conversations");
+    return { success: true };
+  } catch (error) {
+    console.error("[sendAgentMessage]", error instanceof Error ? error.message : error);
+    return { success: false, error: "Failed to send message" };
+  }
+}
+
+// ============================================
 // Platform Settings (Global Keys)
 // ============================================
 

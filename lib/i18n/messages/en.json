@@ -54,6 +54,8 @@
     "live": "Live",
     "noConversations": "No conversations found",
     "typeMessage": "Type a message...",
+    "conversationClosed": "This conversation is closed",
+    "sendFailed": "Failed to send message",
     "msgs": "{count} msgs",
     "filters": {
       "all": "All",

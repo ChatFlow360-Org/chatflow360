@@ -54,6 +54,8 @@
     "live": "En vivo",
     "noConversations": "No se encontraron conversaciones",
     "typeMessage": "Escribe un mensaje...",
+    "conversationClosed": "Esta conversacion esta cerrada",
+    "sendFailed": "Error al enviar mensaje",
     "msgs": "{count} msgs",
     "filters": {
       "all": "Todas",
