@@ -26,7 +26,7 @@ export async function searchKnowledge(
   const { data, error } = await supabase.rpc("search_organization_knowledge", {
     p_organization_id: organizationId,
     p_query_embedding: JSON.stringify(queryEmbedding),
-    p_match_threshold: options?.threshold ?? 0.5,
+    p_match_threshold: options?.threshold ?? 0.35,
     p_match_count: options?.limit ?? 5,
   });
 
