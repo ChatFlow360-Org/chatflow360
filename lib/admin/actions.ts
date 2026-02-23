@@ -63,15 +63,7 @@ export async function createOrganization(
       return { error: "orgNameRequired" };
     }
 
-    // Check slug uniqueness
-    const existing = await prisma.organization.findUnique({
-      where: { slug: parsed.data.slug },
-    });
-    if (existing) {
-      return { error: "slugExists" };
-    }
-
-    // Create org + default AI settings
+    // LOW-02: Create directly, catch P2002 unique constraint (no TOCTOU race)
     await prisma.organization.create({
       data: {
         name: parsed.data.name,
@@ -91,6 +83,10 @@ export async function createOrganization(
     revalidatePath("/organizations");
     return { success: "organizationCreated" };
   } catch (e) {
+    // P2002 = unique constraint violation (slug already exists)
+    if (e && typeof e === "object" && "code" in e && e.code === "P2002") {
+      return { error: "slugExists" };
+    }
     console.error("[createOrganization]", e instanceof Error ? e.message : e);
     return { error: "createFailed" };
   }
@@ -137,6 +133,20 @@ export async function deleteOrganization(id: string): Promise<AdminActionState> 
 
     // Validate UUID to prevent injection
     z.string().uuid().parse(id);
+
+    // MED-05: Check cascade impact before deletion
+    const org = await prisma.organization.findUnique({
+      where: { id },
+      include: {
+        _count: { select: { members: true, channels: true, conversations: true } },
+      },
+    });
+
+    if (!org) return { error: "createFailed" };
+
+    if (org._count.members > 0) {
+      return { error: "orgHasMembers" };
+    }
 
     await prisma.organization.delete({
       where: { id },

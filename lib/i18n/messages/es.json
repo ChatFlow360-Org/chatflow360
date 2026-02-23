@@ -303,6 +303,7 @@
     "errors": {
       "orgNameRequired": "El nombre de la organizacion es requerido.",
       "slugExists": "Este slug ya esta en uso.",
+      "orgHasMembers": "Elimina todos los miembros antes de borrar esta organizacion.",
       "emailRequired": "El correo es requerido.",
       "emailExists": "Ya existe un usuario con este correo.",
       "passwordTooShort": "La contrasena debe tener al menos 8 caracteres.",

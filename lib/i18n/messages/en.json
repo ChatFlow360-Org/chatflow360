@@ -303,6 +303,7 @@
     "errors": {
       "orgNameRequired": "Organization name is required.",
       "slugExists": "This slug is already in use.",
+      "orgHasMembers": "Remove all members before deleting this organization.",
       "emailRequired": "Email is required.",
       "emailExists": "A user with this email already exists.",
       "passwordTooShort": "Password must be at least 8 characters.",

@@ -284,6 +284,7 @@ export function OrganizationsClient({ organizations }: OrganizationsClientProps)
                 placeholder="Miami Dental Care"
                 required
                 maxLength={100}
+                autoComplete="off"
                 className="bg-background"
               />
             </div>
@@ -299,6 +300,7 @@ export function OrganizationsClient({ organizations }: OrganizationsClientProps)
                 required
                 maxLength={100}
                 pattern="[a-z0-9-]+"
+                autoComplete="off"
                 className="bg-background font-mono text-sm"
                 disabled={!!editingOrg}
               />
@@ -387,6 +389,7 @@ export function OrganizationsClient({ organizations }: OrganizationsClientProps)
                 placeholder={tch("namePlaceholder")}
                 required
                 maxLength={100}
+                autoComplete="off"
                 className="bg-background"
               />
             </div>
