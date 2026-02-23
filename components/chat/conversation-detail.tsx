@@ -63,6 +63,11 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
     }, 50);
   }, []);
 
+  // Auto-scroll when remote typing indicator appears
+  useEffect(() => {
+    if (isRemoteTyping) scrollToBottom();
+  }, [isRemoteTyping, scrollToBottom]);
+
   // Fetch messages (used on mount and for refresh)
   const fetchMessages = useCallback(async (showSpinner = false) => {
     if (showSpinner) setRefreshing(true);
@@ -300,11 +305,13 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
               ))
             )}
             {isRemoteTyping && (
-              <div className="flex items-center gap-1 px-2 py-1">
-                <div className="flex items-center gap-1 rounded-full bg-muted px-3 py-1.5">
-                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:0ms]" />
-                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:150ms]" />
-                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:300ms]" />
+              <div className="flex items-start gap-2">
+                <div className="rounded-2xl rounded-bl-sm bg-muted px-4 py-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:0ms]" />
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:150ms]" />
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:300ms]" />
+                  </div>
                 </div>
               </div>
             )}

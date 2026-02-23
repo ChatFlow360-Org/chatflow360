@@ -206,12 +206,21 @@
       realtime.ws = ws;
 
       ws.onopen = function () {
+        // Send access_token (required by Supabase Realtime before any channel ops)
+        realtime.ref++;
+        ws.send(JSON.stringify({
+          topic: "realtime:system",
+          event: "access_token",
+          payload: { access_token: config.key },
+          ref: String(realtime.ref)
+        }));
+
         // Join the typing channel
         realtime.ref++;
         ws.send(JSON.stringify({
           topic: "realtime:" + config.channel,
           event: "phx_join",
-          payload: { config: { broadcast: { self: false } } },
+          payload: { config: { broadcast: { self: false, ack: false }, presence: { key: "" } } },
           ref: String(realtime.ref)
         }));
 
