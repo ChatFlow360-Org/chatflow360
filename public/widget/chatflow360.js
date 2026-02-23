@@ -182,8 +182,7 @@
     pollingTimer: null,
     lastMessageId: null,
     resolved: false,
-    realtimeConfig: null,
-    statusCheckTimer: null
+    realtimeConfig: null
   };
 
   // ─── Realtime Typing via Supabase Broadcast (Phoenix Channels) ──
@@ -899,7 +898,6 @@
           state.conversationId = data.conversationId;
           setConversationId(data.conversationId);
           endConvEl.classList.add("cf360-end-conv--show");
-          startStatusCheck();
         }
 
         // Connect realtime if config provided
@@ -970,11 +968,6 @@
         var messages = data.messages || [];
         for (var i = 0; i < messages.length; i++) {
           appendMessage(messages[i]);
-        }
-
-        // Start status check for active conversations
-        if (!state.resolved) {
-          startStatusCheck();
         }
 
         // If human mode, start polling and show correct banner
@@ -1085,60 +1078,6 @@
       });
   }
 
-  // ─── Status check (detects close from dashboard in any mode) ─────
-  function startStatusCheck() {
-    if (state.statusCheckTimer || state.resolved) return;
-    statusCheck();
-  }
-
-  function stopStatusCheck() {
-    if (state.statusCheckTimer) {
-      clearTimeout(state.statusCheckTimer);
-      state.statusCheckTimer = null;
-    }
-  }
-
-  function statusCheck() {
-    if (!state.conversationId || state.resolved) {
-      stopStatusCheck();
-      return;
-    }
-
-    // Skip if full polling is active — it already checks status
-    if (state.polling) {
-      state.statusCheckTimer = setTimeout(statusCheck, 10000);
-      return;
-    }
-
-    fetch(apiUrl("/api/chat/" + state.conversationId + "?visitorId=" + encodeURIComponent(visitorId)))
-      .then(function (res) {
-        if (!res.ok) return null;
-        return res.json();
-      })
-      .then(function (data) {
-        if (!data) return;
-
-        var convStatus = (data.status || "").toLowerCase();
-        if (convStatus === "closed" || convStatus === "resolved") {
-          connectingEl.textContent = t("connecting");
-          connectingEl.classList.remove("cf360-connecting--show", "cf360-connecting--connected");
-          state.resolved = true;
-          newConvBtn.classList.add("cf360-new-conv--show");
-          endConvEl.classList.remove("cf360-end-conv--show");
-          stopPolling();
-          stopStatusCheck();
-          rtCleanup();
-          return;
-        }
-      })
-      .catch(function () { /* non-critical */ })
-      .finally(function () {
-        if (!state.resolved && state.conversationId) {
-          state.statusCheckTimer = setTimeout(statusCheck, 10000);
-        }
-      });
-  }
-
   // ─── Handlers ─────────────────────────────────────────────────────
   function handleSend() {
     var text = (inputField.value || "").trim();
@@ -1148,7 +1087,6 @@
 
   function startNewConversation() {
     stopPolling();
-    stopStatusCheck();
     rtCleanup();
     state.realtimeConfig = null;
     clearConversationId();
