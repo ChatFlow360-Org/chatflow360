@@ -1,0 +1,74 @@
+import { z } from "zod";
+
+// ============================================
+// Structured Prompt Types & Utilities
+// ============================================
+
+export interface PromptStructure {
+  agentName: string;
+  role: string;
+  rules: string[];
+  personality: string;
+}
+
+export const promptStructureSchema = z.object({
+  agentName: z.string().max(100).default(""),
+  role: z.string().max(1000).default(""),
+  rules: z.array(z.string().max(500)).max(20).default([]),
+  personality: z.string().max(1000).default(""),
+});
+
+/**
+ * Compose structured fields into a system prompt string.
+ * Returns null if all fields are empty.
+ */
+export function composeSystemPrompt(
+  structure: PromptStructure
+): string | null {
+  const sections: string[] = [];
+
+  if (structure.agentName.trim()) {
+    sections.push(`Your name is: ${structure.agentName.trim()}.`);
+  }
+
+  if (structure.role.trim()) {
+    sections.push(structure.role.trim());
+  }
+
+  if (structure.rules.length > 0) {
+    const ruleLines = structure.rules
+      .filter((r) => r.trim())
+      .map((r) => `- ${r.trim()}`)
+      .join("\n");
+    if (ruleLines) {
+      sections.push(`RULES:\n${ruleLines}`);
+    }
+  }
+
+  if (structure.personality.trim()) {
+    sections.push(`PERSONALITY:\n${structure.personality.trim()}`);
+  }
+
+  if (sections.length === 0) return null;
+
+  return sections.join("\n\n");
+}
+
+/**
+ * Check if a PromptStructure has any content.
+ */
+export function isStructureEmpty(structure: PromptStructure): boolean {
+  return (
+    !structure.agentName.trim() &&
+    !structure.role.trim() &&
+    structure.rules.filter((r) => r.trim()).length === 0 &&
+    !structure.personality.trim()
+  );
+}
+
+export const EMPTY_PROMPT_STRUCTURE: PromptStructure = {
+  agentName: "",
+  role: "",
+  rules: [],
+  personality: "",
+};

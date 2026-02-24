@@ -56,9 +56,16 @@ export default async function AiSettingsPage() {
         maxTokens: settings.maxTokens,
         handoffKeywords: settings.handoffKeywords,
         apiKeyHint: settings.apiKeyHint,
+        promptStructure: settings.promptStructure as { agentName: string; role: string; rules: string[]; personality: string } | null,
       };
     }
   }
+
+  // Fetch prompt templates (for template selector)
+  const templates = await prisma.promptTemplate.findMany({
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, description: true, structure: true },
+  });
 
   // Fetch knowledge items for this org
   let knowledgeItems: { id: string; title: string; content: string; tokens_used: number; created_at: string }[] = [];
@@ -77,6 +84,12 @@ export default async function AiSettingsPage() {
       aiSettings={aiSettings}
       isSuperAdmin={user.isSuperAdmin}
       knowledgeItems={knowledgeItems}
+      templates={templates.map((t) => ({
+        id: t.id,
+        name: t.name,
+        description: t.description,
+        structure: t.structure as { agentName: string; role: string; rules: string[]; personality: string },
+      }))}
     />
   );
 }

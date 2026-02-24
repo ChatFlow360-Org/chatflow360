@@ -94,6 +94,7 @@ model AiSettings {
   temperature      Decimal  @default(0.7) @db.Decimal(3, 2)
   maxTokens        Int      @default(500) @map("max_tokens")
   handoffKeywords  String[] @default([]) @map("handoff_keywords")
+  promptStructure  Json?    @map("prompt_structure")
   encryptedApiKey  String?  @map("encrypted_api_key") @db.Text
   apiKeyHint       String?  @map("api_key_hint")
   createdAt        DateTime @default(now()) @map("created_at")
@@ -103,6 +104,22 @@ model AiSettings {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@map("ai_settings")
+}
+
+// ============================================
+// PromptTemplate (global — SOLO Super Admin)
+// Reusable prompt templates for common business types
+// ============================================
+
+model PromptTemplate {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique
+  description String?  @db.Text
+  structure   Json     // { agentName, role, rules[], personality }
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("prompt_templates")
 }
 
 // ============================================

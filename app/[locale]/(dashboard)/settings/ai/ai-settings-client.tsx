@@ -12,6 +12,8 @@ import {
   FileText,
   Loader2,
   Pencil,
+  LayoutTemplate,
+  AlertTriangle,
 } from "lucide-react";
 import {
   Card,
@@ -43,8 +45,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { upsertAiSettings, createKnowledgeItem, updateKnowledgeItem, deleteKnowledgeItem } from "@/lib/admin/actions";
+import {
+  upsertAiSettings,
+  createKnowledgeItem,
+  updateKnowledgeItem,
+  deleteKnowledgeItem,
+  createPromptTemplate,
+  updatePromptTemplate,
+  deletePromptTemplate,
+} from "@/lib/admin/actions";
 import { DEFAULT_HANDOFF_KEYWORDS } from "@/lib/chat/defaults";
+import { EMPTY_PROMPT_STRUCTURE, type PromptStructure } from "@/lib/chat/prompt-builder";
 import { formatRelativeTime } from "@/lib/utils/format";
 
 // --- Types ---
@@ -59,6 +70,7 @@ interface AiSettingsData {
   maxTokens: number;
   handoffKeywords: string[];
   apiKeyHint: string | null;
+  promptStructure: PromptStructure | null;
 }
 
 interface KnowledgeItemData {
@@ -69,12 +81,20 @@ interface KnowledgeItemData {
   created_at: string;
 }
 
+interface TemplateData {
+  id: string;
+  name: string;
+  description: string | null;
+  structure: PromptStructure;
+}
+
 interface AiSettingsClientProps {
   selectedOrgId: string;
   organizationName: string;
   aiSettings: AiSettingsData | null;
   isSuperAdmin: boolean;
   knowledgeItems: KnowledgeItemData[];
+  templates: TemplateData[];
 }
 
 // --- Component ---
@@ -85,6 +105,7 @@ export function AiSettingsClient({
   aiSettings,
   isSuperAdmin,
   knowledgeItems,
+  templates,
 }: AiSettingsClientProps) {
   const t = useTranslations("settings");
   const tCommon = useTranslations("common");
@@ -138,9 +159,38 @@ export function AiSettingsClient({
   const [model, setModel] = useState(aiSettings?.model || "gpt-4o-mini");
   const [temperature, setTemperature] = useState(aiSettings?.temperature ?? 0.7);
   const [maxTokens, setMaxTokens] = useState(aiSettings?.maxTokens || 500);
-  const [systemPrompt, setSystemPrompt] = useState(
-    aiSettings?.systemPrompt || ""
+
+  // Structured prompt state
+  const [promptStructure, setPromptStructure] = useState<PromptStructure>(
+    aiSettings?.promptStructure || { ...EMPTY_PROMPT_STRUCTURE }
   );
+  const [ruleInput, setRuleInput] = useState("");
+  const hasLegacyPrompt = !aiSettings?.promptStructure && !!aiSettings?.systemPrompt;
+
+  // Template state
+  const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [showTemplateManage, setShowTemplateManage] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<TemplateData | null>(null);
+  const [templateStructure, setTemplateStructure] = useState<PromptStructure>({ ...EMPTY_PROMPT_STRUCTURE });
+  const [templateName, setTemplateName] = useState("");
+  const [templateDescription, setTemplateDescription] = useState("");
+  const [templateRuleInput, setTemplateRuleInput] = useState("");
+  const [createTemplateState, createTemplateAction, isCreatingTemplate] = useActionState(createPromptTemplate, null);
+  const [updateTemplateState, updateTemplateAction, isUpdatingTemplate] = useActionState(updatePromptTemplate, null);
+  const [isDeletingTemplate, startDeleteTemplateTransition] = useTransition();
+
+  // Close template dialog on success
+  useEffect(() => {
+    if (createTemplateState?.success || updateTemplateState?.success) {
+      setShowTemplateManage(false);
+      setEditingTemplate(null);
+      setTemplateName("");
+      setTemplateDescription("");
+      setTemplateStructure({ ...EMPTY_PROMPT_STRUCTURE });
+      setTemplateRuleInput("");
+    }
+  }, [createTemplateState, updateTemplateState]);
+
   const resolveKeywords = (settings: AiSettingsData | null): string[] => {
     if (!settings) return [...DEFAULT_HANDOFF_KEYWORDS];
     return settings.handoffKeywords.length > 0 ? settings.handoffKeywords : [...DEFAULT_HANDOFF_KEYWORDS];
@@ -151,7 +201,8 @@ export function AiSettingsClient({
 
   // Reset form when org changes
   useEffect(() => {
-    setSystemPrompt(aiSettings?.systemPrompt || "");
+    setPromptStructure(aiSettings?.promptStructure || { ...EMPTY_PROMPT_STRUCTURE });
+    setRuleInput("");
     setModel(aiSettings?.model || "gpt-4o-mini");
     setTemperature(aiSettings?.temperature ?? 0.7);
     setMaxTokens(aiSettings?.maxTokens || 500);
@@ -203,6 +254,60 @@ export function AiSettingsClient({
       e.preventDefault();
       addKeyword();
     }
+  };
+
+  // --- Rule helpers ---
+  const addRule = () => {
+    const rule = ruleInput.trim();
+    if (rule && promptStructure.rules.length < 20) {
+      setPromptStructure((prev) => ({ ...prev, rules: [...prev.rules, rule] }));
+      setRuleInput("");
+    }
+  };
+  const removeRule = (index: number) => {
+    setPromptStructure((prev) => ({
+      ...prev,
+      rules: prev.rules.filter((_, i) => i !== index),
+    }));
+  };
+  const handleRuleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") { e.preventDefault(); addRule(); }
+  };
+
+  // --- Template helpers ---
+  const addTemplateRule = () => {
+    const rule = templateRuleInput.trim();
+    if (rule && templateStructure.rules.length < 20) {
+      setTemplateStructure((prev) => ({ ...prev, rules: [...prev.rules, rule] }));
+      setTemplateRuleInput("");
+    }
+  };
+  const removeTemplateRule = (index: number) => {
+    setTemplateStructure((prev) => ({
+      ...prev,
+      rules: prev.rules.filter((_, i) => i !== index),
+    }));
+  };
+  const openEditTemplate = (tmpl: TemplateData) => {
+    setEditingTemplate(tmpl);
+    setTemplateName(tmpl.name);
+    setTemplateDescription(tmpl.description || "");
+    setTemplateStructure({ ...tmpl.structure });
+    setTemplateRuleInput("");
+    setShowTemplateManage(true);
+  };
+  const openNewTemplate = () => {
+    setEditingTemplate(null);
+    setTemplateName("");
+    setTemplateDescription("");
+    setTemplateStructure({ ...EMPTY_PROMPT_STRUCTURE });
+    setTemplateRuleInput("");
+    setShowTemplateManage(true);
+  };
+  const handleDeleteTemplate = (templateId: string) => {
+    startDeleteTemplateTransition(async () => {
+      await deletePromptTemplate(templateId);
+    });
   };
 
   // --- Knowledge edit handler ---
@@ -279,7 +384,7 @@ export function AiSettingsClient({
             <input type="hidden" name="model" value={model} />
             <input type="hidden" name="temperature" value={temperature} />
             <input type="hidden" name="maxTokens" value={maxTokens} />
-            <input type="hidden" name="systemPrompt" value={systemPrompt} />
+            <input type="hidden" name="promptStructure" value={JSON.stringify(promptStructure)} />
             <input
               type="hidden"
               name="handoffKeywords"
@@ -289,7 +394,7 @@ export function AiSettingsClient({
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
               {/* ── Left Column: Main content ── */}
               <div className="space-y-6">
-                {/* System Prompt */}
+                {/* Agent Instructions (structured) */}
                 <Card>
                   <CardHeader>
                     <div className="flex items-center justify-between">
@@ -301,22 +406,132 @@ export function AiSettingsClient({
                           {t("systemPrompt.description")}
                         </CardDescription>
                       </div>
-                      {systemPrompt && (
-                        <Badge className="bg-cta/15 text-cta hover:bg-cta/20 border-0">
-                          {t("systemPrompt.active")}
-                        </Badge>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {(promptStructure.agentName || promptStructure.role || promptStructure.rules.length > 0 || promptStructure.personality) && (
+                          <Badge className="bg-cta/15 text-cta hover:bg-cta/20 border-0">
+                            {t("systemPrompt.active")}
+                          </Badge>
+                        )}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowTemplateDialog(true)}
+                        >
+                          <LayoutTemplate className="mr-1.5 h-4 w-4" />
+                          {t("agentInstructions.useTemplate")}
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <Textarea
-                      value={systemPrompt}
-                      onChange={(e) => setSystemPrompt(e.target.value)}
-                      placeholder={t("systemPrompt.placeholder")}
-                      rows={6}
-                      maxLength={4000}
-                      className="resize-none bg-background"
-                    />
+                  <CardContent className="space-y-6">
+                    {/* Legacy prompt warning */}
+                    {hasLegacyPrompt && (
+                      <div className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-600 dark:text-amber-400">
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                        {t("agentInstructions.legacyWarning")}
+                      </div>
+                    )}
+
+                    {/* Agent Name */}
+                    <div className="space-y-2">
+                      <Label>{t("agentInstructions.agentName")}</Label>
+                      <Input
+                        value={promptStructure.agentName}
+                        onChange={(e) => setPromptStructure((prev) => ({ ...prev, agentName: e.target.value }))}
+                        placeholder={t("agentInstructions.agentNamePlaceholder")}
+                        maxLength={100}
+                        autoComplete="off"
+                        className="bg-background"
+                      />
+                      <p className="text-[10px] text-muted-foreground/70">
+                        {t("agentInstructions.agentNameHint")}
+                      </p>
+                    </div>
+
+                    <Separator />
+
+                    {/* Agent Role */}
+                    <div className="space-y-2">
+                      <Label>{t("agentInstructions.role")}</Label>
+                      <Textarea
+                        value={promptStructure.role}
+                        onChange={(e) => setPromptStructure((prev) => ({ ...prev, role: e.target.value }))}
+                        placeholder={t("agentInstructions.rolePlaceholder")}
+                        rows={3}
+                        maxLength={1000}
+                        className="resize-none bg-background"
+                      />
+                      <p className="text-[10px] text-muted-foreground/70">
+                        {t("agentInstructions.roleHint")}
+                      </p>
+                    </div>
+
+                    <Separator />
+
+                    {/* Rules (dynamic list) */}
+                    <div className="space-y-3">
+                      <Label>{t("agentInstructions.rules")}</Label>
+                      {promptStructure.rules.length > 0 && (
+                        <div className="space-y-2">
+                          {promptStructure.rules.map((rule, index) => (
+                            <div
+                              key={index}
+                              className="flex items-start gap-2 rounded-lg border bg-background px-3 py-2"
+                            >
+                              <span className="flex-1 text-sm">{rule}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeRule(index)}
+                                className="mt-0.5 shrink-0 rounded-full p-0.5 transition-colors hover:bg-foreground/10"
+                              >
+                                <X className="h-3.5 w-3.5 text-muted-foreground" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <Input
+                          value={ruleInput}
+                          onChange={(e) => setRuleInput(e.target.value)}
+                          onKeyDown={handleRuleKeyDown}
+                          placeholder={t("agentInstructions.rulePlaceholder")}
+                          maxLength={500}
+                          disabled={promptStructure.rules.length >= 20}
+                          autoComplete="off"
+                          className="bg-background"
+                        />
+                        <Button
+                          type="button"
+                          onClick={addRule}
+                          disabled={!ruleInput.trim() || promptStructure.rules.length >= 20}
+                        >
+                          {t("agentInstructions.addRule")}
+                        </Button>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground/70">
+                        {t("agentInstructions.rulesHint", { count: promptStructure.rules.length })}
+                      </p>
+                    </div>
+
+                    <Separator />
+
+                    {/* Personality */}
+                    <div className="space-y-2">
+                      <Label>{t("agentInstructions.personality")}</Label>
+                      <Textarea
+                        value={promptStructure.personality}
+                        onChange={(e) => setPromptStructure((prev) => ({ ...prev, personality: e.target.value }))}
+                        placeholder={t("agentInstructions.personalityPlaceholder")}
+                        rows={3}
+                        maxLength={1000}
+                        className="resize-none bg-background"
+                      />
+                      <p className="text-[10px] text-muted-foreground/70">
+                        {t("agentInstructions.personalityHint")}
+                      </p>
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -405,6 +620,59 @@ export function AiSettingsClient({
                       <p className="text-xs text-muted-foreground">
                         {t("apiKey.helpText")}
                       </p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Prompt Templates (super_admin only) */}
+                {isSuperAdmin && (
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-base">{t("templates.manageTitle")}</CardTitle>
+                          <CardDescription className="mt-1">{t("templates.manageDescription")}</CardDescription>
+                        </div>
+                        <Button type="button" size="sm" onClick={openNewTemplate}>
+                          <Plus className="mr-1.5 h-4 w-4" />
+                          {t("templates.createTemplate")}
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {templates.length === 0 ? (
+                        <p className="py-6 text-center text-sm text-muted-foreground">
+                          {t("templates.noTemplates")}
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          {templates.map((tmpl) => (
+                            <div key={tmpl.id} className="flex items-center justify-between rounded-lg border bg-background px-4 py-3">
+                              <div className="min-w-0 flex-1">
+                                <h4 className="text-sm font-medium">{tmpl.name}</h4>
+                                {tmpl.description && (
+                                  <p className="mt-0.5 truncate text-xs text-muted-foreground">{tmpl.description}</p>
+                                )}
+                              </div>
+                              <div className="flex shrink-0 gap-1">
+                                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-cta" onClick={() => openEditTemplate(tmpl)}>
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                  onClick={() => handleDeleteTemplate(tmpl.id)}
+                                  disabled={isDeletingTemplate}
+                                >
+                                  {isDeletingTemplate ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 )}
@@ -710,6 +978,185 @@ export function AiSettingsClient({
                 ) : (
                   t("knowledge.save")
                 )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Template Selection Dialog ── */}
+      <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("templates.selectTitle")}</DialogTitle>
+            <DialogDescription>{t("templates.selectDescription")}</DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[400px] space-y-3 overflow-y-auto py-2">
+            {templates.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                {t("templates.noTemplates")}
+              </p>
+            ) : (
+              templates.map((tmpl) => (
+                <button
+                  key={tmpl.id}
+                  type="button"
+                  onClick={() => {
+                    setPromptStructure({ ...tmpl.structure });
+                    setShowTemplateDialog(false);
+                  }}
+                  className="w-full rounded-lg border bg-background p-4 text-left transition-colors hover:border-cta hover:bg-cta/5"
+                >
+                  <h4 className="text-sm font-medium">{tmpl.name}</h4>
+                  {tmpl.description && (
+                    <p className="mt-1 text-xs text-muted-foreground">{tmpl.description}</p>
+                  )}
+                  <p className="mt-1.5 text-[10px] text-muted-foreground/60">
+                    {tmpl.structure.agentName && `${tmpl.structure.agentName} · `}
+                    {t("templates.rulesCount", { count: tmpl.structure.rules.length })}
+                  </p>
+                </button>
+              ))
+            )}
+          </div>
+          {isSuperAdmin && (
+            <div className="border-t pt-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => { setShowTemplateDialog(false); openNewTemplate(); }}
+              >
+                <Plus className="mr-1.5 h-4 w-4" />
+                {t("templates.createTemplate")}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Template Create/Edit Dialog (super_admin) ── */}
+      <Dialog open={showTemplateManage} onOpenChange={(open) => { if (!open) { setShowTemplateManage(false); setEditingTemplate(null); } }}>
+        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingTemplate ? t("templates.editTemplate") : t("templates.createTemplate")}
+            </DialogTitle>
+            <DialogDescription>{t("templates.manageDescription")}</DialogDescription>
+          </DialogHeader>
+          <form action={editingTemplate ? updateTemplateAction : createTemplateAction}>
+            {editingTemplate && (
+              <input type="hidden" name="templateId" value={editingTemplate.id} />
+            )}
+            <input type="hidden" name="structure" value={JSON.stringify(templateStructure)} />
+            <div className="space-y-4 py-2">
+              {/* Template name */}
+              <div className="space-y-2">
+                <Label>{t("templates.templateName")}</Label>
+                <Input
+                  name="name"
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  placeholder={t("templates.templateNamePlaceholder")}
+                  maxLength={100}
+                  required
+                  autoComplete="off"
+                  className="bg-background"
+                />
+              </div>
+              {/* Template description */}
+              <div className="space-y-2">
+                <Label>{t("templates.templateDescription")}</Label>
+                <Input
+                  name="description"
+                  value={templateDescription}
+                  onChange={(e) => setTemplateDescription(e.target.value)}
+                  placeholder={t("templates.templateDescriptionPlaceholder")}
+                  maxLength={500}
+                  autoComplete="off"
+                  className="bg-background"
+                />
+              </div>
+
+              <Separator />
+
+              {/* Agent Name */}
+              <div className="space-y-2">
+                <Label>{t("agentInstructions.agentName")}</Label>
+                <Input
+                  value={templateStructure.agentName}
+                  onChange={(e) => setTemplateStructure((prev) => ({ ...prev, agentName: e.target.value }))}
+                  placeholder={t("agentInstructions.agentNamePlaceholder")}
+                  maxLength={100}
+                  autoComplete="off"
+                  className="bg-background"
+                />
+              </div>
+              {/* Role */}
+              <div className="space-y-2">
+                <Label>{t("agentInstructions.role")}</Label>
+                <Textarea
+                  value={templateStructure.role}
+                  onChange={(e) => setTemplateStructure((prev) => ({ ...prev, role: e.target.value }))}
+                  placeholder={t("agentInstructions.rolePlaceholder")}
+                  rows={3}
+                  maxLength={1000}
+                  className="resize-none bg-background"
+                />
+              </div>
+              {/* Rules */}
+              <div className="space-y-2">
+                <Label>{t("agentInstructions.rules")}</Label>
+                {templateStructure.rules.length > 0 && (
+                  <div className="space-y-1.5">
+                    {templateStructure.rules.map((rule, index) => (
+                      <div key={index} className="flex items-start gap-2 rounded-lg border bg-background px-3 py-1.5">
+                        <span className="flex-1 text-xs">{rule}</span>
+                        <button type="button" onClick={() => removeTemplateRule(index)} className="mt-0.5 shrink-0 rounded-full p-0.5 hover:bg-foreground/10">
+                          <X className="h-3 w-3 text-muted-foreground" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <Input
+                    value={templateRuleInput}
+                    onChange={(e) => setTemplateRuleInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTemplateRule(); } }}
+                    placeholder={t("agentInstructions.rulePlaceholder")}
+                    maxLength={500}
+                    disabled={templateStructure.rules.length >= 20}
+                    autoComplete="off"
+                    className="bg-background"
+                  />
+                  <Button type="button" size="sm" onClick={addTemplateRule} disabled={!templateRuleInput.trim() || templateStructure.rules.length >= 20}>
+                    {t("agentInstructions.addRule")}
+                  </Button>
+                </div>
+              </div>
+              {/* Personality */}
+              <div className="space-y-2">
+                <Label>{t("agentInstructions.personality")}</Label>
+                <Textarea
+                  value={templateStructure.personality}
+                  onChange={(e) => setTemplateStructure((prev) => ({ ...prev, personality: e.target.value }))}
+                  placeholder={t("agentInstructions.personalityPlaceholder")}
+                  rows={2}
+                  maxLength={1000}
+                  className="resize-none bg-background"
+                />
+              </div>
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button type="button" variant="outline" onClick={() => { setShowTemplateManage(false); setEditingTemplate(null); }}>
+                {tCommon("cancel")}
+              </Button>
+              <Button type="submit" disabled={isCreatingTemplate || isUpdatingTemplate || !templateName.trim()}>
+                {(isCreatingTemplate || isUpdatingTemplate) ? (
+                  <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" />{t("templates.saving")}</>
+                ) : t("templates.save")}
               </Button>
             </DialogFooter>
           </form>

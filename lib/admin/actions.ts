@@ -7,6 +7,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUser } from "@/lib/auth/user";
 import { DEFAULT_HANDOFF_KEYWORDS } from "@/lib/chat/defaults";
 import { deriveTypingChannel } from "@/lib/crypto/channel";
+import {
+  promptStructureSchema,
+  composeSystemPrompt,
+  type PromptStructure,
+} from "@/lib/chat/prompt-builder";
 
 // ============================================
 // Types
@@ -355,6 +360,15 @@ const aiSettingsSchema = z.object({
     z.array(z.string().max(50)).max(20)
   ),
   apiKey: z.string().max(200).optional().or(z.literal("")),
+  promptStructure: z.preprocess(
+    (val) => {
+      if (typeof val === "string" && val.trim()) {
+        try { return JSON.parse(val); } catch { return null; }
+      }
+      return null;
+    },
+    promptStructureSchema.nullable().optional()
+  ),
 });
 
 export async function upsertAiSettings(
@@ -384,6 +398,7 @@ export async function upsertAiSettings(
       maxTokens: formData.get("maxTokens"),
       handoffKeywords: formData.get("handoffKeywords"),
       apiKey: formData.get("apiKey") || "",
+      promptStructure: formData.get("promptStructure") || null,
     });
 
     if (!parsed.success) {
@@ -411,10 +426,20 @@ export async function upsertAiSettings(
       }
     }
 
+    // If promptStructure is provided, compose systemPrompt from it
+    let finalSystemPrompt = parsed.data.systemPrompt;
+    let finalPromptStructure: PromptStructure | undefined;
+
+    if (parsed.data.promptStructure) {
+      finalSystemPrompt = composeSystemPrompt(parsed.data.promptStructure);
+      finalPromptStructure = parsed.data.promptStructure;
+    }
+
     // Business params: editable by org admin + super_admin
     const businessUpdate = {
-      systemPrompt: parsed.data.systemPrompt,
+      systemPrompt: finalSystemPrompt,
       handoffKeywords: parsed.data.handoffKeywords,
+      ...(finalPromptStructure !== undefined && { promptStructure: JSON.parse(JSON.stringify(finalPromptStructure)) }),
     };
 
     // Technical params: editable by super_admin only
@@ -437,12 +462,13 @@ export async function upsertAiSettings(
         organizationId: parsed.data.organizationId,
         provider: "openai",
         model: parsed.data.model,
-        systemPrompt: parsed.data.systemPrompt,
+        systemPrompt: finalSystemPrompt,
         temperature: parsed.data.temperature,
         maxTokens: parsed.data.maxTokens,
         handoffKeywords: parsed.data.handoffKeywords.length > 0
           ? parsed.data.handoffKeywords
           : [...DEFAULT_HANDOFF_KEYWORDS],
+        ...(finalPromptStructure !== undefined && { promptStructure: JSON.parse(JSON.stringify(finalPromptStructure)) }),
         ...(encryptedApiKey && { encryptedApiKey, apiKeyHint }),
       },
     });
@@ -924,6 +950,121 @@ export async function deleteKnowledgeItem(
     if (e instanceof Error && e.message === "Unauthorized") {
       return { error: "unauthorized" };
     }
+    return { error: "deleteFailed" };
+  }
+}
+
+// ============================================
+// Prompt Templates (super_admin only)
+// ============================================
+
+const templateSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().max(500).optional().or(z.literal("")),
+  structure: promptStructureSchema,
+});
+
+export async function createPromptTemplate(
+  _prevState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    await requireSuperAdmin();
+
+    const rawStructure = formData.get("structure") as string;
+    let structure: PromptStructure;
+    try {
+      structure = JSON.parse(rawStructure);
+    } catch {
+      return { error: "createFailed" };
+    }
+
+    const parsed = templateSchema.safeParse({
+      name: formData.get("name"),
+      description: formData.get("description") || "",
+      structure,
+    });
+    if (!parsed.success) return { error: "createFailed" };
+
+    await prisma.promptTemplate.create({
+      data: {
+        name: parsed.data.name,
+        description: parsed.data.description || null,
+        structure: JSON.parse(JSON.stringify(parsed.data.structure)),
+      },
+    });
+
+    revalidatePath("/settings/ai");
+    return { success: "templateCreated" };
+  } catch (e) {
+    if (e && typeof e === "object" && "code" in e && (e as { code: string }).code === "P2002") {
+      return { error: "templateNameExists" };
+    }
+    console.error("[createPromptTemplate]", e instanceof Error ? e.message : e);
+    return { error: "createFailed" };
+  }
+}
+
+export async function updatePromptTemplate(
+  _prevState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    await requireSuperAdmin();
+
+    const templateId = formData.get("templateId") as string;
+    z.string().uuid().parse(templateId);
+
+    const rawStructure = formData.get("structure") as string;
+    let structure: PromptStructure;
+    try {
+      structure = JSON.parse(rawStructure);
+    } catch {
+      return { error: "updateFailed" };
+    }
+
+    const parsed = templateSchema.safeParse({
+      name: formData.get("name"),
+      description: formData.get("description") || "",
+      structure,
+    });
+    if (!parsed.success) return { error: "updateFailed" };
+
+    await prisma.promptTemplate.update({
+      where: { id: templateId },
+      data: {
+        name: parsed.data.name,
+        description: parsed.data.description || null,
+        structure: JSON.parse(JSON.stringify(parsed.data.structure)),
+      },
+    });
+
+    revalidatePath("/settings/ai");
+    return { success: "templateUpdated" };
+  } catch (e) {
+    if (e && typeof e === "object" && "code" in e && (e as { code: string }).code === "P2002") {
+      return { error: "templateNameExists" };
+    }
+    console.error("[updatePromptTemplate]", e instanceof Error ? e.message : e);
+    return { error: "updateFailed" };
+  }
+}
+
+export async function deletePromptTemplate(
+  templateId: string
+): Promise<AdminActionState> {
+  try {
+    await requireSuperAdmin();
+    z.string().uuid().parse(templateId);
+
+    await prisma.promptTemplate.delete({
+      where: { id: templateId },
+    });
+
+    revalidatePath("/settings/ai");
+    return { success: "templateDeleted" };
+  } catch (e) {
+    console.error("[deletePromptTemplate]", e instanceof Error ? e.message : e);
     return { error: "deleteFailed" };
   }
 }
