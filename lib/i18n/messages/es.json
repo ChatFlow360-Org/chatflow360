@@ -150,8 +150,8 @@
       "humanTakeover": "Transferencia a Humano"
     },
     "systemPrompt": {
-      "title": "Prompt del Sistema por Defecto",
-      "description": "Define como se comporta y responde el asistente de IA con los visitantes",
+      "title": "Instrucciones para el Agente",
+      "description": "Prompt del sistema que define como se comporta y responde el asistente de IA con los visitantes",
       "placeholder": "Eres un asistente de atencion al cliente amigable. Se profesional y responde preguntas sobre nuestros productos y servicios. Si no conoces la respuesta, ofrece conectar al visitante con un agente humano.",
       "active": "Activo"
     },

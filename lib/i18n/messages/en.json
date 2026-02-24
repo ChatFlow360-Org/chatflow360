@@ -150,8 +150,8 @@
       "humanTakeover": "Human Takeover"
     },
     "systemPrompt": {
-      "title": "Default System Prompt",
-      "description": "Define how the AI assistant behaves and responds to visitors",
+      "title": "Agent Instructions",
+      "description": "Default system prompt that defines how the AI assistant behaves and responds to visitors",
       "placeholder": "You are a helpful customer support assistant. Be friendly, professional, and answer questions about our products and services. If you don't know the answer, offer to connect the visitor with a human agent.",
       "active": "Active"
     },
