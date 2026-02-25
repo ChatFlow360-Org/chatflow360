@@ -211,8 +211,10 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
                     </Badge>
                   )}
                   {tmpl.structure.personality && (
-                    <Badge className="shrink! min-w-0 justify-start truncate border-emerald-500/20 bg-emerald-500/10 text-xs text-emerald-500">
-                      {tSettings("agentInstructions.personality")}: {tmpl.structure.personality}
+                    <Badge className="shrink! min-w-0 border-emerald-500/20 bg-emerald-500/10 text-xs text-emerald-500">
+                      <span className="block flex-1 overflow-hidden text-ellipsis">
+                        {tSettings("agentInstructions.personality")}: {tmpl.structure.personality}
+                      </span>
                     </Badge>
                   )}
                 </div>
