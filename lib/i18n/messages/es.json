@@ -170,7 +170,11 @@
       "addRule": "Agregar",
       "personality": "Personalidad",
       "personalityPlaceholder": "Se profesional, empatico y conciso. Mantiene las respuestas claras y no muy largas.",
-      "personalityHint": "Describe el tono y estilo de comunicacion"
+      "personalityHint": "Describe el tono y estilo de comunicacion",
+      "additionalInstructions": "Instrucciones Adicionales",
+      "additionalInstructionsPlaceholder": "Agrega instrucciones especificas de tu negocio que no encajen en los campos anteriores...",
+      "additionalInstructionsHint": "Opcional — para reglas unicas de negocio o guias de contexto especifico",
+      "additionalInstructionsToggle": "Agregar instrucciones adicionales"
     },
     "templates": {
       "selectTitle": "Elegir una Plantilla",

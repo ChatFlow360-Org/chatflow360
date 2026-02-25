@@ -14,6 +14,7 @@ import {
   Pencil,
   LayoutTemplate,
   AlertTriangle,
+  ChevronDown,
 } from "lucide-react";
 import {
   Card,
@@ -161,11 +162,17 @@ export function AiSettingsClient({
   const [maxTokens, setMaxTokens] = useState(aiSettings?.maxTokens || 500);
 
   // Structured prompt state
-  const [promptStructure, setPromptStructure] = useState<PromptStructure>(
-    aiSettings?.promptStructure || { ...EMPTY_PROMPT_STRUCTURE }
-  );
-  const [ruleInput, setRuleInput] = useState("");
   const hasLegacyPrompt = !aiSettings?.promptStructure && !!aiSettings?.systemPrompt;
+  const [promptStructure, setPromptStructure] = useState<PromptStructure>(() => {
+    if (aiSettings?.promptStructure) return { ...EMPTY_PROMPT_STRUCTURE, ...aiSettings.promptStructure };
+    // Legacy migration: move old systemPrompt into additionalInstructions
+    if (hasLegacyPrompt) return { ...EMPTY_PROMPT_STRUCTURE, additionalInstructions: aiSettings.systemPrompt! };
+    return { ...EMPTY_PROMPT_STRUCTURE };
+  });
+  const [ruleInput, setRuleInput] = useState("");
+  const [showAdditional, setShowAdditional] = useState(
+    () => !!(aiSettings?.promptStructure?.additionalInstructions) || hasLegacyPrompt
+  );
 
   // Template state
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
@@ -201,8 +208,16 @@ export function AiSettingsClient({
 
   // Reset form when org changes
   useEffect(() => {
-    setPromptStructure(aiSettings?.promptStructure || { ...EMPTY_PROMPT_STRUCTURE });
+    const legacy = !aiSettings?.promptStructure && !!aiSettings?.systemPrompt;
+    if (aiSettings?.promptStructure) {
+      setPromptStructure({ ...EMPTY_PROMPT_STRUCTURE, ...aiSettings.promptStructure });
+    } else if (legacy) {
+      setPromptStructure({ ...EMPTY_PROMPT_STRUCTURE, additionalInstructions: aiSettings.systemPrompt! });
+    } else {
+      setPromptStructure({ ...EMPTY_PROMPT_STRUCTURE });
+    }
     setRuleInput("");
+    setShowAdditional(!!(aiSettings?.promptStructure?.additionalInstructions) || legacy);
     setModel(aiSettings?.model || "gpt-4o-mini");
     setTemperature(aiSettings?.temperature ?? 0.7);
     setMaxTokens(aiSettings?.maxTokens || 500);
@@ -532,6 +547,46 @@ export function AiSettingsClient({
                         {t("agentInstructions.personalityHint")}
                       </p>
                     </div>
+
+                    <Separator />
+
+                    {/* Additional Instructions (collapsible) */}
+                    {!showAdditional ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowAdditional(true)}
+                        className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                        {t("agentInstructions.additionalInstructionsToggle")}
+                      </button>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label>{t("agentInstructions.additionalInstructions")}</Label>
+                          {!promptStructure.additionalInstructions?.trim() && (
+                            <button
+                              type="button"
+                              onClick={() => setShowAdditional(false)}
+                              className="text-xs text-muted-foreground/70 transition-colors hover:text-muted-foreground"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
+                        <Textarea
+                          value={promptStructure.additionalInstructions}
+                          onChange={(e) => setPromptStructure((prev) => ({ ...prev, additionalInstructions: e.target.value }))}
+                          placeholder={t("agentInstructions.additionalInstructionsPlaceholder")}
+                          rows={4}
+                          maxLength={2000}
+                          className="resize-none bg-background"
+                        />
+                        <p className="text-[10px] text-muted-foreground/70">
+                          {t("agentInstructions.additionalInstructionsHint")}
+                        </p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -1147,6 +1202,21 @@ export function AiSettingsClient({
                   maxLength={1000}
                   className="resize-none bg-background"
                 />
+              </div>
+              {/* Additional Instructions */}
+              <div className="space-y-2">
+                <Label>{t("agentInstructions.additionalInstructions")}</Label>
+                <Textarea
+                  value={templateStructure.additionalInstructions}
+                  onChange={(e) => setTemplateStructure((prev) => ({ ...prev, additionalInstructions: e.target.value }))}
+                  placeholder={t("agentInstructions.additionalInstructionsPlaceholder")}
+                  rows={2}
+                  maxLength={2000}
+                  className="resize-none bg-background"
+                />
+                <p className="text-[10px] text-muted-foreground/70">
+                  {t("agentInstructions.additionalInstructionsHint")}
+                </p>
               </div>
             </div>
             <DialogFooter className="gap-2 sm:gap-0">

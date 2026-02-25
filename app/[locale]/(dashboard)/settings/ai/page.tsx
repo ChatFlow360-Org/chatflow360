@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth/user";
 import { prisma } from "@/lib/db/prisma";
 import { listKnowledge } from "@/lib/rag/knowledge";
 import { AiSettingsClient } from "./ai-settings-client";
+import type { PromptStructure } from "@/lib/chat/prompt-builder";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -56,7 +57,7 @@ export default async function AiSettingsPage() {
         maxTokens: settings.maxTokens,
         handoffKeywords: settings.handoffKeywords,
         apiKeyHint: settings.apiKeyHint,
-        promptStructure: settings.promptStructure as { agentName: string; role: string; rules: string[]; personality: string } | null,
+        promptStructure: settings.promptStructure as PromptStructure | null,
       };
     }
   }
@@ -88,7 +89,7 @@ export default async function AiSettingsPage() {
         id: t.id,
         name: t.name,
         description: t.description,
-        structure: t.structure as { agentName: string; role: string; rules: string[]; personality: string },
+        structure: t.structure as unknown as PromptStructure,
       }))}
     />
   );

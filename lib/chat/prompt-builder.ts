@@ -9,6 +9,7 @@ export interface PromptStructure {
   role: string;
   rules: string[];
   personality: string;
+  additionalInstructions: string;
 }
 
 export const promptStructureSchema = z.object({
@@ -16,6 +17,7 @@ export const promptStructureSchema = z.object({
   role: z.string().max(1000).default(""),
   rules: z.array(z.string().max(500)).max(20).default([]),
   personality: z.string().max(1000).default(""),
+  additionalInstructions: z.string().max(2000).default(""),
 });
 
 /**
@@ -49,6 +51,10 @@ export function composeSystemPrompt(
     sections.push(`PERSONALITY:\n${structure.personality.trim()}`);
   }
 
+  if (structure.additionalInstructions?.trim()) {
+    sections.push(`ADDITIONAL INSTRUCTIONS:\n${structure.additionalInstructions.trim()}`);
+  }
+
   if (sections.length === 0) return null;
 
   return sections.join("\n\n");
@@ -62,7 +68,8 @@ export function isStructureEmpty(structure: PromptStructure): boolean {
     !structure.agentName.trim() &&
     !structure.role.trim() &&
     structure.rules.filter((r) => r.trim()).length === 0 &&
-    !structure.personality.trim()
+    !structure.personality.trim() &&
+    !structure.additionalInstructions?.trim()
   );
 }
 
@@ -71,4 +78,5 @@ export const EMPTY_PROMPT_STRUCTURE: PromptStructure = {
   role: "",
   rules: [],
   personality: "",
+  additionalInstructions: "",
 };
