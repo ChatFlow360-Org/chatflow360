@@ -66,6 +66,7 @@ chatflow360-dashboard/
 │   │   │   └── settings/
 │   │   │       ├── ai/         # AI Settings (server page + client component)
 │   │   │       └── api-keys/   # API Key management (super_admin only)
+│   │   │   └── prompt-templates/ # Prompt Template CRUD (super_admin only)
 │   ├── api/
 │   │   ├── chat/
 │   │   │   ├── route.ts        # POST — widget chat + AI response
@@ -161,6 +162,7 @@ lib/admin/actions.ts:
   - upsertAiSettings (AI config per org)
   - upsertPlatformKey (global API key — super_admin)
   - getConversationMessages (fetch messages by conversation)
+  - createPromptTemplate, updatePromptTemplate, deletePromptTemplate (super_admin — dual revalidatePath: /settings/ai + /prompt-templates)
 
 lib/auth/actions.ts:
   - login, logout, forgotPassword, updatePassword
@@ -265,6 +267,22 @@ const getChannelConfig = (channel: Channel, orgAiSettings: AiSettings) => ({
 - 19 bilingual keywords (10 EN + 9 ES) pre-loaded for new orgs
 - AI Settings UI pre-populates textarea with defaults when no custom keywords exist
 - `createOrganization` server action uses `DEFAULT_HANDOFF_KEYWORDS` when creating initial AiSettings
+
+### Prompt Templates Page
+
+**Ruta:** `/[locale]/prompt-templates`
+
+| Capa | Archivo | Responsabilidad |
+|------|---------|-----------------|
+| Server page | `app/[locale]/(dashboard)/prompt-templates/page.tsx` | Fetch all PromptTemplates, guard: super_admin only |
+| Client component | `prompt-templates-client.tsx` | Card grid layout, create/edit/delete dialogs, `useActionState` |
+| Server actions | `createPromptTemplate`, `updatePromptTemplate`, `deletePromptTemplate` in `lib/admin/actions.ts` | Zod validation, `requireSuperAdmin()`, dual `revalidatePath` |
+
+**Access control:** super_admin only — page and all CRUD actions are guarded. Org admins can only consume templates via the "Use Template" selector in AI Settings (read-only).
+
+**Sidebar:** "Prompt Templates" item appears in the admin section of the sidebar, positioned before "API Keys".
+
+**Relation to AI Settings:** AI Settings retains only the "Use Template" dialog (read-only selector). Template management (create/edit/delete) was moved out of AI Settings to avoid mixing super_admin CRUD with org admin configuration on the same page.
 
 ### Widget Embed
 
@@ -594,7 +612,7 @@ Los tokens se registran en cada mensaje IA (`Message.tokensUsed`) y se resumen e
 
 ## Alcance del MVP
 
-### Implementado (v0.3.3)
+### Implementado (v0.3.5)
 
 - Multi-tenant con Super Admin (CRUD orgs, users, channels)
 - Website widget embebible (vanilla JS, DOM injection, bilingue, maximize/minimize, end conversation, session timeout)
@@ -606,7 +624,9 @@ Los tokens se registran en cada mensaje IA (`Message.tokensUsed`) y se resumen e
 - Supabase Realtime with RLS: setAuth + denormalized `organization_id` + token refresh + 30s polling safety net
 - RLS policies on `conversations` and `messages` tables (org-scoped tenant isolation)
 - Dashboard basico (5 stat cards, top pages, recent conversations — aun mock)
-- AI Settings page (instructions, model config, handoff, preview widget) + RBAC split (business vs technical params)
+- AI Settings page (structured prompt fields, model config, handoff, preview widget, "Use Template" selector) + RBAC split (business vs technical params)
+- Prompt Templates page (`/prompt-templates`) — super_admin CRUD with card grid layout, separate from AI Settings
+- Structured prompt fields (`lib/chat/prompt-builder.ts`): agentName, role, rules (max 50), personality, additionalInstructions — assembled via `composeSystemPrompt()`
 - Autenticacion real (Supabase Auth — login, logout, forgot/update password)
 - Bilingue (EN/ES) — ~360+ strings traducidas
 - Token tracking (Message.tokensUsed + UsageTracking monthly)

@@ -23,9 +23,11 @@
 
 - **New Prisma model `PromptTemplate`** — fields: `name` (unique), `description`, `structure` (JSON)
 - **3 new server actions** in `lib/admin/actions.ts`: `createPromptTemplate`, `updatePromptTemplate`, `deletePromptTemplate` — all guarded by `requireSuperAdmin()` + Zod validation
-- **"Use Template" button** in the Agent Instructions form opens a dialog listing available templates
-- Selecting a template auto-populates all structured fields (agentName, role, rules, personality, additionalInstructions) without saving — user reviews and confirms
-- Super admins can create, edit, and delete templates directly from the AI Settings page
+- **Dedicated `/prompt-templates` page** — Template CRUD lives on its own standalone page (`app/[locale]/(dashboard)/prompt-templates/`), not in AI Settings. New `prompt-templates-client.tsx` renders a card grid layout with create/edit/delete actions.
+- **New sidebar item "Prompt Templates"** — added to the admin section of the sidebar, positioned before "API Keys"
+- **"Use Template" selector** in the Agent Instructions form (AI Settings) is read-only: opens a dialog listing available templates for both org admins and super admins. Selecting a template auto-populates all structured fields (agentName, role, rules, personality, additionalInstructions) without saving — user reviews and confirms before saving.
+- **Dual `revalidatePath`** in template server actions: both `/settings/ai` and `/prompt-templates` are revalidated on create/update/delete to keep both pages in sync
+- **New i18n namespace `promptTemplates`** (EN + ES) — covers CRUD labels, dialog titles, card grid, empty state, and confirmation messages
 
 #### Additional Instructions — Collapsible Textarea
 
