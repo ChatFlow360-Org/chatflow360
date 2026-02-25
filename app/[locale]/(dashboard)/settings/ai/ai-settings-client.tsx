@@ -561,7 +561,7 @@ export function AiSettingsClient({
                         <span className="flex items-center gap-1.5 font-medium">
                           {t("agentInstructions.additionalInstructions")}
                           {!showAdditional && promptStructure.additionalInstructions?.trim() && (
-                            <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
+                            <Badge className="ml-1.5 border-emerald-500/20 bg-emerald-500/10 text-emerald-500">
                               {t("agentInstructions.additionalInstructionsHasContent")}
                             </Badge>
                           )}
@@ -573,11 +573,12 @@ export function AiSettingsClient({
                         )}
                       </button>
 
+                      <p className="mt-1.5 text-xs text-muted-foreground">
+                        {t("agentInstructions.additionalInstructionsDescription")}
+                      </p>
+
                       {showAdditional && (
-                        <div className="mt-2 space-y-2">
-                          <p className="text-xs text-muted-foreground">
-                            {t("agentInstructions.additionalInstructionsDescription")}
-                          </p>
+                        <div className="mt-2">
                           <Textarea
                             value={promptStructure.additionalInstructions}
                             onChange={(e) => setPromptStructure((prev) => ({ ...prev, additionalInstructions: e.target.value }))}
