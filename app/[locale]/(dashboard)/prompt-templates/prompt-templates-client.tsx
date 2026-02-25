@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Dialog,
   DialogContent,
@@ -78,6 +79,7 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
   const [createState, createAction, isCreating] = useActionState(createPromptTemplate, null);
   const [updateState, updateAction, isUpdating] = useActionState(updatePromptTemplate, null);
   const [isDeletingTemplate, startDeleteTransition] = useTransition();
+  const [deleteTemplateId, setDeleteTemplateId] = useState<string | null>(null);
 
   // Close dialog on success
   useEffect(() => {
@@ -120,9 +122,14 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
   };
 
   const handleDeleteTemplate = (templateId: string) => {
-    if (!confirm(t("deleteConfirm"))) return;
+    setDeleteTemplateId(templateId);
+  };
+
+  const confirmDeleteTemplate = () => {
+    if (!deleteTemplateId) return;
     startDeleteTransition(async () => {
-      await deletePromptTemplate(templateId);
+      await deletePromptTemplate(deleteTemplateId);
+      setDeleteTemplateId(null);
     });
   };
 
@@ -405,6 +412,19 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* ── Delete Confirmation ── */}
+      <ConfirmDialog
+        open={!!deleteTemplateId}
+        onConfirm={confirmDeleteTemplate}
+        onCancel={() => setDeleteTemplateId(null)}
+        title={t("deleteConfirm")}
+        description={t("deleteConfirmDescription")}
+        confirmLabel={tCommon("delete")}
+        cancelLabel={tCommon("cancel")}
+        variant="destructive"
+        loading={isDeletingTemplate}
+      />
     </div>
   );
 }

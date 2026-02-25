@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Select,
   SelectContent,
@@ -59,6 +60,7 @@ export function UsersClient({ users, organizations }: UsersClientProps) {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<SerializedUser | null>(null);
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
   const [orgValue, setOrgValue] = useState("");
   const [roleValue, setRoleValue] = useState("admin");
   const [showPassword, setShowPassword] = useState(false);
@@ -153,9 +155,14 @@ export function UsersClient({ users, organizations }: UsersClientProps) {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(t("deleteConfirm"))) return;
-    await deleteUser(id);
+  const handleDelete = (id: string) => {
+    setDeleteUserId(id);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!deleteUserId) return;
+    await deleteUser(deleteUserId);
+    setDeleteUserId(null);
   };
 
   const actionState = editingUser ? updateState : createState;
@@ -451,6 +458,18 @@ export function UsersClient({ users, organizations }: UsersClientProps) {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* ── Delete User Confirmation ── */}
+      <ConfirmDialog
+        open={!!deleteUserId}
+        onConfirm={confirmDeleteUser}
+        onCancel={() => setDeleteUserId(null)}
+        title={t("deleteConfirm")}
+        description={t("deleteConfirmDescription")}
+        confirmLabel={tc("delete")}
+        cancelLabel={tc("cancel")}
+        variant="destructive"
+      />
     </div>
   );
 }

@@ -108,6 +108,7 @@
     "noChannels": "Aun no hay canales",
     "addFirst": "Agrega un canal para empezar a recibir conversaciones",
     "deleteConfirm": "Estas seguro de que quieres eliminar este canal? Todas las conversaciones se perderan.",
+    "deleteConfirmDescription": "Esto eliminara permanentemente el canal y todas sus conversaciones.",
     "limitReached": "Limite de canales alcanzado para este plan",
     "channelsCount": "{count}/{max} canales"
   },
@@ -322,6 +323,7 @@
     },
     "editOrganization": "Editar Organizacion",
     "deleteConfirm": "Estas seguro de que quieres eliminar esta organizacion? Esta accion no se puede deshacer.",
+    "deleteConfirmDescription": "Esto eliminara permanentemente la organizacion y todos sus datos.",
     "active": "Activa",
     "inactive": "Inactiva"
   },
@@ -351,7 +353,8 @@
     },
     "superAdmin": "Super Admin",
     "noOrganization": "Sin organizacion",
-    "deleteConfirm": "Estas seguro de que quieres eliminar este usuario? Esta accion no se puede deshacer."
+    "deleteConfirm": "Estas seguro de que quieres eliminar este usuario? Esta accion no se puede deshacer.",
+    "deleteConfirmDescription": "Esto eliminara permanentemente al usuario de la plataforma."
   },
   "admin": {
     "errors": {
@@ -379,6 +382,7 @@
     "noTemplates": "Aun no hay plantillas",
     "createFirst": "Crea tu primera plantilla para ayudar a las organizaciones a configurar sus agentes de IA rapidamente",
     "deleteConfirm": "Estas seguro de que quieres eliminar esta plantilla? Esta accion no se puede deshacer.",
+    "deleteConfirmDescription": "Esta accion no se puede deshacer. La plantilla se eliminara permanentemente.",
     "created": "Plantilla creada exitosamente",
     "updatedSuccess": "Plantilla actualizada exitosamente",
     "deleted": "Plantilla eliminada",

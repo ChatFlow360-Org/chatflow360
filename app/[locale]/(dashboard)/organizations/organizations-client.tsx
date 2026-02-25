@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Select,
   SelectContent,
@@ -84,6 +85,10 @@ export function OrganizationsClient({ organizations }: OrganizationsClientProps)
   const [nameValue, setNameValue] = useState("");
   const [slugValue, setSlugValue] = useState("");
   const [planValue, setPlanValue] = useState("starter");
+
+  // Delete confirmation state
+  const [deleteOrgId, setDeleteOrgId] = useState<string | null>(null);
+  const [deleteChannelId, setDeleteChannelId] = useState<string | null>(null);
 
   // Expandable rows
   const [expandedOrgId, setExpandedOrgId] = useState<string | null>(null);
@@ -155,9 +160,14 @@ export function OrganizationsClient({ organizations }: OrganizationsClientProps)
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(t("deleteConfirm"))) return;
-    await deleteOrganization(id);
+  const handleDelete = (id: string) => {
+    setDeleteOrgId(id);
+  };
+
+  const confirmDeleteOrg = async () => {
+    if (!deleteOrgId) return;
+    await deleteOrganization(deleteOrgId);
+    setDeleteOrgId(null);
   };
 
   // Channel dialog helpers
@@ -177,9 +187,14 @@ export function OrganizationsClient({ organizations }: OrganizationsClientProps)
     setChannelDialogOpen(true);
   };
 
-  const handleDeleteChannel = async (id: string) => {
-    if (!confirm(tch("deleteConfirm"))) return;
-    await deleteChannel(id);
+  const handleDeleteChannel = (id: string) => {
+    setDeleteChannelId(id);
+  };
+
+  const confirmDeleteChannel = async () => {
+    if (!deleteChannelId) return;
+    await deleteChannel(deleteChannelId);
+    setDeleteChannelId(null);
   };
 
   const toggleExpand = (orgId: string) => {
@@ -442,6 +457,30 @@ export function OrganizationsClient({ organizations }: OrganizationsClientProps)
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* ── Delete Org Confirmation ── */}
+      <ConfirmDialog
+        open={!!deleteOrgId}
+        onConfirm={confirmDeleteOrg}
+        onCancel={() => setDeleteOrgId(null)}
+        title={t("deleteConfirm")}
+        description={t("deleteConfirmDescription")}
+        confirmLabel={tc("delete")}
+        cancelLabel={tc("cancel")}
+        variant="destructive"
+      />
+
+      {/* ── Delete Channel Confirmation ── */}
+      <ConfirmDialog
+        open={!!deleteChannelId}
+        onConfirm={confirmDeleteChannel}
+        onCancel={() => setDeleteChannelId(null)}
+        title={tch("deleteConfirm")}
+        description={tch("deleteConfirmDescription")}
+        confirmLabel={tc("delete")}
+        cancelLabel={tc("cancel")}
+        variant="destructive"
+      />
     </div>
   );
 }
