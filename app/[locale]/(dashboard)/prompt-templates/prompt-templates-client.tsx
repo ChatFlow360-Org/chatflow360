@@ -162,7 +162,7 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {templates.map((tmpl) => (
             <Card key={tmpl.id} className="group relative transition-shadow hover:shadow-md">
-              <CardHeader className="pb-1.5">
+              <CardHeader className="pb-0.5">
                 <div className="flex items-start justify-between">
                   <div className="min-w-0 flex-1">
                     <CardTitle className="text-base">{tmpl.name}</CardTitle>
@@ -211,7 +211,7 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
                     </Badge>
                   )}
                   {tmpl.structure.personality && (
-                    <Badge className="min-w-0 truncate border-emerald-500/20 bg-emerald-500/10 text-xs text-emerald-500">
+                    <Badge className="shrink! min-w-0 overflow-hidden text-ellipsis border-emerald-500/20 bg-emerald-500/10 text-xs text-emerald-500">
                       {tSettings("agentInstructions.personality")}: {tmpl.structure.personality}
                     </Badge>
                   )}
