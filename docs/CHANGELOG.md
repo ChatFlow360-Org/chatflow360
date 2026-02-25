@@ -2,6 +2,61 @@
 
 > Historial completo de versiones y cambios del proyecto.
 
+## v0.3.5 (2026-02-24)
+
+### Structured Prompt Fields + Template System for Agent Instructions
+
+#### Agent Instructions: Structured Fields (replaces single systemPrompt textarea)
+
+- **`lib/chat/prompt-builder.ts`** — new module with:
+  - `PromptStructure` interface: `agentName` (100 chars), `role` (1000 chars), `rules` (array, max 20 items, 500 chars each), `personality` (1000 chars), `additionalInstructions` (2000 chars)
+  - `composeSystemPrompt(structure)` — assembles the final string in canonical order: Name → Role → Rules → Personality → Additional Instructions
+  - `isStructureEmpty(structure)` — returns true if all fields are blank/empty (used to detect legacy orgs)
+  - `EMPTY_PROMPT_STRUCTURE` — typed constant for initializing new form state
+- **Composition order** is fixed and intentional: agent identity first, behavioral rules second, tone/personality third, free-form overrides last
+- **`promptStructure` JSONB field** added to `AiSettings` Prisma model — stores the structured JSON for UI editing
+- **`systemPrompt` is now derived** — composed via `composeSystemPrompt()` from `promptStructure` before saving; stored string remains as the value passed to OpenAI
+- **Both formats stored:** JSON for round-trip UI editing, composed string for the chat pipeline — zero changes to `lib/chat/ai.ts`
+
+#### Template System (super_admin only)
+
+- **New Prisma model `PromptTemplate`** — fields: `name` (unique), `description`, `structure` (JSON)
+- **3 new server actions** in `lib/admin/actions.ts`: `createPromptTemplate`, `updatePromptTemplate`, `deletePromptTemplate` — all guarded by `requireSuperAdmin()` + Zod validation
+- **"Use Template" button** in the Agent Instructions form opens a dialog listing available templates
+- Selecting a template auto-populates all structured fields (agentName, role, rules, personality, additionalInstructions) without saving — user reviews and confirms
+- Super admins can create, edit, and delete templates directly from the AI Settings page
+
+#### Additional Instructions — Collapsible Textarea
+
+- Located below the Personality field, starts collapsed with toggle label "Add additional instructions" / "Agregar instrucciones adicionales"
+- Expands on click; an X button collapses it (X only available when the field is empty)
+- Auto-expands on load if the field has content or if a legacy migration is detected
+- 2000 character limit — intended for business-specific overrides or edge case instructions that do not fit the structured fields
+- Composed at the end of the system prompt under an `"ADDITIONAL INSTRUCTIONS:"` heading
+
+#### Legacy Migration — Amber Banner
+
+- **Detection:** if an org has a non-empty `systemPrompt` but `promptStructure` is null or empty, the UI shows an amber warning banner
+- **Auto-migration:** the existing `systemPrompt` content is pre-populated into the `additionalInstructions` field so no content is lost
+- **Resolution:** user fills in structured fields and saves — `composeSystemPrompt()` replaces the old string, `promptStructure` is set, banner disappears
+- Existing orgs are unaffected until they open and save the AI Settings form
+
+#### i18n — "System Prompt" renamed to "Agent Instructions"
+
+- UI label renamed across all surfaces: "System Prompt" → "Agent Instructions" / "Instrucciones del Agente"
+- **~40+ new translation keys** added across two new namespaces (EN + ES):
+  - `agentInstructions.*` — field labels, placeholders, character count hints, section headings, legacy migration banner, rules list add/remove, template dialog
+  - `templates.*` — CRUD labels, dialog titles, empty state, confirmation messages
+- All existing `settings.systemPrompt.*` keys preserved for backward compatibility
+
+#### Backward Compatibility
+
+- `promptStructure` is nullable — existing orgs with only `systemPrompt` continue to work without changes
+- Chat pipeline (`lib/chat/ai.ts`, `lib/chat/config.ts`) is unchanged — it reads `systemPrompt` string as before
+- Composed string output format is identical to a manually written system prompt
+
+---
+
 ## v0.3.4 (2026-02-23)
 
 ### Dashboard Real Stats + Editable AI Technical Settings
@@ -41,6 +96,14 @@
 - Selection by **priority at client creation**, NOT retry on failure
 - If per-org key runs out of quota, calls fail — does NOT automatically fall back to global key
 - Future consideration: try/catch with fallback to next tier (has billing implications — would subsidize org consumption)
+
+#### Knowledge Base Onboarding Questionnaire
+
+- **`scripts/generate-knowledge-questionnaire.py`** — Python script (python-docx) that generates `docs/ChatFlow360-Knowledge-Questionnaire.docx`
+- **Bilingual EN/ES** — every question in English (bold) + Spanish (italic gray)
+- **7 universal sections** any business can answer: About, Services & Products, Pricing & Payment, How to Get Started, Location & Hours, Contact Information, FAQs
+- **Professional formatting** — ChatFlow360 branding colors (teal #2F92AD, navy #0F1C2E), styled answer boxes with light borders, tips, cover page with logo
+- **Purpose:** send to new clients so their AI knowledge base isn't empty from day one
 
 #### i18n
 

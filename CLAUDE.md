@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.3.4 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.3.5 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -73,4 +73,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.3.4** - Dashboard real stats + Editable AI Technical Settings. Dashboard stat cards now use real Prisma aggregation queries (6 parallel queries via `lib/dashboard/stats.ts`) with date range filtering. Active Now card moved to first position with emerald accent. AI Settings Technical Settings panel (super_admin only) now editable: model Select (gpt-4o-mini/gpt-4o/gpt-4-turbo), temperature Slider (0-2), maxTokens Input (100-4000). Human Takeover toggle removed (was cosmetic, not connected to backend). API key resolution is 3-tier with NO automatic fallback on quota exhaustion. Pendiente: rate limiting (Upstash Redis — deferred a produccion), mock data removal, typing indicators, handoffEnabled toggle funcional (future).
+**v0.3.5** - Structured Prompt Fields + Template System for Agent Instructions. Single systemPrompt textarea replaced with structured fields: agentName, role, rules[], personality, additionalInstructions (all char-limited). `lib/chat/prompt-builder.ts` — `PromptStructure` interface + `composeSystemPrompt()` assembles final string (Name → Role → Rules → Personality → Additional Instructions). `promptStructure` JSONB field added to AiSettings model; `systemPrompt` is now composed from it before saving. New Prisma model `PromptTemplate` (super_admin only) with 3 server actions (create/update/delete). "Use Template" dialog auto-populates fields. Additional Instructions textarea is collapsible (starts hidden, auto-expands if content exists). Legacy migration: amber banner if org has systemPrompt but no promptStructure — old content auto-loads into additionalInstructions. ~40+ new i18n keys in `agentInstructions.*` + `templates.*` namespaces (EN + ES). Zero changes to chat pipeline (`lib/chat/ai.ts`). Pendiente: rate limiting (Upstash Redis — deferred a produccion), mock data removal, typing indicators, handoffEnabled toggle funcional (future).
