@@ -275,7 +275,7 @@ export function AiSettingsClient({
   // --- Rule helpers ---
   const addRule = () => {
     const rule = ruleInput.trim();
-    if (rule && promptStructure.rules.length < 20) {
+    if (rule && promptStructure.rules.length < 50) {
       setPromptStructure((prev) => ({ ...prev, rules: [...prev.rules, rule] }));
       setRuleInput("");
     }
@@ -293,7 +293,7 @@ export function AiSettingsClient({
   // --- Template helpers ---
   const addTemplateRule = () => {
     const rule = templateRuleInput.trim();
-    if (rule && templateStructure.rules.length < 20) {
+    if (rule && templateStructure.rules.length < 50) {
       setTemplateStructure((prev) => ({ ...prev, rules: [...prev.rules, rule] }));
       setTemplateRuleInput("");
     }
@@ -514,14 +514,14 @@ export function AiSettingsClient({
                           onKeyDown={handleRuleKeyDown}
                           placeholder={t("agentInstructions.rulePlaceholder")}
                           maxLength={500}
-                          disabled={promptStructure.rules.length >= 20}
+                          disabled={promptStructure.rules.length >= 50}
                           autoComplete="off"
                           className="bg-background"
                         />
                         <Button
                           type="button"
                           onClick={addRule}
-                          disabled={!ruleInput.trim() || promptStructure.rules.length >= 20}
+                          disabled={!ruleInput.trim() || promptStructure.rules.length >= 50}
                         >
                           {t("agentInstructions.addRule")}
                         </Button>
@@ -1185,11 +1185,11 @@ export function AiSettingsClient({
                     onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTemplateRule(); } }}
                     placeholder={t("agentInstructions.rulePlaceholder")}
                     maxLength={500}
-                    disabled={templateStructure.rules.length >= 20}
+                    disabled={templateStructure.rules.length >= 50}
                     autoComplete="off"
                     className="bg-background"
                   />
-                  <Button type="button" size="sm" onClick={addTemplateRule} disabled={!templateRuleInput.trim() || templateStructure.rules.length >= 20}>
+                  <Button type="button" size="sm" onClick={addTemplateRule} disabled={!templateRuleInput.trim() || templateStructure.rules.length >= 50}>
                     {t("agentInstructions.addRule")}
                   </Button>
                 </div>

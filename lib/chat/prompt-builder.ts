@@ -15,7 +15,7 @@ export interface PromptStructure {
 export const promptStructureSchema = z.object({
   agentName: z.string().max(100).default(""),
   role: z.string().max(1000).default(""),
-  rules: z.array(z.string().max(500)).max(20).default([]),
+  rules: z.array(z.string().max(500)).max(50).default([]),
   personality: z.string().max(1000).default(""),
   additionalInstructions: z.string().max(2000).default(""),
 });
