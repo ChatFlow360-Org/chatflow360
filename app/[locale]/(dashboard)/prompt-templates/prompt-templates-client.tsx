@@ -10,6 +10,7 @@ import {
   Loader2,
   X,
   LayoutTemplate,
+  Bot,
 } from "lucide-react";
 import {
   Card,
@@ -158,7 +159,7 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
       {templates.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <LayoutTemplate className="mb-4 h-12 w-12 text-muted-foreground/40" />
+            <LayoutTemplate className="mb-4 h-12 w-12 text-cta/40" />
             <h3 className="text-sm font-medium">{t("noTemplates")}</h3>
             <p className="mt-1 text-center text-xs text-muted-foreground">
               {t("createFirst")}
@@ -172,8 +173,8 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {templates.map((tmpl) => (
-            <Card key={tmpl.id} className="group relative overflow-hidden transition-shadow hover:shadow-md">
-              <CardHeader className="pb-0.5">
+            <Card key={tmpl.id} className="group relative overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-cta/30">
+              <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
                   <div className="min-w-0 flex-1">
                     <CardTitle className="text-base">{tmpl.name}</CardTitle>
@@ -189,7 +190,7 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-cta"
+                          className="h-7 w-7 text-muted-foreground hover:bg-muted/50 hover:text-cta"
                           onClick={() => openEditTemplate(tmpl)}
                         >
                           <Pencil className="h-4 w-4" />
@@ -202,7 +203,7 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-cta"
+                          className="h-7 w-7 text-muted-foreground hover:bg-muted/50 hover:text-cta"
                           onClick={() => duplicateTemplate(tmpl)}
                         >
                           <Copy className="h-4 w-4" />
@@ -215,7 +216,7 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          className="h-7 w-7 text-muted-foreground hover:bg-muted/50 hover:text-destructive"
                           onClick={() => handleDeleteTemplate(tmpl.id)}
                           disabled={isDeletingTemplate}
                         >
@@ -230,6 +231,9 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
               <CardContent className="space-y-1 pt-0">
                 {tmpl.structure.agentName && (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-cta/10">
+                      <Bot className="h-3 w-3 text-cta" />
+                    </div>
                     <span className="font-medium">{tmpl.structure.agentName}</span>
                   </div>
                 )}
@@ -287,7 +291,7 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
                   maxLength={100}
                   required
                   autoComplete="off"
-                  className="bg-background"
+                  className="bg-background dark:border-muted-foreground/20 dark:bg-muted/30"
                 />
               </div>
               {/* Template description */}
@@ -300,7 +304,7 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
                   placeholder={tSettings("templates.templateDescriptionPlaceholder")}
                   maxLength={500}
                   autoComplete="off"
-                  className="bg-background"
+                  className="bg-background dark:border-muted-foreground/20 dark:bg-muted/30"
                 />
               </div>
 
@@ -315,7 +319,7 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
                   placeholder={tSettings("agentInstructions.agentNamePlaceholder")}
                   maxLength={100}
                   autoComplete="off"
-                  className="bg-background"
+                  className="bg-background dark:border-muted-foreground/20 dark:bg-muted/30"
                 />
                 <p className="text-[10px] text-muted-foreground/70">{tSettings("agentInstructions.agentNameHint")}</p>
               </div>
@@ -328,7 +332,7 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
                   placeholder={tSettings("agentInstructions.rolePlaceholder")}
                   rows={3}
                   maxLength={1000}
-                  className="resize-none bg-background"
+                  className="resize-none bg-background dark:border-muted-foreground/20 dark:bg-muted/30"
                 />
                 <p className="text-[10px] text-muted-foreground/70">{tSettings("agentInstructions.roleHint")}</p>
               </div>
@@ -356,7 +360,7 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
                     maxLength={500}
                     disabled={templateStructure.rules.length >= 50}
                     autoComplete="off"
-                    className="bg-background"
+                    className="bg-background dark:border-muted-foreground/20 dark:bg-muted/30"
                   />
                   <Button type="button" size="sm" onClick={addRule} disabled={!ruleInput.trim() || templateStructure.rules.length >= 50}>
                     {tSettings("agentInstructions.addRule")}
@@ -375,7 +379,7 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
                   placeholder={tSettings("agentInstructions.personalityPlaceholder")}
                   rows={2}
                   maxLength={1000}
-                  className="resize-none bg-background"
+                  className="resize-none bg-background dark:border-muted-foreground/20 dark:bg-muted/30"
                 />
                 <p className="text-[10px] text-muted-foreground/70">{tSettings("agentInstructions.personalityHint")}</p>
               </div>
