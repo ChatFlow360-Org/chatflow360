@@ -172,9 +172,9 @@
       "personalityPlaceholder": "Be professional, empathetic, and concise. Keep answers clear and not too long.",
       "personalityHint": "Describe the tone and communication style",
       "additionalInstructions": "Additional Instructions",
+      "additionalInstructionsDescription": "Optional — use this for business-specific rules or context that doesn't fit in the structured fields above. The main instructions are defined by the fields above.",
       "additionalInstructionsPlaceholder": "Add any business-specific instructions that don't fit the fields above...",
-      "additionalInstructionsHint": "Optional — for unique business rules or context-specific guidance",
-      "additionalInstructionsToggle": "Add additional instructions"
+      "additionalInstructionsHasContent": "has content"
     },
     "templates": {
       "selectTitle": "Choose a Template",

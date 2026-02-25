@@ -172,9 +172,9 @@
       "personalityPlaceholder": "Se profesional, empatico y conciso. Mantiene las respuestas claras y no muy largas.",
       "personalityHint": "Describe el tono y estilo de comunicacion",
       "additionalInstructions": "Instrucciones Adicionales",
+      "additionalInstructionsDescription": "Opcional — usa esto para reglas especificas de tu negocio o contexto que no encaje en los campos estructurados de arriba. Las instrucciones principales se definen con los campos anteriores.",
       "additionalInstructionsPlaceholder": "Agrega instrucciones especificas de tu negocio que no encajen en los campos anteriores...",
-      "additionalInstructionsHint": "Opcional — para reglas unicas de negocio o guias de contexto especifico",
-      "additionalInstructionsToggle": "Agregar instrucciones adicionales"
+      "additionalInstructionsHasContent": "tiene contenido"
     },
     "templates": {
       "selectTitle": "Elegir una Plantilla",

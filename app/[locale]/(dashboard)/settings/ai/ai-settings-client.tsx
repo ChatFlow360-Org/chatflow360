@@ -15,6 +15,7 @@ import {
   LayoutTemplate,
   AlertTriangle,
   ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import {
   Card,
@@ -550,43 +551,44 @@ export function AiSettingsClient({
 
                     <Separator />
 
-                    {/* Additional Instructions (collapsible) */}
-                    {!showAdditional ? (
+                    {/* Additional Instructions (collapsible disclosure) */}
+                    <div>
                       <button
                         type="button"
-                        onClick={() => setShowAdditional(true)}
-                        className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                        onClick={() => setShowAdditional((v) => !v)}
+                        className="flex w-full items-center justify-between gap-2 rounded-md py-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
                       >
-                        <ChevronDown className="h-4 w-4" />
-                        {t("agentInstructions.additionalInstructionsToggle")}
-                      </button>
-                    ) : (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label>{t("agentInstructions.additionalInstructions")}</Label>
-                          {!promptStructure.additionalInstructions?.trim() && (
-                            <button
-                              type="button"
-                              onClick={() => setShowAdditional(false)}
-                              className="text-xs text-muted-foreground/70 transition-colors hover:text-muted-foreground"
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </button>
+                        <span className="flex items-center gap-1.5 font-medium">
+                          {t("agentInstructions.additionalInstructions")}
+                          {!showAdditional && promptStructure.additionalInstructions?.trim() && (
+                            <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
+                              {t("agentInstructions.additionalInstructionsHasContent")}
+                            </Badge>
                           )}
+                        </span>
+                        {showAdditional ? (
+                          <ChevronUp className="h-4 w-4 shrink-0" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 shrink-0" />
+                        )}
+                      </button>
+
+                      {showAdditional && (
+                        <div className="mt-2 space-y-2">
+                          <p className="text-xs text-muted-foreground">
+                            {t("agentInstructions.additionalInstructionsDescription")}
+                          </p>
+                          <Textarea
+                            value={promptStructure.additionalInstructions}
+                            onChange={(e) => setPromptStructure((prev) => ({ ...prev, additionalInstructions: e.target.value }))}
+                            placeholder={t("agentInstructions.additionalInstructionsPlaceholder")}
+                            rows={4}
+                            maxLength={2000}
+                            className="resize-none bg-background"
+                          />
                         </div>
-                        <Textarea
-                          value={promptStructure.additionalInstructions}
-                          onChange={(e) => setPromptStructure((prev) => ({ ...prev, additionalInstructions: e.target.value }))}
-                          placeholder={t("agentInstructions.additionalInstructionsPlaceholder")}
-                          rows={4}
-                          maxLength={2000}
-                          className="resize-none bg-background"
-                        />
-                        <p className="text-[10px] text-muted-foreground/70">
-                          {t("agentInstructions.additionalInstructionsHint")}
-                        </p>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -1215,7 +1217,7 @@ export function AiSettingsClient({
                   className="resize-none bg-background"
                 />
                 <p className="text-[10px] text-muted-foreground/70">
-                  {t("agentInstructions.additionalInstructionsHint")}
+                  {t("agentInstructions.additionalInstructionsDescription")}
                 </p>
               </div>
             </div>
