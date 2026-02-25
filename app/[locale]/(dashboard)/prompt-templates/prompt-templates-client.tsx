@@ -132,7 +132,7 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
@@ -161,7 +161,7 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {templates.map((tmpl) => (
-            <Card key={tmpl.id} className="group relative transition-shadow hover:shadow-md">
+            <Card key={tmpl.id} className="group relative overflow-hidden transition-shadow hover:shadow-md">
               <CardHeader className="pb-0.5">
                 <div className="flex items-start justify-between">
                   <div className="min-w-0 flex-1">
