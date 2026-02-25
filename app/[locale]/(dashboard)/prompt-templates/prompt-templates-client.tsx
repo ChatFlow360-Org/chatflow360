@@ -193,7 +193,7 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-2 pt-0">
+              <CardContent className="space-y-1 pt-0">
                 {tmpl.structure.agentName && (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span className="font-medium">{tmpl.structure.agentName}</span>
@@ -204,15 +204,15 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
                     {tmpl.structure.role}
                   </p>
                 )}
-                <div className="flex items-center gap-2 pt-1">
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
                   {tmpl.structure.rules.length > 0 && (
-                    <Badge variant="secondary" className="text-[10px]">
+                    <Badge className="border-emerald-500/20 bg-emerald-500/10 text-xs text-emerald-500">
                       {tSettings("templates.rulesCount", { count: tmpl.structure.rules.length })}
                     </Badge>
                   )}
                   {tmpl.structure.personality && (
-                    <Badge variant="secondary" className="text-[10px]">
-                      {tSettings("agentInstructions.personality")}
+                    <Badge className="max-w-full truncate border-emerald-500/20 bg-emerald-500/10 text-xs text-emerald-500">
+                      {tSettings("agentInstructions.personality")}: {tmpl.structure.personality}
                     </Badge>
                   )}
                 </div>
@@ -343,22 +343,6 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
                 />
                 <p className="text-[10px] text-muted-foreground/70">{tSettings("agentInstructions.personalityHint")}</p>
               </div>
-              {/* Additional Instructions */}
-              <div className="space-y-2">
-                <Label>{tSettings("agentInstructions.additionalInstructions")}</Label>
-                <Textarea
-                  value={templateStructure.additionalInstructions}
-                  onChange={(e) => setTemplateStructure((prev) => ({ ...prev, additionalInstructions: e.target.value }))}
-                  placeholder={tSettings("agentInstructions.additionalInstructionsPlaceholder")}
-                  rows={2}
-                  maxLength={2000}
-                  className="resize-none bg-background"
-                />
-                <p className="text-[10px] text-muted-foreground/70">
-                  {tSettings("agentInstructions.additionalInstructionsDescription")}
-                </p>
-              </div>
-
               {/* Error feedback */}
               {(createState?.error || updateState?.error) && (
                 <p className="text-sm text-destructive">
