@@ -183,7 +183,7 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
                       </CardDescription>
                     )}
                   </div>
-                  <div className="flex shrink-0 gap-1 lg:opacity-0 lg:transition-opacity lg:group-hover:opacity-100">
+                  <div className="flex shrink-0 gap-1">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
