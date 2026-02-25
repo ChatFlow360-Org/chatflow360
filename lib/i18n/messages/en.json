@@ -381,7 +381,10 @@
     "deleteConfirm": "Are you sure you want to delete this template? This action cannot be undone.",
     "created": "Template created successfully",
     "updatedSuccess": "Template updated successfully",
-    "deleted": "Template deleted"
+    "deleted": "Template deleted",
+    "editTooltip": "Edit",
+    "duplicateTooltip": "Duplicate",
+    "deleteTooltip": "Delete"
   },
   "apiKeys": {
     "title": "API Keys",

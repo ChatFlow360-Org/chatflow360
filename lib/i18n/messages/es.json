@@ -381,7 +381,10 @@
     "deleteConfirm": "Estas seguro de que quieres eliminar esta plantilla? Esta accion no se puede deshacer.",
     "created": "Plantilla creada exitosamente",
     "updatedSuccess": "Plantilla actualizada exitosamente",
-    "deleted": "Plantilla eliminada"
+    "deleted": "Plantilla eliminada",
+    "editTooltip": "Editar",
+    "duplicateTooltip": "Duplicar",
+    "deleteTooltip": "Eliminar"
   },
   "apiKeys": {
     "title": "Claves API",
