@@ -18,6 +18,7 @@
       "admin": "ADMIN",
       "organizations": "Organizaciones",
       "users": "Usuarios",
+      "promptTemplates": "Plantillas de Prompt",
       "apiKeys": "Claves API",
       "context": "CONTEXTO",
       "selectOrg": "Seleccionar organizacion",
@@ -365,6 +366,22 @@
       "channelLimitReached": "Limite de canales alcanzado para este plan.",
       "unauthorized": "No tienes permisos para realizar esta accion."
     }
+  },
+  "promptTemplates": {
+    "title": "Plantillas de Prompt",
+    "subtitle": "Crea plantillas reutilizables para tipos de negocio comunes",
+    "newTemplate": "Nueva Plantilla",
+    "editTemplate": "Editar Plantilla",
+    "name": "Nombre",
+    "description": "Descripcion",
+    "rules": "Reglas",
+    "updated": "Actualizada",
+    "noTemplates": "Aun no hay plantillas",
+    "createFirst": "Crea tu primera plantilla para ayudar a las organizaciones a configurar sus agentes de IA rapidamente",
+    "deleteConfirm": "Estas seguro de que quieres eliminar esta plantilla? Esta accion no se puede deshacer.",
+    "created": "Plantilla creada exitosamente",
+    "updatedSuccess": "Plantilla actualizada exitosamente",
+    "deleted": "Plantilla eliminada"
   },
   "apiKeys": {
     "title": "Claves API",

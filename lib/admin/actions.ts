@@ -995,6 +995,7 @@ export async function createPromptTemplate(
     });
 
     revalidatePath("/settings/ai");
+    revalidatePath("/prompt-templates");
     return { success: "templateCreated" };
   } catch (e) {
     if (e && typeof e === "object" && "code" in e && (e as { code: string }).code === "P2002") {
@@ -1040,6 +1041,7 @@ export async function updatePromptTemplate(
     });
 
     revalidatePath("/settings/ai");
+    revalidatePath("/prompt-templates");
     return { success: "templateUpdated" };
   } catch (e) {
     if (e && typeof e === "object" && "code" in e && (e as { code: string }).code === "P2002") {
@@ -1062,6 +1064,7 @@ export async function deletePromptTemplate(
     });
 
     revalidatePath("/settings/ai");
+    revalidatePath("/prompt-templates");
     return { success: "templateDeleted" };
   } catch (e) {
     console.error("[deletePromptTemplate]", e instanceof Error ? e.message : e);

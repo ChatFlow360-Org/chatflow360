@@ -9,7 +9,7 @@
 #### Agent Instructions: Structured Fields (replaces single systemPrompt textarea)
 
 - **`lib/chat/prompt-builder.ts`** — new module with:
-  - `PromptStructure` interface: `agentName` (100 chars), `role` (1000 chars), `rules` (array, max 20 items, 500 chars each), `personality` (1000 chars), `additionalInstructions` (2000 chars)
+  - `PromptStructure` interface: `agentName` (100 chars), `role` (1000 chars), `rules` (array, max 50 items, 500 chars each), `personality` (1000 chars), `additionalInstructions` (2000 chars)
   - `composeSystemPrompt(structure)` — assembles the final string in canonical order: Name → Role → Rules → Personality → Additional Instructions
   - `isStructureEmpty(structure)` — returns true if all fields are blank/empty (used to detect legacy orgs)
   - `EMPTY_PROMPT_STRUCTURE` — typed constant for initializing new form state
@@ -17,6 +17,7 @@
 - **`promptStructure` JSONB field** added to `AiSettings` Prisma model — stores the structured JSON for UI editing
 - **`systemPrompt` is now derived** — composed via `composeSystemPrompt()` from `promptStructure` before saving; stored string remains as the value passed to OpenAI
 - **Both formats stored:** JSON for round-trip UI editing, composed string for the chat pipeline — zero changes to `lib/chat/ai.ts`
+- **Rules limit increased from 20 to 50** — personality field guidance improved with better placeholders and descriptive hints
 
 #### Template System (super_admin only)
 

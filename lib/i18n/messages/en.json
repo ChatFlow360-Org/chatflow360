@@ -18,6 +18,7 @@
       "admin": "ADMIN",
       "organizations": "Organizations",
       "users": "Users",
+      "promptTemplates": "Prompt Templates",
       "apiKeys": "API Keys",
       "context": "CONTEXT",
       "selectOrg": "Select organization",
@@ -365,6 +366,22 @@
       "channelLimitReached": "Channel limit reached for this plan.",
       "unauthorized": "You don't have permission to perform this action."
     }
+  },
+  "promptTemplates": {
+    "title": "Prompt Templates",
+    "subtitle": "Create reusable templates for common business types",
+    "newTemplate": "New Template",
+    "editTemplate": "Edit Template",
+    "name": "Name",
+    "description": "Description",
+    "rules": "Rules",
+    "updated": "Updated",
+    "noTemplates": "No templates yet",
+    "createFirst": "Create your first template to help organizations quickly set up their AI agents",
+    "deleteConfirm": "Are you sure you want to delete this template? This action cannot be undone.",
+    "created": "Template created successfully",
+    "updatedSuccess": "Template updated successfully",
+    "deleted": "Template deleted"
   },
   "apiKeys": {
     "title": "API Keys",

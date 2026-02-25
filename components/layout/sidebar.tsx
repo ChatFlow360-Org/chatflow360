@@ -11,6 +11,7 @@ import {
   // BarChart3,
   Building2,
   Users,
+  LayoutTemplate,
   Key,
   X,
   ChevronsUpDown,
@@ -40,6 +41,7 @@ const navItems = [
 const adminItems = [
   { labelKey: "organizations" as const, href: "/organizations" as const, icon: Building2 },
   { labelKey: "users" as const, href: "/users" as const, icon: Users },
+  { labelKey: "promptTemplates" as const, href: "/prompt-templates" as const, icon: LayoutTemplate },
   { labelKey: "apiKeys" as const, href: "/settings/api-keys" as const, icon: Key },
 ];
 
