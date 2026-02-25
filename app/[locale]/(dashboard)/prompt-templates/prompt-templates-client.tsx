@@ -6,6 +6,7 @@ import {
   Plus,
   Trash2,
   Pencil,
+  Copy,
   Loader2,
   X,
   LayoutTemplate,
@@ -107,6 +108,15 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
     setShowDialog(true);
   };
 
+  const duplicateTemplate = (tmpl: TemplateData) => {
+    setEditingTemplate(null);
+    setTemplateName(`${tmpl.name} (Copy)`);
+    setTemplateDescription(tmpl.description || "");
+    setTemplateStructure({ ...tmpl.structure });
+    setRuleInput("");
+    setShowDialog(true);
+  };
+
   const handleDeleteTemplate = (templateId: string) => {
     if (!confirm(t("deleteConfirm"))) return;
     startDeleteTransition(async () => {
@@ -180,6 +190,14 @@ export function PromptTemplatesClient({ templates }: PromptTemplatesClientProps)
                       onClick={() => openEditTemplate(tmpl)}
                     >
                       <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-cta"
+                      onClick={() => duplicateTemplate(tmpl)}
+                    >
+                      <Copy className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
