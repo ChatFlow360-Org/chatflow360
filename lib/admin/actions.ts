@@ -854,6 +854,97 @@ export async function createKnowledgeItem(
   }
 }
 
+/**
+ * Create or update a Business Hours knowledge item (structured category).
+ * Only one business_hours item per org (enforced by DB unique index).
+ */
+export async function upsertBusinessHours(
+  _prevState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const orgId = formData.get("organizationId") as string;
+    const structuredJson = formData.get("structuredData") as string;
+    const existingId = formData.get("knowledgeId") as string | null;
+
+    z.string().uuid().parse(orgId);
+
+    // Auth: super_admin or org member
+    if (!user.isSuperAdmin) {
+      const membership = await prisma.organizationMember.findFirst({
+        where: { userId: user.id, organizationId: orgId },
+      });
+      if (!membership) throw new Error("Unauthorized");
+    }
+
+    // Parse and validate structured data
+    const { businessHoursSchema, composeBusinessHoursText } = await import(
+      "@/lib/knowledge/business-hours"
+    );
+
+    let structuredData;
+    try {
+      structuredData = businessHoursSchema.parse(JSON.parse(structuredJson));
+    } catch {
+      return { error: "createFailed" };
+    }
+
+    // Compose text from structured data
+    const title = "Business Hours";
+    const content = composeBusinessHoursText(structuredData);
+
+    // Generate embedding from composed text
+    const { createOpenAIClient } = await import("@/lib/openai/client");
+    const { generateEmbedding } = await import("@/lib/rag/embedding");
+
+    const client = await createOpenAIClient(orgId);
+    const { embedding, tokensUsed } = await generateEmbedding(
+      client,
+      `${title}\n\n${content}`
+    );
+
+    if (existingId) {
+      // Update existing
+      const { updateKnowledge } = await import("@/lib/rag/knowledge");
+      z.string().uuid().parse(existingId);
+      await updateKnowledge(
+        orgId,
+        existingId,
+        title,
+        content,
+        embedding,
+        tokensUsed,
+        "business_hours",
+        structuredData as unknown as Record<string, unknown>
+      );
+    } else {
+      // Create new
+      const { createKnowledge } = await import("@/lib/rag/knowledge");
+      await createKnowledge(
+        orgId,
+        title,
+        content,
+        embedding,
+        tokensUsed,
+        "business_hours",
+        structuredData as unknown as Record<string, unknown>
+      );
+    }
+
+    revalidatePath("/settings/ai");
+    return { success: "knowledgeCreated" };
+  } catch (e) {
+    console.error("[upsertBusinessHours]", e instanceof Error ? e.message : e);
+    if (e instanceof Error && e.message === "Unauthorized") {
+      return { error: "unauthorized" };
+    }
+    return { error: "createFailed" };
+  }
+}
+
 const updateKnowledgeSchema = z.object({
   organizationId: z.string().uuid(),
   knowledgeId: z.string().uuid(),

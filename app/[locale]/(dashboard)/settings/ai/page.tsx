@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db/prisma";
 import { listKnowledge } from "@/lib/rag/knowledge";
 import { AiSettingsClient } from "./ai-settings-client";
 import type { PromptStructure } from "@/lib/chat/prompt-builder";
+import type { KnowledgeCategory } from "@/lib/knowledge/business-hours";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -69,7 +70,7 @@ export default async function AiSettingsPage() {
   });
 
   // Fetch knowledge items for this org
-  let knowledgeItems: { id: string; title: string; content: string; tokens_used: number; created_at: string }[] = [];
+  let knowledgeItems: { id: string; title: string; content: string; category: KnowledgeCategory; structured_data: Record<string, unknown> | null; tokens_used: number; created_at: string }[] = [];
   if (selectedOrgId) {
     try {
       knowledgeItems = await listKnowledge(selectedOrgId);

@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronUp,
+  Clock,
 } from "lucide-react";
 import {
   Card,
@@ -52,10 +53,14 @@ import {
   createKnowledgeItem,
   updateKnowledgeItem,
   deleteKnowledgeItem,
+  upsertBusinessHours,
 } from "@/lib/admin/actions";
 import { DEFAULT_HANDOFF_KEYWORDS } from "@/lib/chat/defaults";
 import { EMPTY_PROMPT_STRUCTURE, type PromptStructure } from "@/lib/chat/prompt-builder";
 import { formatRelativeTime } from "@/lib/utils/format";
+import { BusinessHoursForm } from "@/components/knowledge/business-hours-form";
+import { DEFAULT_BUSINESS_HOURS } from "@/lib/knowledge/business-hours";
+import type { BusinessHoursData, KnowledgeCategory } from "@/lib/knowledge/business-hours";
 
 // --- Types ---
 
@@ -76,6 +81,8 @@ interface KnowledgeItemData {
   id: string;
   title: string;
   content: string;
+  category: KnowledgeCategory;
+  structured_data: Record<string, unknown> | null;
   tokens_used: number;
   created_at: string;
 }
@@ -122,6 +129,7 @@ export function AiSettingsClient({
     null
   );
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [addCategory, setAddCategory] = useState<KnowledgeCategory | null>(null);
   const [knowledgeTitle, setKnowledgeTitle] = useState("");
   const [knowledgeContent, setKnowledgeContent] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -136,10 +144,22 @@ export function AiSettingsClient({
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
 
+  // Business hours state
+  const existingBH = knowledgeItems.find((i) => i.category === "business_hours");
+  const [showBHDialog, setShowBHDialog] = useState(false);
+  const [bhData, setBhData] = useState<BusinessHoursData>(
+    () => (existingBH?.structured_data as unknown as BusinessHoursData) ?? { ...DEFAULT_BUSINESS_HOURS }
+  );
+  const [bhState, bhAction, isBHSaving] = useActionState(upsertBusinessHours, null);
+
+  // Filter free-text items for the list
+  const freeTextItems = knowledgeItems.filter((i) => i.category !== "business_hours");
+
   // Close dialog on successful create
   useEffect(() => {
     if (createState?.success) {
       setShowAddDialog(false);
+      setAddCategory(null);
       setKnowledgeTitle("");
       setKnowledgeContent("");
     }
@@ -153,6 +173,13 @@ export function AiSettingsClient({
       setEditContent("");
     }
   }, [updateState]);
+
+  // Close BH dialog on successful save
+  useEffect(() => {
+    if (bhState?.success) {
+      setShowBHDialog(false);
+    }
+  }, [bhState]);
 
   // Form state — technical params (editable by super_admin)
   const [model, setModel] = useState(aiSettings?.model || "gpt-4o-mini");
@@ -760,7 +787,61 @@ export function AiSettingsClient({
         </TabsContent>
 
         {/* ── Knowledge Base Tab ── */}
-        <TabsContent value="knowledge" className="mt-6">
+        <TabsContent value="knowledge" className="mt-6 space-y-4">
+          {/* ── Business Hours Card ── */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-cta" />
+                  <CardTitle className="text-base">
+                    {t("businessHours.title")}
+                  </CardTitle>
+                  {existingBH && (
+                    <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                      {t("businessHours.configured")}
+                    </Badge>
+                  )}
+                </div>
+                <Button
+                  size="sm"
+                  variant={existingBH ? "outline" : "default"}
+                  onClick={() => {
+                    if (existingBH?.structured_data) {
+                      setBhData(existingBH.structured_data as unknown as BusinessHoursData);
+                    } else {
+                      setBhData({ ...DEFAULT_BUSINESS_HOURS });
+                    }
+                    setShowBHDialog(true);
+                  }}
+                >
+                  {existingBH ? (
+                    <>
+                      <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                      {t("businessHours.edit")}
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="mr-1.5 h-3.5 w-3.5" />
+                      {t("businessHours.title")}
+                    </>
+                  )}
+                </Button>
+              </div>
+              <CardDescription className="mt-1">
+                {t("businessHours.description")}
+              </CardDescription>
+            </CardHeader>
+            {existingBH && (
+              <CardContent className="pt-0">
+                <p className="line-clamp-3 text-xs text-muted-foreground whitespace-pre-line">
+                  {existingBH.content}
+                </p>
+              </CardContent>
+            )}
+          </Card>
+
+          {/* ── Free Text Knowledge ── */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -773,9 +854,9 @@ export function AiSettingsClient({
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-3">
-                  {knowledgeItems.length > 0 && (
+                  {freeTextItems.length > 0 && (
                     <Badge variant="secondary" className="text-xs">
-                      {t("knowledge.itemCount", { count: knowledgeItems.length })}
+                      {t("knowledge.itemCount", { count: freeTextItems.length })}
                     </Badge>
                   )}
                   <Button
@@ -789,7 +870,7 @@ export function AiSettingsClient({
               </div>
             </CardHeader>
             <CardContent>
-              {knowledgeItems.length === 0 ? (
+              {freeTextItems.length === 0 ? (
                 /* Empty state */
                 <div className="flex flex-col items-center justify-center py-12">
                   <div className="rounded-full bg-muted p-4">
@@ -805,7 +886,7 @@ export function AiSettingsClient({
               ) : (
                 /* Knowledge items list */
                 <div className="space-y-3">
-                  {knowledgeItems.map((item) => (
+                  {freeTextItems.map((item) => (
                     <div
                       key={item.id}
                       className="flex items-start justify-between gap-4 rounded-lg border bg-background p-4"
@@ -964,6 +1045,50 @@ export function AiSettingsClient({
               ))
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Business Hours Dialog ── */}
+      <Dialog open={showBHDialog} onOpenChange={setShowBHDialog}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("businessHours.dialogTitle")}</DialogTitle>
+            <DialogDescription>
+              {t("businessHours.dialogDescription")}
+            </DialogDescription>
+          </DialogHeader>
+          <form action={bhAction}>
+            <input type="hidden" name="organizationId" value={selectedOrgId} />
+            <input type="hidden" name="knowledgeId" value={existingBH?.id ?? ""} />
+            <input type="hidden" name="structuredData" value={JSON.stringify(bhData)} />
+            <div className="py-2">
+              <BusinessHoursForm
+                data={bhData}
+                onChange={setBhData}
+                locale={locale}
+                t={(key, values) => t(`businessHours.${key}`, values as Record<string, string | number | Date> | undefined)}
+              />
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowBHDialog(false)}
+              >
+                {tCommon("cancel")}
+              </Button>
+              <Button type="submit" disabled={isBHSaving}>
+                {isBHSaving ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                    {t("businessHours.saving")}
+                  </>
+                ) : (
+                  t("businessHours.save")
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 

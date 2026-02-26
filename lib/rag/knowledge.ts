@@ -1,10 +1,13 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { KnowledgeCategory } from "@/lib/knowledge/business-hours";
 
 export interface KnowledgeItem {
   id: string;
   organization_id: string;
   title: string;
   content: string;
+  category: KnowledgeCategory;
+  structured_data: Record<string, unknown> | null;
   tokens_used: number;
   created_at: string;
   updated_at: string;
@@ -20,7 +23,7 @@ export async function listKnowledge(
 
   const { data, error } = await supabase
     .from("organization_knowledge")
-    .select("id, organization_id, title, content, tokens_used, created_at, updated_at")
+    .select("id, organization_id, title, content, category, structured_data, tokens_used, created_at, updated_at")
     .eq("organization_id", organizationId)
     .order("created_at", { ascending: false });
 
@@ -39,7 +42,9 @@ export async function createKnowledge(
   title: string,
   content: string,
   embedding: number[],
-  tokensUsed: number
+  tokensUsed: number,
+  category: KnowledgeCategory = "free_text",
+  structuredData: Record<string, unknown> | null = null
 ): Promise<KnowledgeItem> {
   const supabase = createAdminClient();
 
@@ -51,8 +56,10 @@ export async function createKnowledge(
       content,
       embedding: JSON.stringify(embedding),
       tokens_used: tokensUsed,
+      category,
+      structured_data: structuredData,
     })
-    .select("id, organization_id, title, content, tokens_used, created_at, updated_at")
+    .select("id, organization_id, title, content, category, structured_data, tokens_used, created_at, updated_at")
     .single();
 
   if (error) {
@@ -72,22 +79,29 @@ export async function updateKnowledge(
   title: string,
   content: string,
   embedding: number[],
-  tokensUsed: number
+  tokensUsed: number,
+  category?: KnowledgeCategory,
+  structuredData?: Record<string, unknown> | null
 ): Promise<KnowledgeItem> {
   const supabase = createAdminClient();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updatePayload: Record<string, any> = {
+    title,
+    content,
+    embedding: JSON.stringify(embedding),
+    tokens_used: tokensUsed,
+    updated_at: new Date().toISOString(),
+  };
+  if (category !== undefined) updatePayload.category = category;
+  if (structuredData !== undefined) updatePayload.structured_data = structuredData;
+
   const { data, error } = await supabase
     .from("organization_knowledge")
-    .update({
-      title,
-      content,
-      embedding: JSON.stringify(embedding),
-      tokens_used: tokensUsed,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updatePayload)
     .eq("id", knowledgeId)
     .eq("organization_id", organizationId)
-    .select("id, organization_id, title, content, tokens_used, created_at, updated_at")
+    .select("id, organization_id, title, content, category, structured_data, tokens_used, created_at, updated_at")
     .single();
 
   if (error) {
