@@ -156,7 +156,9 @@ export function AiSettingsClient({
   const freeTextItems = knowledgeItems.filter((i) => i.category !== "business_hours");
 
   // Smooth scroll to top so user sees feedback banners
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  // Dashboard layout uses <main> with overflow-y-auto, not window scroll
+  const scrollToTop = () =>
+    document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
 
   // Close dialog on successful create
   useEffect(() => {
