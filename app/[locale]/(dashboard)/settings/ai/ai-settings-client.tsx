@@ -155,6 +155,9 @@ export function AiSettingsClient({
   // Filter free-text items for the list
   const freeTextItems = knowledgeItems.filter((i) => i.category !== "business_hours");
 
+  // Smooth scroll to top so user sees feedback banners
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+
   // Close dialog on successful create
   useEffect(() => {
     if (createState?.success) {
@@ -162,6 +165,7 @@ export function AiSettingsClient({
       setAddCategory(null);
       setKnowledgeTitle("");
       setKnowledgeContent("");
+      scrollToTop();
     }
   }, [createState]);
 
@@ -171,6 +175,7 @@ export function AiSettingsClient({
       setEditingItem(null);
       setEditTitle("");
       setEditContent("");
+      scrollToTop();
     }
   }, [updateState]);
 
@@ -178,8 +183,14 @@ export function AiSettingsClient({
   useEffect(() => {
     if (bhState?.success) {
       setShowBHDialog(false);
+      scrollToTop();
     }
   }, [bhState]);
+
+  // Scroll to top on main save success/error
+  useEffect(() => {
+    if (state?.success || state?.error) scrollToTop();
+  }, [state]);
 
   // Form state — technical params (editable by super_admin)
   const [model, setModel] = useState(aiSettings?.model || "gpt-4o-mini");

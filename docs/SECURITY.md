@@ -43,6 +43,20 @@ $$ LANGUAGE sql SECURITY DEFINER STABLE;
 - `STABLE` — can be cached within a transaction
 - Handles super admin (sees all orgs) vs regular user (sees membership orgs only)
 
+**`prompt_templates` table:**
+
+- **Policy:** `service_role_full_access` — full CRUD for service_role
+- **Policy:** `super_admin_select` — SELECT only for authenticated super_admins
+- **Expression:** `EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role = 'super_admin')`
+- All mutations go through Prisma server actions with `requireSuperAdmin()` guard
+- Prisma uses `postgres` superuser (bypasses RLS) — policies protect PostgREST access only
+
+**`organization_knowledge` table:**
+
+- RLS not enabled (managed via Supabase admin client with service_role key)
+- All CRUD goes through server actions with auth guards
+- Multi-tenant safety enforced by double-filtering on `organization_id` in all queries
+
 **REPLICA IDENTITY FULL** enabled on both `conversations` and `messages` tables (required for Supabase Realtime to include all column values in change events).
 
 ### Realtime Auth (setAuth pattern)
