@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.3.5 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.3.5.1 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -73,4 +73,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.3.5** - Structured Prompt Fields + Template System for Agent Instructions. Single systemPrompt textarea replaced with structured fields: agentName, role, rules[], personality, additionalInstructions (all char-limited). `lib/chat/prompt-builder.ts` — `PromptStructure` interface + `composeSystemPrompt()` assembles final string (Name → Role → Rules → Personality → Additional Instructions). `promptStructure` JSONB field added to AiSettings model; `systemPrompt` is now composed from it before saving. New Prisma model `PromptTemplate` (super_admin only) with 3 server actions (create/update/delete). "Use Template" dialog auto-populates fields. Additional Instructions textarea is collapsible (starts hidden, auto-expands if content exists). Legacy migration: amber banner if org has systemPrompt but no promptStructure — old content auto-loads into additionalInstructions. ~40+ new i18n keys in `agentInstructions.*` + `templates.*` namespaces (EN + ES). Zero changes to chat pipeline (`lib/chat/ai.ts`). Pendiente: rate limiting (Upstash Redis — deferred a produccion), mock data removal, typing indicators, handoffEnabled toggle funcional (future).
+**v0.3.5.1** - Prompt Templates UI polish + app-wide ConfirmDialog + Tooltips. Emerald badges with truncation, card hover signature, duplicate template button, action buttons always visible with Radix tooltips, responsive card grid. ConfirmDialog (`components/ui/confirm-dialog.tsx`) replaces ALL native `confirm()` calls app-wide (prompt-templates, organizations, users). TooltipProvider in DashboardShell. Built on v0.3.5: Structured Prompt Fields (agentName, role, rules[], personality, additionalInstructions) via `lib/chat/prompt-builder.ts` + `PromptTemplate` model (super_admin CRUD). Zero changes to chat pipeline. Pendiente: rate limiting (Upstash Redis — deferred a produccion), mock data removal, typing indicators, handoffEnabled toggle funcional (future).

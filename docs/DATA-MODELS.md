@@ -6,7 +6,7 @@
 
 ```
 Organization (1)
-    ├── AiSettings (1:1) ─── Config IA por org (SOLO super_admin)
+    ├── AiSettings (1:1) ─── Config IA por org (technical: super_admin, business: org_admin)
     ├── OrganizationMember (1:N) ─── User (N:1)
     ├── UsageTracking (1:N) ─── Resumen mensual de uso
     ├── Conversation (1:N) ─── denormalized FK for RLS (v0.3.3)
@@ -15,6 +15,9 @@ Organization (1)
             ├── ChannelKnowledge (1:N) ─── Conocimiento RAG (pgvector)
             └── Conversation (1:N) ─── User? (assignedTo)
                     └── Message (1:N) ─── User? (sender) + tokensUsed
+
+PromptTemplate (global) ─── Plantillas reutilizables (SOLO super_admin CRUD)
+PlatformSettings (global) ─── Config plataforma: API keys (SOLO super_admin)
 ```
 
 ## Control de Acceso por Modelo
@@ -99,9 +102,9 @@ const handoffKeywords = channel.handoffKeywords.length > 0
 
 **Constraint:** UNIQUE(organizationId, userId)
 
-### AiSettings (Config IA — SOLO Super Admin)
+### AiSettings (Config IA por Org)
 
-> Parametros tecnicos de la IA configurados por el super admin. Controlan costos y calidad de la plataforma. El cliente NO tiene acceso a estos campos.
+> Configuracion IA por organizacion. Parametros tecnicos (model, temperature, maxTokens) controlados por super admin. Parametros de negocio (systemPrompt, handoffKeywords, promptStructure) editables por org admin y super admin.
 
 | Campo | Tipo | Default | Descripcion |
 |-------|------|---------|-------------|
@@ -109,10 +112,44 @@ const handoffKeywords = channel.handoffKeywords.length > 0
 | organizationId | UUID (unique) | - | FK Organization (1:1) |
 | provider | String | "openai" | Proveedor IA |
 | model | String | "gpt-4o-mini" | Modelo a usar |
-| systemPrompt | String? | null | **Instrucciones** default de la IA (fallback si el canal no tiene) |
-| temperature | Decimal | 0.7 | Creatividad (0-2) |
+| systemPrompt | String? (Text) | null | **Instrucciones** compuestas de la IA — generado via `composeSystemPrompt()` desde `promptStructure` |
+| temperature | Decimal(3,2) | 0.7 | Creatividad (0-2) |
 | maxTokens | Int | 500 | Tokens maximos por respuesta |
 | handoffKeywords | String[] | [] | Keywords default para human takeover (fallback) |
+| promptStructure | Json? | null | Campos estructurados para UI editing (v0.3.5): `{ agentName, role, rules[], personality, additionalInstructions }` |
+| encryptedApiKey | String? (Text) | null | API key OpenAI per-org (AES-256-GCM encrypted) |
+| apiKeyHint | String? | null | Hint visible del API key (ej: `sk-...xyz`) |
+
+**RBAC Split:**
+
+| Parametro | Quien edita | Razon |
+|-----------|-------------|-------|
+| model, temperature, maxTokens, encryptedApiKey | Super Admin | Control de costos y calidad |
+| systemPrompt, promptStructure, handoffKeywords | Super Admin + Org Admin | El cliente conoce su negocio |
+
+### PromptTemplate (Global — SOLO Super Admin)
+
+> Plantillas reutilizables de instrucciones para tipos de negocio comunes. Almacenan la estructura completa de prompt que se puede aplicar a cualquier organizacion via "Use Template" en AI Settings.
+
+| Campo | Tipo | Default | Descripcion |
+|-------|------|---------|-------------|
+| id | UUID | auto | PK |
+| name | String (unique) | - | Nombre de la plantilla (unico) |
+| description | String? (Text) | null | Descripcion opcional |
+| structure | Json | - | `PromptStructure`: `{ agentName, role, rules[], personality, additionalInstructions }` |
+
+**Acceso:** SOLO `user.isSuperAdmin === true` (CRUD). Org admins pueden consumir templates via selector read-only en AI Settings.
+
+### PlatformSettings (Global — SOLO Super Admin)
+
+> Configuracion global de la plataforma. Actualmente almacena el API key global de OpenAI (encrypted).
+
+| Campo | Tipo | Default | Descripcion |
+|-------|------|---------|-------------|
+| id | UUID | auto | PK |
+| key | String (unique) | - | Clave de configuracion (ej: `openai_api_key`) |
+| value | String (Text) | - | Valor encriptado (AES-256-GCM) |
+| hint | String? | null | Hint visible del valor (ej: `sk-...xyz`) |
 
 **Acceso:** SOLO `user.isSuperAdmin === true`
 
@@ -261,6 +298,8 @@ Prisma usa camelCase en el codigo pero las tablas y columnas en PostgreSQL usan 
 | User | users |
 | OrganizationMember | organization_members |
 | AiSettings | ai_settings |
+| PromptTemplate | prompt_templates |
+| PlatformSettings | platform_settings |
 | Channel | channels |
 | *(SQL directo)* | channel_knowledge |
 | Conversation | conversations |

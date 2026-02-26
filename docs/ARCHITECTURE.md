@@ -76,7 +76,7 @@ chatflow360-dashboard/
 │   │   │   └── callback/       # Supabase auth callback (code exchange)
 │   │   └── webhooks/           # Future: WhatsApp, Messenger
 ├── components/
-│   ├── ui/                     # Shadcn components
+│   ├── ui/                     # Shadcn components (tooltip, alert-dialog, confirm-dialog, drawer, date-range-picker)
 │   ├── chat/                   # ConversationCard, ConversationDetail, ChatMessage, Filters
 │   ├── dashboard/              # StatCard, TopPages, RecentConversations
 │   └── layout/                 # Sidebar, Header, DashboardShell
@@ -625,7 +625,9 @@ Los tokens se registran en cada mensaje IA (`Message.tokensUsed`) y se resumen e
 - RLS policies on `conversations` and `messages` tables (org-scoped tenant isolation)
 - Dashboard basico (5 stat cards, top pages, recent conversations — aun mock)
 - AI Settings page (structured prompt fields, model config, handoff, preview widget, "Use Template" selector) + RBAC split (business vs technical params)
-- Prompt Templates page (`/prompt-templates`) — super_admin CRUD with card grid layout, separate from AI Settings
+- Prompt Templates page (`/prompt-templates`) — super_admin CRUD with card grid layout, separate from AI Settings. Responsive card grid, duplicate template, action tooltips (Radix), emerald badges with truncation
+- App-wide ConfirmDialog (`components/ui/confirm-dialog.tsx`) — replaces ALL native confirm() calls. Uses shadcn/ui AlertDialog. Applied to: prompt-templates, organizations (org + channel delete), users
+- App-wide Tooltips (`components/ui/tooltip.tsx`) — shadcn/ui Tooltip with TooltipProvider in DashboardShell
 - Structured prompt fields (`lib/chat/prompt-builder.ts`): agentName, role, rules (max 50), personality, additionalInstructions — assembled via `composeSystemPrompt()`
 - Autenticacion real (Supabase Auth — login, logout, forgot/update password)
 - Bilingue (EN/ES) — ~360+ strings traducidas

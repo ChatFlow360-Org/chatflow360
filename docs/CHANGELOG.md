@@ -60,6 +60,53 @@
 
 ---
 
+## v0.3.5.1 (2026-02-25)
+
+### Prompt Templates Page — UI Polish + App-wide ConfirmDialog
+
+#### Prompt Template Cards — Visual Refinements
+
+- **Badge styling:** emerald green badges (`bg-emerald-500/10 text-emerald-500 border-emerald-500/20`) for rules count and personality text
+- **Personality badge truncation:** inner `<span className="block flex-1 overflow-hidden text-ellipsis">` to keep both badges on a single line — `shrink!` (Tailwind v4 important modifier) + `min-w-0` overrides Badge base `whitespace-nowrap shrink-0`
+- **Card hover signature:** `transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-cta/30` matching Conversation Cards
+- **Agent icon:** Bot icon in `h-5 w-5 rounded bg-cta/10` container with `text-cta` — replaces plain text
+- **Action buttons always visible:** removed all opacity/hover-show logic — edit, duplicate, delete buttons visible at all times (mobile and desktop). Buttons styled `h-7 w-7 hover:bg-muted/50`
+- **Dark mode inputs:** `dark:border-muted-foreground/20 dark:bg-muted/30` on all dialog form inputs
+- **Empty state:** `LayoutTemplate` icon in `text-cta/40`
+- **CardHeader spacing:** `pb-2` for consistent rhythm
+- **Responsive layout:** `flex-wrap gap-2` on header, `overflow-hidden` on cards, grid `sm:grid-cols-2 lg:grid-cols-3`
+
+#### Duplicate Template Button
+
+- **New action button** with Copy icon — opens create dialog pre-filled with existing template data and "(Copy)" name suffix
+- Tooltip: "Duplicate" / "Duplicar"
+
+#### Tooltips — App-wide Infrastructure (shadcn/ui)
+
+- **Installed `components/ui/tooltip.tsx`** — shadcn/ui Tooltip wrapper (Radix UI)
+- **`TooltipProvider`** added to `components/layout/dashboard-shell.tsx` — wraps the entire app for consistent tooltip behavior
+- **Usage pattern:** `<Tooltip><TooltipTrigger asChild>...</TooltipTrigger><TooltipContent side="bottom">label</TooltipContent></Tooltip>`
+- Applied to all 3 action buttons (edit, duplicate, delete) on prompt template cards
+- **i18n keys:** `promptTemplates.editTooltip`, `promptTemplates.duplicateTooltip`, `promptTemplates.deleteTooltip` (EN + ES)
+
+#### ConfirmDialog — App-wide Replacement for native confirm()
+
+- **RULE ESTABLISHED:** native `window.confirm()` must NEVER be used anywhere in the app — all confirmations use custom ConfirmDialog
+- **Installed `components/ui/alert-dialog.tsx`** — shadcn/ui AlertDialog (Radix UI)
+- **Created `components/ui/confirm-dialog.tsx`** — reusable wrapper with props: `open`, `onConfirm`, `onCancel`, `title`, `description`, `confirmLabel`, `cancelLabel`, `variant` ("destructive" | "default"), `loading`
+- **Replaced ALL 4 native confirm() calls across the entire app:**
+  - `prompt-templates-client.tsx` — delete template confirmation
+  - `organizations-client.tsx` — delete organization + delete channel confirmations (2 confirm() calls)
+  - `users-client.tsx` — delete user confirmation
+- **State-based pattern:** `deleteId` state → ConfirmDialog `open={!!deleteId}` → `onConfirm` executes deletion → clears state
+- **i18n keys added:** `promptTemplates.deleteConfirmDescription`, `organizations.deleteConfirmDescription`, `channels.deleteConfirmDescription`, `users.deleteConfirmDescription` (EN + ES — 8 new keys total)
+
+#### Interface Design Audit (system.md updated)
+
+- `.interface-design/system.md` updated with Prompt Template Cards pattern, Tooltips pattern, and key implementation files
+
+---
+
 ## v0.3.4 (2026-02-23)
 
 ### Dashboard Real Stats + Editable AI Technical Settings
