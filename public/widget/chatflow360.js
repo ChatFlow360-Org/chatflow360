@@ -383,7 +383,7 @@
       // Chat window
       ".cf360-window{",
       "  position:absolute;bottom:76px;" + (posRight ? "right:0;" : "left:0;"),
-      "  width:380px;height:560px;border-radius:20px;overflow:hidden;",
+      "  width:380px;height:560px;border-radius:20px 20px 12px 12px;overflow:hidden;",
       "  background:#fff;box-shadow:0 8px 48px rgba(0,0,0,0.15),0 2px 8px rgba(0,0,0,0.08);",
       "  display:flex;flex-direction:column;",
       "  opacity:0;transform:translateY(16px) scale(0.95);pointer-events:none;",
@@ -396,11 +396,13 @@
       "  position:fixed;top:0;right:0;bottom:0;width:420px;height:100vh;",
       "  border-radius:0;box-shadow:-4px 0 24px rgba(0,0,0,0.12);",
       "}",
+      ".cf360-window--expanded .cf360-header{border-radius:0;}",
 
       // Header — two-row with bot avatar
       ".cf360-header{",
-      "  background:linear-gradient(135deg,#1c2e47,#243a56);color:#fff;padding:18px 20px;display:flex;",
+      "  background:" + primaryColor + ";color:#fff;padding:18px 20px;display:flex;",
       "  align-items:center;gap:14px;flex-shrink:0;position:relative;",
+      "  border-radius:20px 20px 0 0;",
       "}",
       ".cf360-header-avatar{",
       "  width:42px;height:42px;border-radius:50%;flex-shrink:0;",
@@ -420,7 +422,7 @@
 
       // Online indicator dot
       ".cf360-online-dot{",
-      "  width:10px;height:10px;border-radius:50%;background:#34d399;border:2px solid #1c2e47;",
+      "  width:10px;height:10px;border-radius:50%;background:#34d399;border:2px solid " + primaryColor + ";",
       "  position:absolute;bottom:16px;left:48px;",
       "}",
 
@@ -491,15 +493,16 @@
       "  background:#fff;flex-shrink:0;border-top:1px solid #f1f5f9;",
       "}",
       ".cf360-input{",
-      "  flex:1;border:1px solid #e2e8f0;border-radius:24px;padding:10px 18px;font-size:14px;",
-      "  outline:none;resize:none;font-family:inherit;background:#f8fafc;color:#1e293b;",
+      "  flex:1;border:1px solid #e2e8f0;border-radius:24px;padding:0 18px;font-size:14px;",
+      "  height:42px;line-height:42px;",
+      "  outline:none;resize:none;font-family:inherit;background:#f1f5f9;color:#1e293b;",
       "  transition:border-color 0.2s,box-shadow 0.2s;",
       "}",
-      ".cf360-input:focus{border-color:" + primaryColor + ";box-shadow:0 0 0 3px " + primaryAlpha15 + ";}",
+      ".cf360-input:focus{border-color:" + primaryColor + ";box-shadow:0 0 0 3px " + primaryAlpha15 + ";background:#fff;}",
       ".cf360-input::placeholder{color:#94a3b8;}",
       ".cf360-send-btn{",
       "  width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;flex-shrink:0;",
-      "  background:linear-gradient(135deg," + primaryColor + "," + primaryDarker + ");color:#fff;display:flex;align-items:center;justify-content:center;",
+      "  background:" + primaryColor + ";color:#fff;display:flex;align-items:center;justify-content:center;",
       "  transition:opacity 0.15s,transform 0.15s,box-shadow 0.15s;outline:none;",
       "  box-shadow:0 2px 8px rgba(0,0,0,0.12);",
       "}",
@@ -514,10 +517,10 @@
       "}",
       ".cf360-end-conv--show{display:block;}",
       ".cf360-end-conv button{",
-      "  background:none;border:1px solid #e2e8f0;cursor:pointer;font-size:11px;color:#64748b;",
-      "  padding:4px 14px;border-radius:16px;font-family:inherit;transition:all 0.15s;",
+      "  background:#1e293b;border:none;cursor:pointer;font-size:11px;color:#fff;",
+      "  padding:5px 16px;border-radius:16px;font-family:inherit;transition:all 0.15s;font-weight:500;",
       "}",
-      ".cf360-end-conv button:hover{border-color:#94a3b8;color:#475569;background:#f8fafc;}",
+      ".cf360-end-conv button:hover{background:#334155;}",
 
       // Confirm dialog
       ".cf360-confirm{",
@@ -568,6 +571,7 @@
       "    position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;",
       "    border-radius:0;max-height:none;",
       "  }",
+      "  .cf360-header{border-radius:0;}",
       "  .cf360-bubble{position:fixed;bottom:16px;" + (posRight ? "right:16px;" : "left:16px;") + "}",
       "}"
     ].join("\n");
