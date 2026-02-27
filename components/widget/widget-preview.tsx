@@ -2,8 +2,21 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { MessageCircle, X, Expand, Send } from "lucide-react";
+import { X, Expand, Send } from "lucide-react";
 import type { WidgetAppearance } from "@/lib/widget/appearance";
+
+// ─── Chat Icon (matches the real widget SVG) ─────────────────────
+
+function ChatBubbleIcon({ size = 24, fill = "currentColor", dotFill = "#fff" }: { size?: number; fill?: string; dotFill?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={fill}>
+      <path d="M12 2C6.48 2 2 5.92 2 10.5c0 2.55 1.33 4.84 3.42 6.4L4 22l4.35-2.18C9.5 20.27 10.72 20.5 12 20.5c5.52 0 10-3.42 10-7.5S17.52 2 12 2z" />
+      <circle cx="8" cy="10.5" r="1.5" fill={dotFill} />
+      <circle cx="12" cy="10.5" r="1.5" fill={dotFill} />
+      <circle cx="16" cy="10.5" r="1.5" fill={dotFill} />
+    </svg>
+  );
+}
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -133,7 +146,7 @@ export function WidgetPreview({ appearance, className }: WidgetPreviewProps) {
                 background: "rgba(255,255,255,0.15)",
               }}
             >
-              <MessageCircle size={22} style={{ color: hic }} />
+              <ChatBubbleIcon size={22} fill={hic} dotFill={hc} />
               <span
                 className="absolute bottom-0 right-0"
                 style={{
@@ -315,7 +328,7 @@ export function WidgetPreview({ appearance, className }: WidgetPreviewProps) {
             boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
           }}
         >
-          <MessageCircle size={26} />
+          <ChatBubbleIcon size={26} fill={bic} dotFill={bc} />
         </div>
       </div>
 
