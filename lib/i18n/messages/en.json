@@ -591,6 +591,7 @@
     "pwNumber": "One number",
     "pwSymbol": "One special character (!@#$...)",
     "selectOrganization": "Select organization",
+    "selectRole": "Select role",
     "roles": {
       "admin": "Admin"
     },

@@ -429,28 +429,49 @@ export function UsersClient({ users, organizations, currentUserId }: UsersClient
             </div>
             <input type="hidden" name="isSuperAdmin" value={isSuperAdminValue ? "true" : ""} />
 
-            {/* Organization — hidden when Super Admin is on */}
+            {/* Organization + Role — hidden when Super Admin is on */}
             {!isSuperAdminValue && (
-              <div className="space-y-2">
-                <Label htmlFor="organizationId">{t("organization")}</Label>
-                <Select
-                  name="organizationId"
-                  value={orgValue}
-                  onValueChange={setOrgValue}
-                >
-                  <SelectTrigger className="bg-background">
-                    <SelectValue placeholder={t("selectOrganization")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">{t("noOrganization")}</SelectItem>
-                    {organizations.map((org) => (
-                      <SelectItem key={org.id} value={org.id}>
-                        {org.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="organizationId">{t("organization")}</Label>
+                  <Select
+                    name="organizationId"
+                    value={orgValue}
+                    onValueChange={setOrgValue}
+                  >
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder={t("selectOrganization")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">{t("noOrganization")}</SelectItem>
+                      {organizations.map((org) => (
+                        <SelectItem key={org.id} value={org.id}>
+                          {org.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Role — visible when an organization is selected */}
+                {orgValue && orgValue !== "none" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="role">{t("role")}</Label>
+                    <Select
+                      name="role"
+                      value={roleValue}
+                      onValueChange={setRoleValue}
+                    >
+                      <SelectTrigger className="bg-background">
+                        <SelectValue placeholder={t("selectRole")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">{t("roles.admin")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </>
             )}
 
             <div className="flex justify-end gap-2 pt-2">
