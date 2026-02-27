@@ -400,12 +400,12 @@
 
       // Header — two-row with bot avatar + curved bottom overlap
       ".cf360-header{",
-      "  background:" + primaryColor + ";color:#fff;padding:18px 20px 30px;display:flex;",
+      "  background:linear-gradient(135deg,#1c2e47 0%," + primaryColor + " 100%);color:#fff;padding:18px 20px 30px;display:flex;",
       "  align-items:center;gap:14px;flex-shrink:0;position:relative;",
       "  border-radius:20px 20px 0 0;",
       "}",
       ".cf360-header-avatar{",
-      "  width:42px;height:42px;border-radius:50%;flex-shrink:0;",
+      "  width:42px;height:42px;border-radius:50%;flex-shrink:0;position:relative;",
       "  background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;",
       "}",
       ".cf360-header-avatar svg{width:22px;height:22px;fill:#fff;}",
@@ -420,10 +420,10 @@
       ".cf360-header-btn--expand{display:none;}",
       "@media (min-width:481px){.cf360-header-btn--expand{display:flex;}}",
 
-      // Online indicator dot
+      // Online indicator dot — positioned relative to avatar
       ".cf360-online-dot{",
-      "  width:10px;height:10px;border-radius:50%;background:#34d399;border:2px solid " + primaryColor + ";",
-      "  position:absolute;bottom:16px;left:48px;",
+      "  width:10px;height:10px;border-radius:50%;background:#34d399;border:2px solid #1c2e47;",
+      "  position:absolute;bottom:0;right:0;",
       "}",
 
       // Messages area — overlaps header with rounded top
@@ -619,10 +619,9 @@
 
     var avatar = el("div", "cf360-header-avatar");
     avatar.innerHTML = ICON_MSG;
-    header.appendChild(avatar);
-
     var onlineDot = el("span", "cf360-online-dot");
-    header.appendChild(onlineDot);
+    avatar.appendChild(onlineDot);
+    header.appendChild(avatar);
 
     var headerInfo = el("div", "cf360-header-info");
     var title = el("span", "cf360-header-title");
