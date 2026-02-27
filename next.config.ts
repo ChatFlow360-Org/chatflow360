@@ -78,7 +78,8 @@ const nextConfig: NextConfig = {
           { key: "Access-Control-Allow-Origin", value: "*" },
           {
             key: "Cache-Control",
-            value: "public, max-age=3600, s-maxage=86400",
+            value:
+              "public, max-age=0, s-maxage=60, stale-while-revalidate=30",
           },
           { key: "X-Content-Type-Options", value: "nosniff" },
         ],
