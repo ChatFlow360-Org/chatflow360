@@ -118,6 +118,7 @@ export function AppearanceForm({
       } else {
         setFeedback({ type: "error", msg: t("saveError") });
       }
+      document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
       setTimeout(() => setFeedback(null), 3000);
     });
   }
