@@ -398,9 +398,9 @@
       "}",
       ".cf360-window--expanded .cf360-header{border-radius:0;}",
 
-      // Header — two-row with bot avatar
+      // Header — two-row with bot avatar + curved bottom overlap
       ".cf360-header{",
-      "  background:" + primaryColor + ";color:#fff;padding:18px 20px;display:flex;",
+      "  background:" + primaryColor + ";color:#fff;padding:18px 20px 30px;display:flex;",
       "  align-items:center;gap:14px;flex-shrink:0;position:relative;",
       "  border-radius:20px 20px 0 0;",
       "}",
@@ -426,10 +426,10 @@
       "  position:absolute;bottom:16px;left:48px;",
       "}",
 
-      // Messages area
+      // Messages area — overlaps header with rounded top
       ".cf360-messages{",
       "  flex:1;overflow-y:auto;padding:20px 16px;display:flex;flex-direction:column;gap:6px;",
-      "  background:#f8fafc;",
+      "  background:#f8fafc;border-radius:16px 16px 0 0;margin-top:-16px;position:relative;z-index:1;",
       "}",
       ".cf360-messages::-webkit-scrollbar{width:4px;}",
       ".cf360-messages::-webkit-scrollbar-track{background:transparent;}",
