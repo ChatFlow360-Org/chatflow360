@@ -188,6 +188,7 @@ export function BusinessHoursForm({
               key={day}
               schedule={data.schedule[day]}
               label={t(day)}
+              shortLabel={t(`${day}Short`)}
               onToggle={(open) => updateDay(day, { open })}
               onOpenTimeChange={(openTime) => updateDay(day, { openTime })}
               onCloseTimeChange={(closeTime) => updateDay(day, { closeTime })}
@@ -338,6 +339,7 @@ export function BusinessHoursForm({
 interface DayRowProps {
   schedule: BusinessHoursData["schedule"][DayOfWeek];
   label: string;
+  shortLabel: string;
   onToggle: (open: boolean) => void;
   onOpenTimeChange: (time: string) => void;
   onCloseTimeChange: (time: string) => void;
@@ -346,14 +348,15 @@ interface DayRowProps {
 function DayRow({
   schedule,
   label,
+  shortLabel,
   onToggle,
   onOpenTimeChange,
   onCloseTimeChange,
 }: DayRowProps) {
   return (
-    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+    <div className="flex items-center gap-2">
       {/* Day label + toggle */}
-      <div className="flex items-center gap-2 min-w-0">
+      <div className="flex items-center gap-2 w-28 sm:w-32 shrink-0">
         <Switch
           size="sm"
           checked={schedule.open}
@@ -361,23 +364,19 @@ function DayRow({
           aria-label={`${label} open/closed`}
         />
         <span
-          className={`text-sm truncate ${
+          className={`text-sm ${
             schedule.open
               ? "text-foreground font-medium"
               : "text-muted-foreground"
           }`}
         >
-          {label}
+          <span className="sm:hidden">{shortLabel}</span>
+          <span className="hidden sm:inline">{label}</span>
         </span>
       </div>
 
-      {/* Visual spacer */}
-      <span className="text-muted-foreground text-xs select-none">
-        {schedule.open ? "" : ""}
-      </span>
-
       {/* Time inputs or Closed label */}
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1.5 ml-auto">
         {schedule.open ? (
           <>
             <Input
