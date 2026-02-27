@@ -78,6 +78,8 @@ import type { LocationContactData } from "@/lib/knowledge/location-contact";
 import { PoliciesForm } from "@/components/knowledge/policies-form";
 import { DEFAULT_POLICIES } from "@/lib/knowledge/policies";
 import type { PoliciesData } from "@/lib/knowledge/policies";
+import { AppearanceForm } from "@/components/widget/appearance-form";
+import type { WidgetAppearance } from "@/lib/widget/appearance";
 
 // --- Types ---
 
@@ -118,6 +120,8 @@ interface AiSettingsClientProps {
   isSuperAdmin: boolean;
   knowledgeItems: KnowledgeItemData[];
   templates: TemplateData[];
+  widgetChannelId?: string;
+  widgetAppearance?: WidgetAppearance;
 }
 
 // --- Component ---
@@ -129,6 +133,8 @@ export function AiSettingsClient({
   isSuperAdmin,
   knowledgeItems,
   templates,
+  widgetChannelId,
+  widgetAppearance,
 }: AiSettingsClientProps) {
   const t = useTranslations("settings");
   const tCommon = useTranslations("common");
@@ -436,6 +442,7 @@ export function AiSettingsClient({
         <TabsList>
           <TabsTrigger value="instructions">{t("tabs.instructions")}</TabsTrigger>
           <TabsTrigger value="knowledge">{t("tabs.knowledge")}</TabsTrigger>
+          <TabsTrigger value="appearance">{t("tabs.appearance")}</TabsTrigger>
         </TabsList>
 
         {/* ── Instructions Tab ── */}
@@ -1225,6 +1232,27 @@ export function AiSettingsClient({
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ── Widget Appearance Tab ── */}
+        <TabsContent value="appearance" className="mt-6">
+          {widgetChannelId ? (
+            <AppearanceForm
+              channelId={widgetChannelId}
+              initialAppearance={widgetAppearance || {}}
+            />
+          ) : (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <p className="text-sm font-medium text-muted-foreground">
+                  {t("widgetAppearance.noChannel")}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t("widgetAppearance.noChannelDescription")}
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
 

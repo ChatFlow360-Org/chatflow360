@@ -54,7 +54,7 @@ const nextConfig: NextConfig = {
     return [
       // Dashboard routes: full security headers
       {
-        source: "/((?!api/chat|widget).*)",
+        source: "/((?!api/chat|api/widget|widget).*)",
         headers: securityHeaders,
       },
       // Widget API routes: CORS + minimal security

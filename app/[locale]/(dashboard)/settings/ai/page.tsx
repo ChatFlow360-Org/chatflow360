@@ -6,6 +6,7 @@ import { listKnowledge } from "@/lib/rag/knowledge";
 import { AiSettingsClient } from "./ai-settings-client";
 import type { PromptStructure } from "@/lib/chat/prompt-builder";
 import type { KnowledgeCategory } from "@/lib/knowledge/business-hours";
+import type { WidgetAppearance, ChannelWidgetConfig } from "@/lib/widget/appearance";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -79,6 +80,21 @@ export default async function AiSettingsPage() {
     }
   }
 
+  // Fetch first active website channel for widget appearance
+  let widgetChannelId = "";
+  let widgetAppearance: WidgetAppearance = {};
+  if (selectedOrgId) {
+    const channel = await prisma.channel.findFirst({
+      where: { organizationId: selectedOrgId, type: "website", isActive: true },
+      select: { id: true, config: true },
+    });
+    if (channel) {
+      widgetChannelId = channel.id;
+      const cfg = channel.config as ChannelWidgetConfig | null;
+      widgetAppearance = cfg?.widgetAppearance || {};
+    }
+  }
+
   return (
     <AiSettingsClient
       selectedOrgId={selectedOrgId}
@@ -92,6 +108,8 @@ export default async function AiSettingsPage() {
         description: t.description,
         structure: t.structure as unknown as PromptStructure,
       }))}
+      widgetChannelId={widgetChannelId}
+      widgetAppearance={widgetAppearance}
     />
   );
 }

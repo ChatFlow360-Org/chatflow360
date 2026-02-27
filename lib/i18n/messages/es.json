@@ -127,7 +127,8 @@
     "saveChanges": "Guardar Cambios",
     "tabs": {
       "instructions": "Instrucciones",
-      "knowledge": "Base de Conocimiento"
+      "knowledge": "Base de Conocimiento",
+      "appearance": "Widget"
     },
     "modelConfig": {
       "title": "Configuracion del Modelo de IA",
@@ -404,6 +405,38 @@
       "placeholder": "sk-proj-...",
       "currentKey": "Clave actual",
       "helpText": "Dejar vacio para usar la clave global de la plataforma. Solo configurar si esta organizacion usa su propia cuenta de OpenAI."
+    },
+    "widgetAppearance": {
+      "title": "Apariencia del Widget",
+      "description": "Personaliza como se ve tu widget de chat en tu sitio web",
+      "noChannel": "No se encontro canal activo",
+      "noChannelDescription": "Crea un canal de sitio web primero para personalizar la apariencia del widget.",
+      "sectionTexts": "Textos",
+      "sectionHeader": "Encabezado",
+      "sectionFloatingButton": "Burbuja de Chat",
+      "sectionVisitorBubble": "Mensajes del Visitante",
+      "sectionAiBubble": "Mensajes de IA / Agente",
+      "sectionSendButton": "Boton de Enviar",
+      "headerTitle": "Titulo del Encabezado",
+      "headerTitlePlaceholder": "ej., Chatea con nosotros",
+      "headerTitleHint": "Dejar vacio para usar el texto predeterminado del widget",
+      "headerSubtitle": "Subtitulo del Encabezado",
+      "headerSubtitlePlaceholder": "ej., Normalmente respondemos al instante",
+      "headerSubtitleHint": "{count}/60 caracteres",
+      "headerColor": "Color de Degradado",
+      "headerIconColor": "Color de Iconos",
+      "bubbleColor": "Fondo",
+      "bubbleIconColor": "Color de Icono",
+      "visitorBubbleBg": "Fondo",
+      "visitorBubbleText": "Color de Texto",
+      "aiBubbleBg": "Fondo",
+      "aiBubbleText": "Color de Texto",
+      "sendButtonColor": "Color",
+      "resetDefaults": "Restablecer Predeterminados",
+      "resetConfirmTitle": "Restablecer apariencia del widget?",
+      "resetConfirmDescription": "Todas las personalizaciones se revertiran a los valores predeterminados.",
+      "saved": "Apariencia del widget guardada",
+      "saveError": "Error al guardar la apariencia del widget"
     }
   },
   "dateRange": {

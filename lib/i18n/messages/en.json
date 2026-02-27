@@ -127,7 +127,8 @@
     "saveChanges": "Save Changes",
     "tabs": {
       "instructions": "Instructions",
-      "knowledge": "Knowledge Base"
+      "knowledge": "Knowledge Base",
+      "appearance": "Widget"
     },
     "modelConfig": {
       "title": "AI Model Configuration",
@@ -404,6 +405,38 @@
       "placeholder": "sk-proj-...",
       "currentKey": "Current key",
       "helpText": "Leave empty to use the global platform key. Only set this if this organization uses their own OpenAI account."
+    },
+    "widgetAppearance": {
+      "title": "Widget Appearance",
+      "description": "Customize how your chat widget looks on your website",
+      "noChannel": "No active channel found",
+      "noChannelDescription": "Create a website channel first to customize the widget appearance.",
+      "sectionTexts": "Texts",
+      "sectionHeader": "Header",
+      "sectionFloatingButton": "Chat Bubble",
+      "sectionVisitorBubble": "Visitor Messages",
+      "sectionAiBubble": "AI / Agent Messages",
+      "sectionSendButton": "Send Button",
+      "headerTitle": "Header Title",
+      "headerTitlePlaceholder": "e.g., Chat with us",
+      "headerTitleHint": "Leave empty to use the widget's default text",
+      "headerSubtitle": "Header Subtitle",
+      "headerSubtitlePlaceholder": "e.g., We typically reply instantly",
+      "headerSubtitleHint": "{count}/60 characters",
+      "headerColor": "Gradient Color",
+      "headerIconColor": "Icons Color",
+      "bubbleColor": "Background",
+      "bubbleIconColor": "Icon Color",
+      "visitorBubbleBg": "Background",
+      "visitorBubbleText": "Text Color",
+      "aiBubbleBg": "Background",
+      "aiBubbleText": "Text Color",
+      "sendButtonColor": "Color",
+      "resetDefaults": "Reset to Defaults",
+      "resetConfirmTitle": "Reset widget appearance?",
+      "resetConfirmDescription": "All customizations will be reverted to the default values.",
+      "saved": "Widget appearance saved",
+      "saveError": "Failed to save widget appearance"
     }
   },
   "dateRange": {

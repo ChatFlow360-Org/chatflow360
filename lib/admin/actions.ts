@@ -12,6 +12,10 @@ import {
   composeSystemPrompt,
   type PromptStructure,
 } from "@/lib/chat/prompt-builder";
+import {
+  widgetAppearanceSchema,
+  type WidgetAppearance,
+} from "@/lib/widget/appearance";
 
 // ============================================
 // Types
@@ -1139,6 +1143,62 @@ export async function deleteKnowledgeItem(
       return { error: "unauthorized" };
     }
     return { error: "deleteFailed" };
+  }
+}
+
+// ============================================
+// Widget Appearance
+// ============================================
+
+export async function upsertWidgetAppearance(
+  channelId: string,
+  appearance: WidgetAppearance
+): Promise<AdminActionState> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error("Unauthorized");
+
+    z.string().uuid().parse(channelId);
+
+    // Find channel and verify ownership
+    const channel = await prisma.channel.findUnique({
+      where: { id: channelId },
+      select: { id: true, organizationId: true, config: true },
+    });
+    if (!channel) return { error: "createFailed" };
+
+    // Auth: super_admin or org member
+    if (!user.isSuperAdmin) {
+      const membership = await prisma.organizationMember.findFirst({
+        where: { userId: user.id, organizationId: channel.organizationId },
+      });
+      if (!membership) throw new Error("Unauthorized");
+    }
+
+    // Validate appearance data
+    const parsed = widgetAppearanceSchema.safeParse(appearance);
+    if (!parsed.success) return { error: "createFailed" };
+
+    // Merge into existing config (preserve other config fields)
+    const existingConfig = (channel.config as Record<string, unknown>) || {};
+    const updatedConfig = {
+      ...existingConfig,
+      widgetAppearance: parsed.data,
+    };
+
+    await prisma.channel.update({
+      where: { id: channelId },
+      data: { config: updatedConfig },
+    });
+
+    revalidatePath("/settings/ai");
+    return { success: "settingsSaved" };
+  } catch (e) {
+    console.error("[upsertWidgetAppearance]", e instanceof Error ? e.message : e);
+    if (e instanceof Error && e.message === "Unauthorized") {
+      return { error: "unauthorized" };
+    }
+    return { error: "createFailed" };
   }
 }
 

@@ -1178,10 +1178,84 @@
     endConvEl.classList.add("cf360-end-conv--show");
   }
 
+  // ─── Apply Appearance Config ─────────────────────────────────────
+  function applyAppearance(cfg) {
+    if (!cfg) return;
+
+    // Update header texts
+    var titleEl = document.querySelector(".cf360-header-title");
+    var subtitleEl = document.querySelector(".cf360-header-subtitle");
+    if (cfg.headerTitle && titleEl) titleEl.textContent = cfg.headerTitle;
+    if (cfg.headerSubtitle && subtitleEl) subtitleEl.textContent = cfg.headerSubtitle;
+
+    // Build CSS overrides
+    var hc = cfg.headerColor || primaryColor;
+    var hic = cfg.headerIconColor || "#ffffff";
+    var bc = cfg.bubbleColor || primaryColor;
+    var bic = cfg.bubbleIconColor || "#ffffff";
+    var vbg = cfg.visitorBubbleBg || primaryColor;
+    var vbt = cfg.visitorBubbleText || "#ffffff";
+    var abg = cfg.aiBubbleBg || "#e8ecf1";
+    var abt = cfg.aiBubbleText || "#1e293b";
+    var sbc = cfg.sendButtonColor || primaryColor;
+
+    // Compute derived values
+    var bcRgb = hexToRgb(bc);
+    var bcDarker = "rgb(" + Math.round(bcRgb.r * 0.85) + "," + Math.round(bcRgb.g * 0.85) + "," + Math.round(bcRgb.b * 0.85) + ")";
+    var bcAlpha15 = "rgba(" + bcRgb.r + "," + bcRgb.g + "," + bcRgb.b + ",0.15)";
+    var bcAlpha80 = "rgba(" + bcRgb.r + "," + bcRgb.g + "," + bcRgb.b + ",0.80)";
+    var sbcRgb = hexToRgb(sbc);
+    var sbcAlpha15 = "rgba(" + sbcRgb.r + "," + sbcRgb.g + "," + sbcRgb.b + ",0.15)";
+
+    var overrides = [
+      ".cf360-header{background:linear-gradient(135deg,#1c2e47 0%," + hc + " 100%);}",
+      ".cf360-header-btn{color:" + hic + ";}",
+      ".cf360-header-avatar svg{fill:" + hic + ";}",
+      ".cf360-bubble{background:linear-gradient(135deg," + bc + "," + bcDarker + ");color:" + bic + ";}",
+      ".cf360-bubble svg{fill:" + bic + ";}",
+      "@keyframes cf360-pulse{0%{box-shadow:0 4px 20px rgba(0,0,0,0.2),0 0 0 0 " + bcAlpha80 + ";}70%{box-shadow:0 4px 20px rgba(0,0,0,0.2),0 0 0 14px rgba(0,0,0,0);}100%{box-shadow:0 4px 20px rgba(0,0,0,0.2),0 0 0 0 rgba(0,0,0,0);}}",
+      ".cf360-msg--visitor{background:" + vbg + ";color:" + vbt + ";}",
+      ".cf360-msg--ai,.cf360-msg--agent{background:" + abg + ";color:" + abt + ";}",
+      ".cf360-typing{background:" + abg + ";}",
+      ".cf360-typing-dot{background:" + sbc + ";}",
+      ".cf360-send-btn{background:" + sbc + ";}",
+      ".cf360-input:focus{border-color:" + sbc + ";box-shadow:0 0 0 3px " + sbcAlpha15 + ";}",
+      ".cf360-new-conv{color:" + sbc + ";}",
+      ".cf360-footer a:hover{color:" + sbc + ";}",
+      ".cf360-welcome-icon{background:" + bcAlpha15 + ";}",
+      ".cf360-welcome-icon svg{fill:" + bc + ";}"
+    ].join("\n");
+
+    // Remove old overrides if any
+    var oldOverride = document.getElementById("cf360-appearance-overrides");
+    if (oldOverride) oldOverride.remove();
+
+    var style = document.createElement("style");
+    style.id = "cf360-appearance-overrides";
+    style.textContent = overrides;
+    document.head.appendChild(style);
+  }
+
+  // ─── Fetch Config ───────────────────────────────────────────────
+  function fetchAppearanceConfig() {
+    var url = apiBaseUrl + "/api/widget/config?key=" + encodeURIComponent(publicKey);
+    try {
+      fetch(url)
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (data && data.appearance) {
+            applyAppearance(data.appearance);
+          }
+        })
+        .catch(function () { /* use data-color defaults — config fetch is non-blocking */ });
+    } catch (e) { /* noop */ }
+  }
+
   // ─── Init ─────────────────────────────────────────────────────────
   function init() {
     injectStyles();
     buildDOM();
+    fetchAppearanceConfig();
   }
 
   // Start when DOM is ready
