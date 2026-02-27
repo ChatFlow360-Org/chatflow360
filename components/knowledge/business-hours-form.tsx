@@ -197,11 +197,12 @@ export function BusinessHoursForm({
         </div>
 
         {showCopyButton && (
-          <div className="pt-1">
+          <div className="pt-3">
             <Button
               type="button"
               variant="outline"
-              size="xs"
+              size="sm"
+              className="border-cta/30 text-cta hover:bg-cta/10 hover:text-cta"
               onClick={copyMondayToWeekdays}
             >
               <Copy />

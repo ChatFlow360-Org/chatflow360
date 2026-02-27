@@ -267,7 +267,7 @@
       "fridayShort": "Fri",
       "saturdayShort": "Sat",
       "sundayShort": "Sun",
-      "copyToWeekdays": "Copy to Tue-Fri",
+      "copyToWeekdays": "Copy Monday to Tuesday–Friday",
       "timezone": "Timezone",
       "holidays": "Holidays",
       "addHoliday": "Add Holiday",
