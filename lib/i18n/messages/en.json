@@ -440,6 +440,11 @@
       "resetDefaults": "Reset to Defaults",
       "resetConfirmTitle": "Reset widget appearance?",
       "resetConfirmDescription": "All customizations will be reverted to the default values.",
+      "preview": "Preview",
+      "embedTitle": "Embed Code",
+      "embedDescription": "Copy and paste this snippet into your website's HTML",
+      "copyCode": "Copy to Clipboard",
+      "copied": "Copied!",
       "saved": "Widget appearance saved",
       "saveError": "Failed to save widget appearance"
     }

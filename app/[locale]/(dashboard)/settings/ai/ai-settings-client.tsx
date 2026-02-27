@@ -123,6 +123,7 @@ interface AiSettingsClientProps {
   knowledgeItems: KnowledgeItemData[];
   templates: TemplateData[];
   widgetChannelId?: string;
+  widgetPublicKey?: string;
   widgetAppearance?: WidgetAppearance;
 }
 
@@ -136,6 +137,7 @@ export function AiSettingsClient({
   knowledgeItems,
   templates,
   widgetChannelId,
+  widgetPublicKey,
   widgetAppearance,
 }: AiSettingsClientProps) {
   const t = useTranslations("settings");
@@ -1250,6 +1252,7 @@ export function AiSettingsClient({
           {widgetChannelId ? (
             <AppearanceForm
               channelId={widgetChannelId}
+              publicKey={widgetPublicKey || ""}
               initialAppearance={widgetAppearance || {}}
             />
           ) : (

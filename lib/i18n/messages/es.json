@@ -440,6 +440,11 @@
       "resetDefaults": "Restablecer Predeterminados",
       "resetConfirmTitle": "Restablecer apariencia del widget?",
       "resetConfirmDescription": "Todas las personalizaciones se revertiran a los valores predeterminados.",
+      "preview": "Vista Previa",
+      "embedTitle": "Codigo de Integracion",
+      "embedDescription": "Copia y pega este fragmento en el HTML de tu sitio web",
+      "copyCode": "Copiar al Portapapeles",
+      "copied": "Copiado!",
       "saved": "Apariencia del widget guardada",
       "saveError": "Error al guardar la apariencia del widget"
     }

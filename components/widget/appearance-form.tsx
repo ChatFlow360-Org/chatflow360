@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { RotateCcw, Loader2, Palette } from "lucide-react";
+import { RotateCcw, Loader2, Eye } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -15,16 +15,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { upsertWidgetAppearance } from "@/lib/admin/actions";
 import {
   DEFAULT_WIDGET_APPEARANCE,
   type WidgetAppearance,
 } from "@/lib/widget/appearance";
+import { WidgetPreview } from "@/components/widget/widget-preview";
+import { EmbedCodeCard } from "@/components/widget/embed-code-card";
 
 // ─── Types ────────────────────────────────────────────────────────
 
 interface AppearanceFormProps {
   channelId: string;
+  publicKey: string;
   initialAppearance: WidgetAppearance;
 }
 
@@ -73,12 +82,14 @@ function ColorRow({
 
 export function AppearanceForm({
   channelId,
+  publicKey,
   initialAppearance,
 }: AppearanceFormProps) {
   const t = useTranslations("settings.widgetAppearance");
   const tCommon = useTranslations("common");
   const [isPending, startTransition] = useTransition();
   const [resetId, setResetId] = useState<string | null>(null);
+  const [mobilePreview, setMobilePreview] = useState(false);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
     msg: string;
@@ -116,7 +127,9 @@ export function AppearanceForm({
     setResetId(null);
   }
 
-  return (
+  // ─── Shared Form Content ──────────────────────────────────────
+
+  const formContent = (
     <div className="space-y-6">
       {/* Feedback */}
       {feedback && (
@@ -212,8 +225,8 @@ export function AppearanceForm({
         </CardContent>
       </Card>
 
-      {/* Color Sections — 3-col grid on desktop */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Color Sections — 2-col grid */}
+      <div className="grid gap-4 sm:grid-cols-2">
         {/* Header */}
         <Card>
           <CardHeader className="pb-4">
@@ -299,7 +312,7 @@ export function AppearanceForm({
         </Card>
 
         {/* Send Button — spans full width */}
-        <Card className="sm:col-span-2 lg:col-span-3">
+        <Card className="sm:col-span-2">
           <CardHeader className="pb-4">
             <CardTitle className="text-base">
               {t("sectionSendButton")}
@@ -314,6 +327,9 @@ export function AppearanceForm({
           </CardContent>
         </Card>
       </div>
+
+      {/* Embed Code */}
+      {publicKey && <EmbedCodeCard publicKey={publicKey} />}
 
       {/* Actions */}
       <div className="flex items-center justify-between gap-4">
@@ -347,5 +363,45 @@ export function AppearanceForm({
         onConfirm={handleReset}
       />
     </div>
+  );
+
+  // ─── Layout: 60/40 split on lg+, stacked on mobile ───────────
+
+  return (
+    <>
+      <div className="flex gap-6">
+        {/* Form Column */}
+        <div className="flex-1 min-w-0">{formContent}</div>
+
+        {/* Preview Column — desktop only (lg+) */}
+        <div className="hidden lg:block w-[380px] shrink-0">
+          <div className="sticky top-24">
+            <WidgetPreview appearance={appearance} />
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Preview FAB — visible below lg */}
+      <button
+        type="button"
+        onClick={() => setMobilePreview(true)}
+        className="fixed bottom-6 right-6 z-40 lg:hidden flex items-center gap-2 rounded-full bg-cta text-white px-4 py-3 shadow-lg hover:bg-cta/90 transition-colors"
+      >
+        <Eye className="h-4 w-4" />
+        <span className="text-sm font-medium">{t("preview")}</span>
+      </button>
+
+      {/* Mobile Preview Drawer */}
+      <Drawer open={mobilePreview} onOpenChange={setMobilePreview}>
+        <DrawerContent>
+          <DrawerHeader className="text-left">
+            <DrawerTitle>{t("preview")}</DrawerTitle>
+          </DrawerHeader>
+          <div className="px-4 pb-6 overflow-y-auto max-h-[80vh]">
+            <WidgetPreview appearance={appearance} />
+          </div>
+        </DrawerContent>
+      </Drawer>
+    </>
   );
 }

@@ -82,14 +82,16 @@ export default async function AiSettingsPage() {
 
   // Fetch first active website channel for widget appearance
   let widgetChannelId = "";
+  let widgetPublicKey = "";
   let widgetAppearance: WidgetAppearance = {};
   if (selectedOrgId) {
     const channel = await prisma.channel.findFirst({
       where: { organizationId: selectedOrgId, type: "website", isActive: true },
-      select: { id: true, config: true },
+      select: { id: true, publicKey: true, config: true },
     });
     if (channel) {
       widgetChannelId = channel.id;
+      widgetPublicKey = channel.publicKey ?? "";
       const cfg = channel.config as ChannelWidgetConfig | null;
       widgetAppearance = cfg?.widgetAppearance || {};
     }
@@ -109,6 +111,7 @@ export default async function AiSettingsPage() {
         structure: t.structure as unknown as PromptStructure,
       }))}
       widgetChannelId={widgetChannelId}
+      widgetPublicKey={widgetPublicKey}
       widgetAppearance={widgetAppearance}
     />
   );
