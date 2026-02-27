@@ -180,12 +180,27 @@ function ServiceItemRow({
   onUpdate,
   onRequestDelete,
 }: ServiceItemRowProps) {
+  /** Allow only digits, one dot, and up to 2 decimal places */
+  const handlePriceChange = (raw: string) => {
+    // Strip anything that isn't a digit or dot
+    let sanitized = raw.replace(/[^\d.]/g, "");
+    // Only allow one dot
+    const parts = sanitized.split(".");
+    if (parts.length > 2) sanitized = `${parts[0]}.${parts[1]}`;
+    // Limit to 2 decimal places
+    if (parts.length === 2 && parts[1].length > 2) {
+      sanitized = `${parts[0]}.${parts[1].slice(0, 2)}`;
+    }
+    // Cap at 10 chars (e.g. 9999999.99)
+    onUpdate({ price: sanitized.slice(0, 10) });
+  };
+
   return (
     <div className="rounded-lg border bg-background p-4 space-y-3 dark:border-muted-foreground/20">
-      {/* Top row: Service name + Price + Delete */}
-      <div className="flex items-start gap-3">
+      {/* Service Name + Price — stacked on mobile, side-by-side on sm+ */}
+      <div className="grid gap-3 sm:grid-cols-[1fr_8rem]">
         {/* Service Name */}
-        <div className="flex-1 min-w-0 space-y-1">
+        <div className="space-y-1">
           <Label
             htmlFor={`service-name-${index}`}
             className="text-xs text-muted-foreground"
@@ -206,8 +221,8 @@ function ServiceItemRow({
           </p>
         </div>
 
-        {/* Price */}
-        <div className="w-32 shrink-0 space-y-1">
+        {/* Price — numeric only */}
+        <div className="space-y-1">
           <Label
             htmlFor={`service-price-${index}`}
             className="text-xs text-muted-foreground"
@@ -216,29 +231,14 @@ function ServiceItemRow({
           </Label>
           <Input
             id={`service-price-${index}`}
+            inputMode="decimal"
             placeholder={t("pricePlaceholder")}
             value={item.price}
-            maxLength={50}
-            onChange={(e) => onUpdate({ price: e.target.value })}
+            onChange={(e) => handlePriceChange(e.target.value)}
             className="dark:border-muted-foreground/20 dark:bg-muted/30"
             aria-label={`${t("price")} ${index + 1}`}
           />
-          <p className="text-xs text-muted-foreground text-right">
-            {item.price.length}/50
-          </p>
         </div>
-
-        {/* Delete Button */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          className="mt-6 text-muted-foreground hover:text-destructive shrink-0"
-          onClick={onRequestDelete}
-          aria-label={`${t("deleteConfirmTitle")} ${index + 1}`}
-        >
-          <Trash2 className="size-4" />
-        </Button>
       </div>
 
       {/* Description */}
@@ -262,6 +262,21 @@ function ServiceItemRow({
         <p className="text-xs text-muted-foreground text-right">
           {(item.description?.length ?? 0)}/300
         </p>
+      </div>
+
+      {/* Delete — bottom right */}
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-destructive"
+          onClick={onRequestDelete}
+          aria-label={`${t("deleteConfirmTitle")} ${index + 1}`}
+        >
+          <Trash2 className="size-3.5 mr-1.5" />
+          {t("deleteService")}
+        </Button>
       </div>
     </div>
   );
