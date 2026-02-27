@@ -45,6 +45,26 @@ const WEEKDAYS_TUE_FRI: DayOfWeek[] = [
   "friday",
 ];
 
+const MONTHS = [
+  { value: "01", label: "Jan" },
+  { value: "02", label: "Feb" },
+  { value: "03", label: "Mar" },
+  { value: "04", label: "Apr" },
+  { value: "05", label: "May" },
+  { value: "06", label: "Jun" },
+  { value: "07", label: "Jul" },
+  { value: "08", label: "Aug" },
+  { value: "09", label: "Sep" },
+  { value: "10", label: "Oct" },
+  { value: "11", label: "Nov" },
+  { value: "12", label: "Dec" },
+] as const;
+
+/** Days 1–31 as zero-padded strings. */
+const DAYS_1_TO_31 = Array.from({ length: 31 }, (_, i) =>
+  String(i + 1).padStart(2, "0"),
+);
+
 // ─── Props ───────────────────────────────────────────────────────
 
 interface BusinessHoursFormProps {
@@ -141,6 +161,16 @@ export function BusinessHoursForm({
 
   const mondayIsOpen = data.schedule.monday.open;
 
+  /** Show "Copy to Tue-Fri" only when Monday is open AND at least one weekday differs */
+  const showCopyButton = useMemo(() => {
+    if (!mondayIsOpen) return false;
+    const mon = data.schedule.monday;
+    return WEEKDAYS_TUE_FRI.some((day) => {
+      const d = data.schedule[day];
+      return d.open !== mon.open || d.openTime !== mon.openTime || d.closeTime !== mon.closeTime;
+    });
+  }, [data.schedule, mondayIsOpen]);
+
   // ─── Render ────────────────────────────────────────────────────
 
   return (
@@ -165,13 +195,12 @@ export function BusinessHoursForm({
           ))}
         </div>
 
-        {mondayIsOpen && (
+        {showCopyButton && (
           <div className="pt-1">
             <Button
               type="button"
-              variant="ghost"
+              variant="outline"
               size="xs"
-              className="text-muted-foreground"
               onClick={copyMondayToWeekdays}
             >
               <Copy />
@@ -387,9 +416,19 @@ interface HolidayRowProps {
 }
 
 function HolidayRow({ holiday, t, onUpdate, onRemove }: HolidayRowProps) {
+  // Parse "MM-DD" into separate month/day for the dropdowns
+  const [month, day] = (holiday.date || "-").split("-");
+
+  const handleMonthChange = (m: string) => {
+    onUpdate({ date: `${m}-${day || "01"}` });
+  };
+  const handleDayChange = (d: string) => {
+    onUpdate({ date: `${month || "01"}-${d}` });
+  };
+
   return (
     <div className="rounded-md border border-border p-3 space-y-2 dark:border-muted-foreground/20">
-      {/* Top row: name + date + remove */}
+      {/* Top row: name + remove */}
       <div className="flex items-center gap-2">
         <Input
           placeholder={t("holidayName")}
@@ -397,17 +436,6 @@ function HolidayRow({ holiday, t, onUpdate, onRemove }: HolidayRowProps) {
           onChange={(e) => onUpdate({ name: e.target.value })}
           className="h-8 text-sm flex-1 min-w-0 dark:border-muted-foreground/20 dark:bg-muted/30"
           aria-label={t("holidayName")}
-        />
-        <Input
-          type="text"
-          placeholder="MM-DD"
-          value={holiday.date}
-          onChange={(e) => {
-            const val = e.target.value.replace(/[^0-9-]/g, "").slice(0, 5);
-            onUpdate({ date: val });
-          }}
-          className="h-8 w-20 text-sm text-center dark:border-muted-foreground/20 dark:bg-muted/30"
-          aria-label={t("holidayDate")}
         />
         <Button
           type="button"
@@ -419,6 +447,40 @@ function HolidayRow({ holiday, t, onUpdate, onRemove }: HolidayRowProps) {
         >
           <X />
         </Button>
+      </div>
+
+      {/* Date row: month + day selects */}
+      <div className="flex items-center gap-2">
+        <Select value={month || ""} onValueChange={handleMonthChange}>
+          <SelectTrigger
+            className="h-8 w-22 text-xs dark:border-muted-foreground/20 dark:bg-muted/30"
+            aria-label={t("holidayMonth")}
+          >
+            <SelectValue placeholder={t("month")} />
+          </SelectTrigger>
+          <SelectContent>
+            {MONTHS.map((m) => (
+              <SelectItem key={m.value} value={m.value} className="text-xs">
+                {m.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={day || ""} onValueChange={handleDayChange}>
+          <SelectTrigger
+            className="h-8 w-18 text-xs dark:border-muted-foreground/20 dark:bg-muted/30"
+            aria-label={t("holidayDay")}
+          >
+            <SelectValue placeholder={t("day")} />
+          </SelectTrigger>
+          <SelectContent>
+            {DAYS_1_TO_31.map((d) => (
+              <SelectItem key={d} value={d} className="text-xs">
+                {d}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Bottom row: open/closed toggle + optional time inputs */}
