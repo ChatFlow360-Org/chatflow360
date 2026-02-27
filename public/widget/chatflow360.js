@@ -468,16 +468,16 @@
       ".cf360-msg-row--visitor .cf360-msg-time{text-align:right;}",
       ".cf360-msg-row--ai .cf360-msg-time,.cf360-msg-row--agent .cf360-msg-time{text-align:left;}",
 
-      // Typing indicator — left side like AI
+      // Typing indicator — wave dots (iMessage-style)
       ".cf360-typing{",
-      "  align-self:flex-start;display:flex;align-items:center;gap:5px;padding:12px 18px;",
-      "  background:#e8ecf1;border-radius:20px 20px 20px 6px;",
+      "  align-self:flex-start;display:flex;align-items:flex-end;gap:4px;padding:14px 20px;",
+      "  background:#e8ecf1;border-radius:20px 20px 20px 6px;min-height:44px;",
       "}",
-      "@keyframes cf360-dot{0%,80%,100%{opacity:0.3;transform:scale(0.8);}40%{opacity:1;transform:scale(1);}}",
-      ".cf360-typing-dot{width:8px;height:8px;border-radius:50%;background:#94a3b8;}",
-      ".cf360-typing-dot:nth-child(1){animation:cf360-dot 1.4s 0s infinite;}",
-      ".cf360-typing-dot:nth-child(2){animation:cf360-dot 1.4s 0.2s infinite;}",
-      ".cf360-typing-dot:nth-child(3){animation:cf360-dot 1.4s 0.4s infinite;}",
+      "@keyframes cf360-wave{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-8px);}}",
+      ".cf360-typing-dot{width:7px;height:7px;border-radius:50%;background:" + primaryColor + ";opacity:0.6;",
+      "  animation:cf360-wave 1.3s cubic-bezier(0.4,0,0.2,1) infinite;}",
+      ".cf360-typing-dot:nth-child(2){animation-delay:0.15s;}",
+      ".cf360-typing-dot:nth-child(3){animation-delay:0.3s;}",
 
       // Connecting banner
       ".cf360-connecting{",
