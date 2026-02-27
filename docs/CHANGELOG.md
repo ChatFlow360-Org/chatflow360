@@ -42,6 +42,14 @@
 - `POST /api/widget/rating` endpoint for collecting visitor ratings
 - Widget JS flow: rating prompt → email collection → transcript send
 
+### User Management Improvements
+
+- **Super Admin toggle** in user create/edit form — mutually exclusive with organization assignment (super admins are platform-level, not org-bound)
+- **Removed cosmetic "Agent" role** — was stored in `OrganizationMember.role` but never enforced via RBAC. Only 2 functional user types remain: Super Admin (platform-level) and Org Admin (organization-level)
+- **Super admins can create other super admins** from the dashboard UI
+- **Self-edit/delete protection** — users cannot edit or delete their own account from the Users page
+- **Edit other super admins** — previously blocked; now allowed (except self)
+
 ---
 
 ## v0.3.7 (2026-02-27)

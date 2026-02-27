@@ -715,7 +715,7 @@ Los tokens se registran en cada mensaje IA (`Message.tokensUsed`) y se resumen e
 
 ### Implementado (v0.3.8)
 
-- Multi-tenant con Super Admin (CRUD orgs, users, channels)
+- Multi-tenant con Super Admin (CRUD orgs, users, channels). 2 user types: Super Admin (platform-level, can create other super admins) and Org Admin (organization-level). Self-edit/delete protection
 - Website widget embebible (vanilla JS, DOM injection, bilingue, maximize/minimize, end conversation, session timeout)
 - Widget Appearance Customization — per-channel colors + bilingual header texts, stored in `Channel.config` JSONB, live preview, `GET /api/widget/config` endpoint
 - Post-Chat Experience (frontend) — rating toggle, transcript email toggle, email CC, logo upload, bilingual email template customization, live email preview
@@ -751,14 +751,14 @@ Los tokens se registran en cada mensaje IA (`Message.tokensUsed`) y se resumen e
 - Dashboard con datos reales (stat cards, charts)
 - Reports page
 - Push notifications / email notifications
-- RBAC enforcement middleware (basic business/technical split done, full RBAC pending)
+- RBAC enforcement middleware (business/technical split done, super_admin/org_admin enforced, full middleware pending)
 - Canales WhatsApp / Facebook
 - File attachments, typing indicators, read receipts
 - Integraciones n8n (automatizaciones laterales)
 
 ### Future-Ready (estructura en DB)
 
-- Roles de usuario (Admin/Agent en OrganizationMember — stored, not enforced)
+- Roles de usuario (2 functional types: Super Admin platform-level, Org Admin organization-level — Agent role removed)
 - Channel types enum (para WhatsApp, FB)
 - UsageTracking model (monthly summary per org)
 - PlatformSettings model (global config key-value)
