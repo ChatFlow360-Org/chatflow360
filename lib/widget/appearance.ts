@@ -3,8 +3,10 @@ import { z } from "zod";
 // ─── Types ────────────────────────────────────────────────────────
 
 export interface WidgetAppearance {
-  headerTitle?: string;
-  headerSubtitle?: string;
+  headerTitleEn?: string;
+  headerTitleEs?: string;
+  headerSubtitleEn?: string;
+  headerSubtitleEs?: string;
   headerColor?: string;
   headerIconColor?: string;
   bubbleColor?: string;
@@ -24,8 +26,10 @@ export interface ChannelWidgetConfig {
 // ─── Defaults ─────────────────────────────────────────────────────
 
 export const DEFAULT_WIDGET_APPEARANCE: Required<WidgetAppearance> = {
-  headerTitle: "",           // empty = use widget's built-in i18n default
-  headerSubtitle: "",        // empty = use widget's built-in i18n default
+  headerTitleEn: "",           // empty = use widget's built-in i18n default
+  headerTitleEs: "",
+  headerSubtitleEn: "",        // empty = use widget's built-in i18n default
+  headerSubtitleEs: "",
   headerColor: "#1c2e47",
   headerIconColor: "#ffffff",
   bubbleColor: "#2f92ad",
@@ -44,8 +48,10 @@ const hexColor = z
   .regex(/^#[0-9A-Fa-f]{6}$/, "Must be a valid hex color (#RRGGBB)");
 
 export const widgetAppearanceSchema = z.object({
-  headerTitle: z.string().max(40).optional().default(""),
-  headerSubtitle: z.string().max(60).optional().default(""),
+  headerTitleEn: z.string().max(40).optional().default(""),
+  headerTitleEs: z.string().max(40).optional().default(""),
+  headerSubtitleEn: z.string().max(60).optional().default(""),
+  headerSubtitleEs: z.string().max(60).optional().default(""),
   headerColor: hexColor.optional().default(DEFAULT_WIDGET_APPEARANCE.headerColor),
   headerIconColor: hexColor.optional().default(DEFAULT_WIDGET_APPEARANCE.headerIconColor),
   bubbleColor: hexColor.optional().default(DEFAULT_WIDGET_APPEARANCE.bubbleColor),
@@ -62,6 +68,9 @@ export const widgetAppearanceSchema = z.object({
 /**
  * Merge stored appearance overrides with defaults.
  * Any field that is empty string or missing falls back to the default.
+ *
+ * Also migrates legacy `headerTitle` / `headerSubtitle` fields
+ * (pre-bilingual) into the new `*En` keys so existing data keeps working.
  */
 export function resolveAppearance(
   config: Record<string, unknown> | null | undefined,
@@ -69,9 +78,18 @@ export function resolveAppearance(
   const stored = (config as ChannelWidgetConfig | null)?.widgetAppearance;
   if (!stored) return { ...DEFAULT_WIDGET_APPEARANCE };
 
+  // Migrate legacy single-language fields
+  const compat = { ...stored } as Record<string, string | undefined>;
+  if (compat.headerTitle && !compat.headerTitleEn) {
+    compat.headerTitleEn = compat.headerTitle;
+  }
+  if (compat.headerSubtitle && !compat.headerSubtitleEn) {
+    compat.headerSubtitleEn = compat.headerSubtitle;
+  }
+
   const resolved = { ...DEFAULT_WIDGET_APPEARANCE };
   for (const key of Object.keys(DEFAULT_WIDGET_APPEARANCE) as (keyof WidgetAppearance)[]) {
-    const val = stored[key];
+    const val = compat[key];
     if (val && val.length > 0) {
       (resolved as Record<string, string>)[key] = val;
     }

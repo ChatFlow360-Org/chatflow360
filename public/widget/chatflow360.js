@@ -1182,11 +1182,16 @@
   function applyAppearance(cfg) {
     if (!cfg) return;
 
-    // Update header texts
+    // Update header texts (bilingual: pick by widget language)
     var titleEl = document.querySelector(".cf360-header-title");
     var subtitleEl = document.querySelector(".cf360-header-subtitle");
-    if (cfg.headerTitle && titleEl) titleEl.textContent = cfg.headerTitle;
-    if (cfg.headerSubtitle && subtitleEl) subtitleEl.textContent = cfg.headerSubtitle;
+    var cfgTitle = lang === "es" ? (cfg.headerTitleEs || cfg.headerTitleEn) : (cfg.headerTitleEn || cfg.headerTitleEs);
+    var cfgSubtitle = lang === "es" ? (cfg.headerSubtitleEs || cfg.headerSubtitleEn) : (cfg.headerSubtitleEn || cfg.headerSubtitleEs);
+    // Legacy single-field fallback
+    cfgTitle = cfgTitle || cfg.headerTitle;
+    cfgSubtitle = cfgSubtitle || cfg.headerSubtitle;
+    if (cfgTitle && titleEl) titleEl.textContent = cfgTitle;
+    if (cfgSubtitle && subtitleEl) subtitleEl.textContent = cfgSubtitle;
 
     // Build CSS overrides
     var hc = cfg.headerColor || primaryColor;

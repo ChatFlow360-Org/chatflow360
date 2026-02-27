@@ -131,45 +131,89 @@ export function AppearanceForm({
         </div>
       )}
 
-      {/* Texts Section — full width */}
+      {/* Texts Section — EN/ES pairs */}
       <Card>
         <CardHeader className="pb-4">
           <CardTitle className="text-base">{t("sectionTexts")}</CardTitle>
+          <CardDescription className="text-xs">
+            {t("sectionTextsHint")}
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="headerTitle">{t("headerTitle")}</Label>
-            <Input
-              id="headerTitle"
-              value={appearance.headerTitle}
-              onChange={(e) => update("headerTitle", e.target.value)}
-              placeholder={t("headerTitlePlaceholder")}
-              maxLength={40}
-            />
+        <CardContent className="space-y-5">
+          {/* Header Title — EN / ES */}
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">{t("headerTitle")}</Label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="headerTitleEn" className="text-xs text-muted-foreground">
+                  {t("english")}
+                </Label>
+                <Input
+                  id="headerTitleEn"
+                  value={appearance.headerTitleEn}
+                  onChange={(e) => update("headerTitleEn", e.target.value)}
+                  placeholder={t("headerTitlePlaceholderEn")}
+                  maxLength={40}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="headerTitleEs" className="text-xs text-muted-foreground">
+                  {t("spanish")}
+                </Label>
+                <Input
+                  id="headerTitleEs"
+                  value={appearance.headerTitleEs}
+                  onChange={(e) => update("headerTitleEs", e.target.value)}
+                  placeholder={t("headerTitlePlaceholderEs")}
+                  maxLength={40}
+                />
+              </div>
+            </div>
             <p className="text-xs text-muted-foreground">
               {t("headerTitleHint")}
             </p>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="headerSubtitle">{t("headerSubtitle")}</Label>
-            <Input
-              id="headerSubtitle"
-              value={appearance.headerSubtitle}
-              onChange={(e) => update("headerSubtitle", e.target.value)}
-              placeholder={t("headerSubtitlePlaceholder")}
-              maxLength={60}
-            />
+
+          <Separator />
+
+          {/* Header Subtitle — EN / ES */}
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">{t("headerSubtitle")}</Label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="headerSubtitleEn" className="text-xs text-muted-foreground">
+                  {t("english")}
+                </Label>
+                <Input
+                  id="headerSubtitleEn"
+                  value={appearance.headerSubtitleEn}
+                  onChange={(e) => update("headerSubtitleEn", e.target.value)}
+                  placeholder={t("headerSubtitlePlaceholderEn")}
+                  maxLength={60}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="headerSubtitleEs" className="text-xs text-muted-foreground">
+                  {t("spanish")}
+                </Label>
+                <Input
+                  id="headerSubtitleEs"
+                  value={appearance.headerSubtitleEs}
+                  onChange={(e) => update("headerSubtitleEs", e.target.value)}
+                  placeholder={t("headerSubtitlePlaceholderEs")}
+                  maxLength={60}
+                />
+              </div>
+            </div>
             <p className="text-xs text-muted-foreground">
-              {t("headerSubtitleHint", {
-                count: appearance.headerSubtitle.length,
-              })}
+              {t("headerSubtitleHint")}
             </p>
           </div>
         </CardContent>
       </Card>
 
-      {/* Color Sections — 2-col grid on desktop */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      {/* Color Sections — 3-col grid on desktop */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {/* Header */}
         <Card>
           <CardHeader className="pb-4">
@@ -254,8 +298,8 @@ export function AppearanceForm({
           </CardContent>
         </Card>
 
-        {/* Send Button — spans full width on its own */}
-        <Card className="sm:col-span-2">
+        {/* Send Button — spans full width */}
+        <Card className="sm:col-span-2 lg:col-span-3">
           <CardHeader className="pb-4">
             <CardTitle className="text-base">
               {t("sectionSendButton")}
