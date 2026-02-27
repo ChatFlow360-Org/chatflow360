@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.3.5.1 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.3.6 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -73,4 +73,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.3.5.1** - Prompt Templates UI polish + app-wide ConfirmDialog + Tooltips. Emerald badges with truncation, card hover signature, duplicate template button, action buttons always visible with Radix tooltips, responsive card grid. ConfirmDialog (`components/ui/confirm-dialog.tsx`) replaces ALL native `confirm()` calls app-wide (prompt-templates, organizations, users). TooltipProvider in DashboardShell. Built on v0.3.5: Structured Prompt Fields (agentName, role, rules[], personality, additionalInstructions) via `lib/chat/prompt-builder.ts` + `PromptTemplate` model (super_admin CRUD). Zero changes to chat pipeline. Pendiente: rate limiting (Upstash Redis — deferred a produccion), mock data removal, typing indicators, handoffEnabled toggle funcional (future).
+**v0.3.6** - Smart Knowledge Categories: FAQs, Pricing/Services, Location & Contact, Policies. Each category: type file with Zod schema + `composeText()` for RAG, form component (accordion for FAQs/Policies, card rows for Pricing, structured form for Location), ~80 i18n keys (EN+ES). Generic `upsertStructuredKnowledge` server action dispatches by category. No SQL migration needed — existing `category VARCHAR(50)` + `structured_data JSONB` columns. Knowledge Base tab now has 6 categories (Business Hours + 4 new + Free Text). Accordion component (`components/ui/accordion.tsx`) via Radix UI. Prominent active tab styling with teal border + indicator bar. Pendiente: rate limiting (Upstash Redis — deferred a produccion), mock data removal, typing indicators, handoffEnabled toggle funcional (future).
