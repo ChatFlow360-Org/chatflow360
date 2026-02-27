@@ -270,7 +270,7 @@ function ServiceItemRow({
           type="button"
           variant="ghost"
           size="sm"
-          className="text-muted-foreground hover:text-destructive"
+          className="text-destructive/70 hover:text-destructive"
           onClick={onRequestDelete}
           aria-label={`${t("deleteConfirmTitle")} ${index + 1}`}
         >

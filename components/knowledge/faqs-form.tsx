@@ -149,7 +149,7 @@ export function FAQsForm({ data, onChange, t }: FAQsFormProps) {
                   type="button"
                   variant="ghost"
                   size="icon-xs"
-                  className="shrink-0 text-muted-foreground hover:text-destructive"
+                  className="shrink-0 text-destructive/70 hover:text-destructive"
                   onClick={() => setDeleteIndex(index)}
                   aria-label={t("deleteConfirmTitle")}
                 >

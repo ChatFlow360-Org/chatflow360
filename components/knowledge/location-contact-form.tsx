@@ -378,7 +378,7 @@ function SocialMediaRow({
         type="button"
         variant="ghost"
         size="icon-xs"
-        className="mt-1.5 text-muted-foreground hover:text-destructive shrink-0"
+        className="mt-1.5 text-destructive/70 hover:text-destructive shrink-0"
         onClick={onRemove}
         aria-label={t("removeSocialMedia")}
       >
@@ -418,7 +418,7 @@ function AdditionalLocationCard({
           type="button"
           variant="ghost"
           size="icon-xs"
-          className="text-muted-foreground hover:text-destructive shrink-0"
+          className="text-destructive/70 hover:text-destructive shrink-0"
           onClick={onRemove}
           aria-label={t("removeLocation")}
         >
