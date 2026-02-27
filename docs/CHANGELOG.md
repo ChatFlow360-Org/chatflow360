@@ -2,6 +2,86 @@
 
 > Historial completo de versiones y cambios del proyecto.
 
+## v0.3.8 (2026-02-27)
+
+### Post-Chat Experience (Frontend)
+
+#### Post-Chat Settings Tab — 4th Tab in AI Settings
+
+- **New "Post-Chat" tab** added as the 4th tab in AI Settings (alongside Instructions, Knowledge Base, Widget)
+- **Toggle: Enable transcript email** — default ON, allows visitors to receive a transcript of the conversation via email after chat ends
+- **Toggle: Enable rating prompt** — default ON, presents a satisfaction rating prompt to visitors before email collection
+- **Email CC field** — organization-level CC address for receiving copies of all transcript emails
+
+#### Logo Upload
+
+- **Logo upload** for branding on transcript emails — stored in Supabase Storage
+- **Dimension guidance** included in the upload UI to help users select appropriately sized logos
+
+#### Email Template Customization
+
+- **Bilingual email fields** (EN + ES): subject line, greeting text, closing text, header color, footer text
+- **All fields editable** per organization — allows full branding control over post-chat emails
+- **Live email preview component** — 60/40 split layout matching the Widget tab pattern (form left, preview right)
+- Desktop: sticky preview panel alongside form. Mobile: FAB + Vaul drawer for preview access
+
+#### Types, Validation & Server Action
+
+- **`lib/widget/post-chat.ts`** — types, Zod schema (`PostChatSettings`), and default values for all post-chat configuration fields
+- **`upsertPostChatSettings`** server action — validates input with Zod, persists to `Channel.config` JSONB under `postChatSettings` key
+- Settings stored alongside `widgetAppearance` in the same `Channel.config` JSONB column — no schema migration needed
+
+#### i18n
+
+- **~50 new translation keys** (EN + ES): post-chat tab labels, toggle descriptions, email template field labels/placeholders, preview labels, upload guidance
+
+#### Pending Backend
+
+- Resend integration for sending transcript emails
+- `POST /api/widget/transcript` endpoint for generating and sending transcripts
+- `POST /api/widget/rating` endpoint for collecting visitor ratings
+- Widget JS flow: rating prompt → email collection → transcript send
+
+---
+
+## v0.3.7 (2026-02-27)
+
+### Widget Appearance Customization
+
+#### Widget Appearance Form
+
+- **Color customization** — configurable colors for: header background, chat bubble, visitor message bubbles, AI message bubbles, send button
+- **Bilingual header texts** (EN + ES) — custom header title and subtitle for each language
+- **Form layout** — left column (60%) with all appearance controls
+
+#### Live Widget Preview
+
+- **React replica widget preview** — right column (40%) with sticky positioning on desktop, showing real-time appearance changes as the user edits the form
+- **60/40 split layout** matching the established pattern from AI Settings page
+- **Mobile: FAB + Vaul drawer** — floating action button triggers a bottom sheet drawer containing the preview (avoids consuming screen space on narrow viewports)
+
+#### Embed Code Card
+
+- **Script tag generator** — displays the embed snippet with the channel's public key
+- **EN/ES toggle** — switch between `data-lang="en"` and `data-lang="es"` in the generated snippet
+- **Clipboard copy** — one-click copy to clipboard for the embed code
+
+#### API Endpoint
+
+- **`GET /api/widget/config?key=PUBLIC_KEY`** — public endpoint that returns the resolved widget appearance configuration for a given channel
+- Widget JS fetches this config at initialization and applies appearance settings dynamically (colors, header texts)
+
+#### Storage & Validation
+
+- **`Channel.config` JSONB** — widget appearance settings stored as a `widgetAppearance` nested object within the existing `config` column; no schema migration needed
+- **`upsertWidgetAppearance`** server action — validates input with Zod schema, persists to `Channel.config`
+
+#### i18n
+
+- **~60 new translation keys** (EN + ES): color labels, header text fields, preview labels, embed code instructions, copy confirmation
+
+---
+
 ## v0.3.5 (2026-02-24)
 
 ### Structured Prompt Fields + Template System for Agent Instructions

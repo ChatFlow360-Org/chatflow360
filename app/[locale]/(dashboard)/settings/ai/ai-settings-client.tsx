@@ -14,6 +14,7 @@ import {
   Loader2,
   Pencil,
   Palette,
+  MessageSquareMore,
   LayoutTemplate,
   AlertTriangle,
   ChevronDown,
@@ -81,7 +82,9 @@ import { PoliciesForm } from "@/components/knowledge/policies-form";
 import { DEFAULT_POLICIES } from "@/lib/knowledge/policies";
 import type { PoliciesData } from "@/lib/knowledge/policies";
 import { AppearanceForm } from "@/components/widget/appearance-form";
+import { PostChatForm } from "@/components/widget/post-chat-form";
 import type { WidgetAppearance } from "@/lib/widget/appearance";
+import type { PostChatSettings } from "@/lib/widget/post-chat";
 
 // --- Types ---
 
@@ -125,6 +128,7 @@ interface AiSettingsClientProps {
   widgetChannelId?: string;
   widgetPublicKey?: string;
   widgetAppearance?: WidgetAppearance;
+  postChatSettings?: PostChatSettings;
 }
 
 // --- Component ---
@@ -139,6 +143,7 @@ export function AiSettingsClient({
   widgetChannelId,
   widgetPublicKey,
   widgetAppearance,
+  postChatSettings,
 }: AiSettingsClientProps) {
   const t = useTranslations("settings");
   const tCommon = useTranslations("common");
@@ -455,6 +460,10 @@ export function AiSettingsClient({
           <TabsTrigger value="appearance" className="group/tab">
             <Palette className="h-4 w-4" />
             <span className="hidden group-data-[state=active]/tab:inline sm:inline">{t("tabs.appearance")}</span>
+          </TabsTrigger>
+          <TabsTrigger value="post-chat" className="group/tab">
+            <MessageSquareMore className="h-4 w-4" />
+            <span className="hidden group-data-[state=active]/tab:inline sm:inline">{t("tabs.postChat")}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1263,6 +1272,28 @@ export function AiSettingsClient({
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {t("widgetAppearance.noChannelDescription")}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* ── Post-Chat Tab ── */}
+        <TabsContent value="post-chat" className="mt-6">
+          {widgetChannelId ? (
+            <PostChatForm
+              channelId={widgetChannelId}
+              orgName={organizationName}
+              initialSettings={postChatSettings || {}}
+            />
+          ) : (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <p className="text-sm font-medium text-muted-foreground">
+                  {t("postChat.noChannel")}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t("postChat.noChannelDescription")}
                 </p>
               </CardContent>
             </Card>

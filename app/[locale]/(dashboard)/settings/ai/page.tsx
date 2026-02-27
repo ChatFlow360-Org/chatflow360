@@ -7,6 +7,7 @@ import { AiSettingsClient } from "./ai-settings-client";
 import type { PromptStructure } from "@/lib/chat/prompt-builder";
 import type { KnowledgeCategory } from "@/lib/knowledge/business-hours";
 import type { WidgetAppearance, ChannelWidgetConfig } from "@/lib/widget/appearance";
+import type { PostChatSettings, ChannelPostChatConfig } from "@/lib/widget/post-chat";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -84,6 +85,7 @@ export default async function AiSettingsPage() {
   let widgetChannelId = "";
   let widgetPublicKey = "";
   let widgetAppearance: WidgetAppearance = {};
+  let postChatSettings: PostChatSettings = {};
   if (selectedOrgId) {
     const channel = await prisma.channel.findFirst({
       where: { organizationId: selectedOrgId, type: "website", isActive: true },
@@ -92,8 +94,9 @@ export default async function AiSettingsPage() {
     if (channel) {
       widgetChannelId = channel.id;
       widgetPublicKey = channel.publicKey ?? "";
-      const cfg = channel.config as ChannelWidgetConfig | null;
+      const cfg = channel.config as (ChannelWidgetConfig & ChannelPostChatConfig) | null;
       widgetAppearance = cfg?.widgetAppearance || {};
+      postChatSettings = cfg?.postChatSettings || {};
     }
   }
 
@@ -113,6 +116,7 @@ export default async function AiSettingsPage() {
       widgetChannelId={widgetChannelId}
       widgetPublicKey={widgetPublicKey}
       widgetAppearance={widgetAppearance}
+      postChatSettings={postChatSettings}
     />
   );
 }

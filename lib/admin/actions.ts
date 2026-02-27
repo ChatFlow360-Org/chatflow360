@@ -16,6 +16,10 @@ import {
   widgetAppearanceSchema,
   type WidgetAppearance,
 } from "@/lib/widget/appearance";
+import {
+  postChatSchema,
+  type PostChatSettings,
+} from "@/lib/widget/post-chat";
 
 // ============================================
 // Types
@@ -1195,6 +1199,58 @@ export async function upsertWidgetAppearance(
     return { success: "settingsSaved" };
   } catch (e) {
     console.error("[upsertWidgetAppearance]", e instanceof Error ? e.message : e);
+    if (e instanceof Error && e.message === "Unauthorized") {
+      return { error: "unauthorized" };
+    }
+    return { error: "createFailed" };
+  }
+}
+
+// ============================================
+// Post-Chat Settings
+// ============================================
+
+export async function upsertPostChatSettings(
+  channelId: string,
+  settings: PostChatSettings
+): Promise<AdminActionState> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error("Unauthorized");
+
+    z.string().uuid().parse(channelId);
+
+    const channel = await prisma.channel.findUnique({
+      where: { id: channelId },
+      select: { id: true, organizationId: true, config: true },
+    });
+    if (!channel) return { error: "createFailed" };
+
+    if (!user.isSuperAdmin) {
+      const membership = await prisma.organizationMember.findFirst({
+        where: { userId: user.id, organizationId: channel.organizationId },
+      });
+      if (!membership) throw new Error("Unauthorized");
+    }
+
+    const parsed = postChatSchema.safeParse(settings);
+    if (!parsed.success) return { error: "createFailed" };
+
+    const existingConfig = (channel.config as Record<string, unknown>) || {};
+    const updatedConfig = {
+      ...existingConfig,
+      postChatSettings: parsed.data,
+    };
+
+    await prisma.channel.update({
+      where: { id: channelId },
+      data: { config: updatedConfig },
+    });
+
+    revalidatePath("/settings/ai");
+    return { success: "settingsSaved" };
+  } catch (e) {
+    console.error("[upsertPostChatSettings]", e instanceof Error ? e.message : e);
     if (e instanceof Error && e.message === "Unauthorized") {
       return { error: "unauthorized" };
     }

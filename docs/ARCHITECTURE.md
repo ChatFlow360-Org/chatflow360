@@ -74,6 +74,9 @@ chatflow360-dashboard/
 │   │   │       └── route.ts    # GET — conversation history
 │   │   ├── auth/
 │   │   │   └── callback/       # Supabase auth callback (code exchange)
+│   │   ├── widget/
+│   │   │   └── config/
+│   │   │       └── route.ts    # GET — widget appearance config by publicKey
 │   │   └── webhooks/           # Future: WhatsApp, Messenger
 ├── components/
 │   ├── ui/                     # Shadcn components (tooltip, alert-dialog, confirm-dialog, drawer, date-range-picker)
@@ -105,12 +108,14 @@ chatflow360-dashboard/
 │   │   ├── request.ts          # getRequestConfig (server)
 │   │   ├── navigation.ts       # Locale-aware Link, useRouter, usePathname
 │   │   └── messages/
-│   │       ├── en.json         # English translations (~360+ strings)
-│   │       └── es.json         # Spanish translations (~360+ strings)
+│   │       ├── en.json         # English translations (~470+ strings)
+│   │       └── es.json         # Spanish translations (~470+ strings)
 │   ├── supabase/
 │   │   ├── client.ts           # Browser client (realtime, auth)
 │   │   ├── server.ts           # Server client (auth verification)
 │   │   └── admin.ts            # Admin client (SERVICE_ROLE_KEY)
+│   ├── widget/
+│   │   └── post-chat.ts        # PostChatSettings types, Zod schema, defaults
 │   └── utils/
 ├── hooks/
 │   ├── use-realtime-conversations.ts  # Supabase Realtime for conversations list
@@ -131,12 +136,13 @@ chatflow360-dashboard/
 
 ## API Routes
 
-### Publicas (Widget) — Implementadas v0.3.0 / v0.3.1
+### Publicas (Widget) — Implementadas v0.3.0 / v0.3.1 / v0.3.7
 
 ```
 POST  /api/chat                          # Enviar mensaje + respuesta IA automatica
 GET   /api/chat/[conversationId]         # Historial (validacion visitorId)
 PATCH /api/chat/[conversationId]         # Cerrar conversacion desde widget (v0.3.1)
+GET   /api/widget/config?key=PUBLIC_KEY  # Widget appearance config (v0.3.7)
 ```
 
 **Autenticacion:** via `publicKey` (UUID del canal) + `visitorId` (generado por widget). Sin JWT — API publica con CORS abierto.
@@ -163,6 +169,8 @@ lib/admin/actions.ts:
   - upsertPlatformKey (global API key — super_admin)
   - getConversationMessages (fetch messages by conversation)
   - createPromptTemplate, updatePromptTemplate, deletePromptTemplate (super_admin — dual revalidatePath: /settings/ai + /prompt-templates)
+  - upsertWidgetAppearance (widget colors + header texts per channel)
+  - upsertPostChatSettings (post-chat config per channel)
 
 lib/auth/actions.ts:
   - login, logout, forgotPassword, updatePassword
@@ -359,6 +367,59 @@ Migration: `supabase/migrations/20260226_rls_prompt_templates.sql`
 - Timestamp de ultimo mensaje guardado en localStorage: `cf360_conv_ts_` + publicKey
 - Actualizado en cada `sendMessage()`. Verificado al iniciar el widget.
 - Si han pasado mas de 2h, la conversacion expirada se descarta silenciosamente → welcome screen
+
+### Widget Appearance Customization (v0.3.7)
+
+The widget's visual appearance (colors, header texts) is fully customizable per channel from the dashboard. Settings are stored in the `Channel.config` JSONB column under a `widgetAppearance` nested object — no schema migration was needed.
+
+**Configuration flow:**
+
+```
+Dashboard form → upsertWidgetAppearance (Zod validation) → Channel.config.widgetAppearance (JSONB)
+Widget JS init → GET /api/widget/config?key=PUBLIC_KEY → applies colors + header texts dynamically
+```
+
+**API endpoint:** `GET /api/widget/config?key=PUBLIC_KEY` — public, returns the resolved appearance configuration for the given channel. The widget JS fetches this at initialization and overrides default styles.
+
+**Customizable properties:** header background color, chat bubble color, visitor message color, AI message color, send button color, header title (EN + ES), header subtitle (EN + ES).
+
+**Dashboard UI:** 60/40 split layout — form on left, live React preview widget on right (sticky on desktop, FAB + Vaul drawer on mobile).
+
+### Post-Chat Experience (v0.3.8)
+
+Post-chat settings control what happens after a conversation ends: visitor rating collection, transcript email delivery, and email branding customization. Settings are stored in `Channel.config` JSONB under `postChatSettings`, alongside `widgetAppearance`.
+
+**Post-chat flow (planned):**
+
+```
+Conversation ends in widget
+    → Rating prompt (if enabled) → visitor submits 1-5 stars
+    → Transcript email prompt (if enabled) → visitor enters email
+    → POST /api/widget/rating (stores rating)
+    → POST /api/widget/transcript (generates + sends email via Resend)
+```
+
+**Configuration stored in `Channel.config.postChatSettings`:**
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `transcriptEnabled` | boolean | Toggle transcript email feature |
+| `ratingEnabled` | boolean | Toggle rating prompt feature |
+| `emailCc` | string | Organization CC for transcript copies |
+| `logoUrl` | string | Logo URL (Supabase Storage) for email branding |
+| `emailSubject` | bilingual (EN/ES) | Custom email subject line |
+| `emailGreeting` | bilingual (EN/ES) | Custom greeting text |
+| `emailClosing` | bilingual (EN/ES) | Custom closing text |
+| `headerColor` | string | Email header background color |
+| `footerText` | bilingual (EN/ES) | Custom footer text |
+
+**Types + validation:** `lib/widget/post-chat.ts` — Zod schema, TypeScript types, and default values.
+
+**Server action:** `upsertPostChatSettings` — validates with Zod, persists to `Channel.config` JSONB.
+
+**Dashboard UI:** 4th tab in AI Settings page ("Post-Chat"), with 60/40 split layout (form + live email preview), matching the Widget tab pattern.
+
+**Pending backend:** Resend integration, transcript API endpoint, rating API endpoint, widget JS flow implementation.
 
 ### Conversation Auto-Cleanup — Modelo de 3 Capas (v0.3.1)
 
@@ -652,10 +713,12 @@ Los tokens se registran en cada mensaje IA (`Message.tokensUsed`) y se resumen e
 
 ## Alcance del MVP
 
-### Implementado (v0.3.6)
+### Implementado (v0.3.8)
 
 - Multi-tenant con Super Admin (CRUD orgs, users, channels)
 - Website widget embebible (vanilla JS, DOM injection, bilingue, maximize/minimize, end conversation, session timeout)
+- Widget Appearance Customization — per-channel colors + bilingual header texts, stored in `Channel.config` JSONB, live preview, `GET /api/widget/config` endpoint
+- Post-Chat Experience (frontend) — rating toggle, transcript email toggle, email CC, logo upload, bilingual email template customization, live email preview
 - Respuestas IA con OpenAI (GPT-4o-mini default)
 - Human takeover (keyword-based, bilateral EN/ES, 19 default keywords)
 - API key management (AES-256-GCM, 3-tier resolution, UI-based)
@@ -664,7 +727,7 @@ Los tokens se registran en cada mensaje IA (`Message.tokensUsed`) y se resumen e
 - Supabase Realtime with RLS: setAuth + denormalized `organization_id` + token refresh + 30s polling safety net
 - RLS policies on `conversations`, `messages`, and `prompt_templates` tables (org-scoped tenant isolation + super_admin gate)
 - Dashboard basico (5 stat cards, top pages, recent conversations — aun mock)
-- AI Settings page (structured prompt fields, model config, handoff, preview widget, "Use Template" selector) + RBAC split (business vs technical params)
+- AI Settings page (structured prompt fields, model config, handoff, preview widget, "Use Template" selector, Widget appearance, Post-Chat) + RBAC split (business vs technical params)
 - Prompt Templates page (`/prompt-templates`) — super_admin CRUD with card grid layout, separate from AI Settings. Responsive card grid, duplicate template, action tooltips (Radix), emerald badges with truncation. RLS defense-in-depth on table.
 - App-wide ConfirmDialog (`components/ui/confirm-dialog.tsx`) — replaces ALL native confirm() calls. Uses shadcn/ui AlertDialog. Applied to: prompt-templates, organizations (org + channel delete), users
 - App-wide Tooltips (`components/ui/tooltip.tsx`) — shadcn/ui Tooltip with TooltipProvider in DashboardShell
@@ -673,7 +736,7 @@ Los tokens se registran en cada mensaje IA (`Message.tokensUsed`) y se resumen e
 - Prominent Tabs active state — teal CTA border, bottom indicator bar, semibold text, card background (`components/ui/tabs.tsx`)
 - Scroll-to-top on save in AI Settings — targets `<main>` container so feedback banners are always visible
 - Autenticacion real (Supabase Auth — login, logout, forgot/update password)
-- Bilingue (EN/ES) — ~360+ strings traducidas
+- Bilingue (EN/ES) — ~470+ strings traducidas
 - Token tracking (Message.tokensUsed + UsageTracking monthly)
 - Security hardened (CSP, HSTS, crypto passwords, transaction atomicity, OWASP widget API hardening)
 - 3-layer conversation cleanup (PATCH + client timeout + pg_cron)
@@ -681,6 +744,7 @@ Los tokens se registran en cada mensaje IA (`Message.tokensUsed`) y se resumen e
 
 ### Pendiente (Post-MVP)
 
+- Post-Chat backend: Resend integration, transcript API endpoint, rating API endpoint, widget JS flow
 - RAG/Knowledge Base (pgvector) — tab dice "coming soon"
 - Enviar mensajes como agente desde dashboard
 - Rate limiting (@upstash/ratelimit — deferred to production phase)
