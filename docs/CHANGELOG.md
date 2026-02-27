@@ -60,6 +60,64 @@
 
 ---
 
+## v0.3.6 (2026-02-26)
+
+### Knowledge Categories + RLS on prompt_templates + UX Polish
+
+#### RLS on prompt_templates Table
+
+- **Migration `supabase/migrations/20260226_rls_prompt_templates.sql`** — enables Row Level Security on the `prompt_templates` table as a defense-in-depth measure
+- **Prisma bypasses RLS** — dashboard operations are unaffected because Prisma connects as the postgres superuser via the connection pooler, which has RLS bypass
+- **Policies applied:**
+  - `service_role_full_access` — `FOR ALL TO service_role USING (true)` — allows Supabase admin operations
+  - `super_admin_select` — `FOR SELECT TO authenticated` using a subquery on `users.is_super_admin = true` — guards direct PostgREST/anon reads
+  - No INSERT/UPDATE/DELETE policies for the `authenticated` role — all mutations must go through Prisma server actions with `requireSuperAdmin()` guard
+- **Design decision:** mutations from PostgREST are intentionally blocked. If direct Supabase client mutations are ever needed, explicit policies must be added at that time
+
+#### Knowledge Categories — Structured DB Schema
+
+- **Migration `supabase/migrations/20260226_add_knowledge_categories.sql`** adds two columns to `organization_knowledge`:
+  - `category` — `VARCHAR(50) NOT NULL DEFAULT 'free_text'` — classifies the knowledge entry type (`free_text`, `business_hours`, `pricing`, `faq`, etc.)
+  - `structured_data` — `JSONB` — stores the parsed form data for structured categories; `NULL` for `free_text` entries
+- **Indexes:**
+  - `idx_org_knowledge_category` — composite index on `(organization_id, category)` for fast filtered queries
+  - `idx_org_knowledge_unique_category` — partial unique index on `(organization_id, category) WHERE category != 'free_text'` — enforces one entry per structured category per org (e.g., only one `business_hours` record per org), while allowing unlimited `free_text` entries
+- **Backward compatible** — existing rows receive `'free_text'` default and `NULL` structured_data with no data loss
+
+#### Business Hours Form — Structured Knowledge Input
+
+- **New component `components/knowledge/business-hours-form.tsx`** — purpose-built form for the `business_hours` knowledge category
+- **Weekly schedule grid** — 7 `DayRow` sub-components, each with:
+  - Toggle switch for open/closed status
+  - Short day labels on mobile (`Mon`, `Tue`, etc.) via `sm:hidden` / `hidden sm:inline` — avoids overflow on narrow viewports
+  - Paired `<input type="time">` fields for open and close time (hidden when day is closed)
+- **Smart "Copy Monday to Tue–Fri" button** — appears only when Monday is open AND at least one weekday (Tue–Fri) differs from Monday's hours. Uses `useMemo` to avoid stale comparisons. Button styled `border-cta/30 text-cta hover:bg-cta/10` — teal accent, outline variant
+- **Timezone selector** — shadcn Select with 4 US zones (ET, CT, MT, PT); defaults to Eastern
+- **Holidays section** — collapsible (starts open when holidays exist):
+  - Add individual entries or use quick-add preset badges (US federal holidays, bilingual EN/ES names via `US_HOLIDAY_PRESETS`)
+  - `HolidayRow` sub-component: name text input + month/day Select dropdowns (avoids native date picker inconsistencies across browsers) + open/closed toggle with optional time inputs
+  - Preset badge list filters out already-added holidays using `useMemo`
+- **Additional notes** — `<Textarea>` (max 500 chars) with right-aligned character counter; used by the AI to add context beyond the schedule grid
+- **Data model:** `BusinessHoursData` interface (defined in `lib/knowledge/business-hours.ts`) with `schedule` (record keyed by `DayOfWeek`), `timezone`, `holidays: HolidayEntry[]`, `notes?`
+- **i18n** — all labels, placeholders, and day names passed via `t()` prop; day short labels use `{day}Short` key convention
+
+#### AI Settings — Scroll to Top on Save
+
+- **`ai-settings-client.tsx`** — `scrollToTop()` helper calls `document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" })` targeting the scrollable `<main>` container (not `window`, which does not scroll in the dashboard layout)
+- Called in three branches of the save effect: success, validation error, and server error — ensuring the feedback banner at the top of the page is always visible after a save attempt
+
+#### Tabs Component — Prominent Active State
+
+- **`components/ui/tabs.tsx`** `TabsTrigger` enhanced with a more visible active state for both orientations:
+  - `data-[state=active]:bg-card` — active tab lifts to card background (light and dark)
+  - `data-[state=active]:font-semibold` — semibold weight distinguishes active from inactive
+  - `data-[state=active]:border-cta/40` — teal CTA border on active tab; `dark:data-[state=active]:border-cta/50` for dark mode
+  - `data-[state=active]:shadow-sm` / `dark:data-[state=active]:shadow-[0_1px_3px_rgba(0,0,0,0.3)]` — subtle elevation
+  - **Bottom indicator bar** — teal `::after` pseudo-element (`after:bg-cta after:h-0.5 after:rounded-full`) at the bottom of the trigger for horizontal tabs; right-edge bar for vertical tabs. `after:opacity-0` by default, `data-[state=active]:after:opacity-100` when active — pure CSS, no JS
+- Works in both horizontal (`data-orientation=horizontal`) and vertical (`data-orientation=vertical`) orientations via `group-data-[orientation=…]/tabs:after:*` selectors
+
+---
+
 ## v0.3.5.1 (2026-02-25)
 
 ### Prompt Templates Page — UI Polish + App-wide ConfirmDialog

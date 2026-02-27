@@ -51,11 +51,21 @@ export interface BusinessHoursData {
 
 // ─── Knowledge Categories ────────────────────────────────────────
 
-export type KnowledgeCategory = "free_text" | "business_hours";
+export type KnowledgeCategory =
+  | "free_text"
+  | "business_hours"
+  | "faqs"
+  | "pricing"
+  | "location_contact"
+  | "policies";
 
 export const KNOWLEDGE_CATEGORIES: KnowledgeCategory[] = [
   "free_text",
   "business_hours",
+  "faqs",
+  "pricing",
+  "location_contact",
+  "policies",
 ];
 
 // ─── Default schedule (Mon-Fri 9-5, Sat-Sun closed) ─────────────

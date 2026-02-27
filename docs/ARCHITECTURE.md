@@ -268,6 +268,35 @@ const getChannelConfig = (channel: Channel, orgAiSettings: AiSettings) => ({
 - AI Settings UI pre-populates textarea with defaults when no custom keywords exist
 - `createOrganization` server action uses `DEFAULT_HANDOFF_KEYWORDS` when creating initial AiSettings
 
+### Knowledge Categories — Structured Knowledge Entries
+
+The `organization_knowledge` table was extended with two columns to support structured, category-specific knowledge types alongside free-form text:
+
+| Column | Type | Default | Purpose |
+|--------|------|---------|---------|
+| `category` | `VARCHAR(50) NOT NULL` | `'free_text'` | Classifies the entry (`free_text`, `business_hours`, `pricing`, `faq`, etc.) |
+| `structured_data` | `JSONB` | `NULL` | Parsed form data for structured categories; NULL for free_text |
+
+**Indexing strategy:**
+
+- `idx_org_knowledge_category` — composite index on `(organization_id, category)` for fast filtered reads
+- `idx_org_knowledge_unique_category` — partial unique index on `(organization_id, category) WHERE category != 'free_text'` — enforces at most one entry per structured category per org (e.g., one `business_hours` record), while allowing unlimited `free_text` entries
+
+**Business Hours Form (`components/knowledge/business-hours-form.tsx`):**
+
+The first structured category is `business_hours`, backed by a purpose-built React form component:
+
+- Weekly schedule grid (`DayRow` × 7) with open/close time inputs and per-day toggle switches
+- Smart "Copy Monday to Tue–Fri" button — appears only when Monday is open and at least one weekday differs; uses `useMemo` for efficient comparison
+- Timezone selector (US zones via shadcn Select)
+- Collapsible holidays section with US federal holiday quick-add presets (bilingual EN/ES via `US_HOLIDAY_PRESETS`)
+- Additional notes textarea (500 char limit)
+- Mobile-responsive: short day labels (`Mon`, `Tue`) on narrow viewports via `sm:hidden`/`hidden sm:inline`
+
+**Data model:** `BusinessHoursData` interface in `lib/knowledge/business-hours.ts` — `schedule` (record keyed by `DayOfWeek`), `timezone`, `holidays: HolidayEntry[]`, `notes?`.
+
+**Migration:** `supabase/migrations/20260226_add_knowledge_categories.sql` — backward compatible; existing rows receive `'free_text'` default with no data loss.
+
 ### Prompt Templates Page
 
 **Ruta:** `/[locale]/prompt-templates`
@@ -283,6 +312,17 @@ const getChannelConfig = (channel: Channel, orgAiSettings: AiSettings) => ({
 **Sidebar:** "Prompt Templates" item appears in the admin section of the sidebar, positioned before "API Keys".
 
 **Relation to AI Settings:** AI Settings retains only the "Use Template" dialog (read-only selector). Template management (create/edit/delete) was moved out of AI Settings to avoid mixing super_admin CRUD with org admin configuration on the same page.
+
+#### RLS on prompt_templates
+
+Row Level Security is enabled on `prompt_templates` as a defense-in-depth measure:
+
+- **Prisma is unaffected** — connects as postgres superuser (bypasses RLS), so all dashboard CRUD operations work as before
+- **`service_role_full_access`** policy — `FOR ALL TO service_role USING (true)` — allows Supabase admin operations
+- **`super_admin_select`** policy — `FOR SELECT TO authenticated` — limits direct PostgREST reads to users where `users.is_super_admin = true`
+- No INSERT/UPDATE/DELETE policies for the `authenticated` role — direct PostgREST mutations are intentionally blocked; all writes go through Prisma server actions with `requireSuperAdmin()` guard
+
+Migration: `supabase/migrations/20260226_rls_prompt_templates.sql`
 
 ### Widget Embed
 
@@ -612,7 +652,7 @@ Los tokens se registran en cada mensaje IA (`Message.tokensUsed`) y se resumen e
 
 ## Alcance del MVP
 
-### Implementado (v0.3.5)
+### Implementado (v0.3.6)
 
 - Multi-tenant con Super Admin (CRUD orgs, users, channels)
 - Website widget embebible (vanilla JS, DOM injection, bilingue, maximize/minimize, end conversation, session timeout)
@@ -622,13 +662,16 @@ Los tokens se registran en cada mensaje IA (`Message.tokensUsed`) y se resumen e
 - Conversations page con datos reales (Prisma) + Supabase Realtime (live updates)
 - Conversation detail with Realtime messages (live message updates via postgres_changes)
 - Supabase Realtime with RLS: setAuth + denormalized `organization_id` + token refresh + 30s polling safety net
-- RLS policies on `conversations` and `messages` tables (org-scoped tenant isolation)
+- RLS policies on `conversations`, `messages`, and `prompt_templates` tables (org-scoped tenant isolation + super_admin gate)
 - Dashboard basico (5 stat cards, top pages, recent conversations — aun mock)
 - AI Settings page (structured prompt fields, model config, handoff, preview widget, "Use Template" selector) + RBAC split (business vs technical params)
-- Prompt Templates page (`/prompt-templates`) — super_admin CRUD with card grid layout, separate from AI Settings. Responsive card grid, duplicate template, action tooltips (Radix), emerald badges with truncation
+- Prompt Templates page (`/prompt-templates`) — super_admin CRUD with card grid layout, separate from AI Settings. Responsive card grid, duplicate template, action tooltips (Radix), emerald badges with truncation. RLS defense-in-depth on table.
 - App-wide ConfirmDialog (`components/ui/confirm-dialog.tsx`) — replaces ALL native confirm() calls. Uses shadcn/ui AlertDialog. Applied to: prompt-templates, organizations (org + channel delete), users
 - App-wide Tooltips (`components/ui/tooltip.tsx`) — shadcn/ui Tooltip with TooltipProvider in DashboardShell
 - Structured prompt fields (`lib/chat/prompt-builder.ts`): agentName, role, rules (max 50), personality, additionalInstructions — assembled via `composeSystemPrompt()`
+- Knowledge Categories — `category` + `structured_data` columns on `organization_knowledge`; Business Hours structured form (`components/knowledge/business-hours-form.tsx`)
+- Prominent Tabs active state — teal CTA border, bottom indicator bar, semibold text, card background (`components/ui/tabs.tsx`)
+- Scroll-to-top on save in AI Settings — targets `<main>` container so feedback banners are always visible
 - Autenticacion real (Supabase Auth — login, logout, forgot/update password)
 - Bilingue (EN/ES) — ~360+ strings traducidas
 - Token tracking (Message.tokensUsed + UsageTracking monthly)

@@ -945,6 +945,103 @@ export async function upsertBusinessHours(
   }
 }
 
+/**
+ * Generic upsert for any structured knowledge category (faqs, pricing, location_contact, policies).
+ * Dispatches to the right schema + composer based on category field.
+ */
+export async function upsertStructuredKnowledge(
+  _prevState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const orgId = formData.get("organizationId") as string;
+    const category = formData.get("category") as string;
+    const structuredJson = formData.get("structuredData") as string;
+    const existingId = formData.get("knowledgeId") as string | null;
+
+    z.string().uuid().parse(orgId);
+
+    // Auth: super_admin or org member
+    if (!user.isSuperAdmin) {
+      const membership = await prisma.organizationMember.findFirst({
+        where: { userId: user.id, organizationId: orgId },
+      });
+      if (!membership) throw new Error("Unauthorized");
+    }
+
+    // Dispatch to the right schema + composer
+    let title: string;
+    let content: string;
+    let validatedData: Record<string, unknown>;
+
+    const rawData = JSON.parse(structuredJson);
+
+    switch (category) {
+      case "faqs": {
+        const { faqsSchema, composeFaqsText } = await import("@/lib/knowledge/faqs");
+        validatedData = faqsSchema.parse(rawData) as unknown as Record<string, unknown>;
+        title = "FAQs";
+        content = composeFaqsText(rawData);
+        break;
+      }
+      case "pricing": {
+        const { pricingSchema, composePricingText } = await import("@/lib/knowledge/pricing");
+        validatedData = pricingSchema.parse(rawData) as unknown as Record<string, unknown>;
+        title = "Pricing & Services";
+        content = composePricingText(rawData);
+        break;
+      }
+      case "location_contact": {
+        const { locationContactSchema, composeLocationContactText } = await import("@/lib/knowledge/location-contact");
+        validatedData = locationContactSchema.parse(rawData) as unknown as Record<string, unknown>;
+        title = "Location & Contact";
+        content = composeLocationContactText(rawData);
+        break;
+      }
+      case "policies": {
+        const { policiesSchema, composePoliciesText } = await import("@/lib/knowledge/policies");
+        validatedData = policiesSchema.parse(rawData) as unknown as Record<string, unknown>;
+        title = "Policies";
+        content = composePoliciesText(rawData);
+        break;
+      }
+      default:
+        return { error: "createFailed" };
+    }
+
+    // Generate embedding from composed text
+    const { createOpenAIClient } = await import("@/lib/openai/client");
+    const { generateEmbedding } = await import("@/lib/rag/embedding");
+
+    const client = await createOpenAIClient(orgId);
+    const { embedding, tokensUsed } = await generateEmbedding(
+      client,
+      `${title}\n\n${content}`
+    );
+
+    if (existingId) {
+      const { updateKnowledge } = await import("@/lib/rag/knowledge");
+      z.string().uuid().parse(existingId);
+      await updateKnowledge(orgId, existingId, title, content, embedding, tokensUsed, category as "faqs" | "pricing" | "location_contact" | "policies", validatedData);
+    } else {
+      const { createKnowledge } = await import("@/lib/rag/knowledge");
+      await createKnowledge(orgId, title, content, embedding, tokensUsed, category as "faqs" | "pricing" | "location_contact" | "policies", validatedData);
+    }
+
+    revalidatePath("/settings/ai");
+    return { success: "knowledgeCreated" };
+  } catch (e) {
+    console.error("[upsertStructuredKnowledge]", e instanceof Error ? e.message : e);
+    if (e instanceof Error && e.message === "Unauthorized") {
+      return { error: "unauthorized" };
+    }
+    return { error: "createFailed" };
+  }
+}
+
 const updateKnowledgeSchema = z.object({
   organizationId: z.string().uuid(),
   knowledgeId: z.string().uuid(),

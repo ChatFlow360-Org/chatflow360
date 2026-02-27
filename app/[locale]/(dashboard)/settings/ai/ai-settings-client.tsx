@@ -17,6 +17,10 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
+  HelpCircle,
+  DollarSign,
+  MapPin,
+  Shield,
 } from "lucide-react";
 import {
   Card,
@@ -54,6 +58,7 @@ import {
   updateKnowledgeItem,
   deleteKnowledgeItem,
   upsertBusinessHours,
+  upsertStructuredKnowledge,
 } from "@/lib/admin/actions";
 import { DEFAULT_HANDOFF_KEYWORDS } from "@/lib/chat/defaults";
 import { EMPTY_PROMPT_STRUCTURE, type PromptStructure } from "@/lib/chat/prompt-builder";
@@ -61,6 +66,18 @@ import { formatRelativeTime } from "@/lib/utils/format";
 import { BusinessHoursForm } from "@/components/knowledge/business-hours-form";
 import { DEFAULT_BUSINESS_HOURS } from "@/lib/knowledge/business-hours";
 import type { BusinessHoursData, KnowledgeCategory } from "@/lib/knowledge/business-hours";
+import { FAQsForm } from "@/components/knowledge/faqs-form";
+import { DEFAULT_FAQS } from "@/lib/knowledge/faqs";
+import type { FAQsData } from "@/lib/knowledge/faqs";
+import { PricingForm } from "@/components/knowledge/pricing-form";
+import { DEFAULT_PRICING } from "@/lib/knowledge/pricing";
+import type { PricingData } from "@/lib/knowledge/pricing";
+import { LocationContactForm } from "@/components/knowledge/location-contact-form";
+import { DEFAULT_LOCATION_CONTACT } from "@/lib/knowledge/location-contact";
+import type { LocationContactData } from "@/lib/knowledge/location-contact";
+import { PoliciesForm } from "@/components/knowledge/policies-form";
+import { DEFAULT_POLICIES } from "@/lib/knowledge/policies";
+import type { PoliciesData } from "@/lib/knowledge/policies";
 
 // --- Types ---
 
@@ -152,8 +169,43 @@ export function AiSettingsClient({
   );
   const [bhState, bhAction, isBHSaving] = useActionState(upsertBusinessHours, null);
 
+  // FAQs state
+  const existingFaqs = knowledgeItems.find((i) => i.category === "faqs");
+  const [showFaqsDialog, setShowFaqsDialog] = useState(false);
+  const [faqsData, setFaqsData] = useState<FAQsData>(
+    () => (existingFaqs?.structured_data as unknown as FAQsData) ?? { ...DEFAULT_FAQS }
+  );
+  const [faqsState, faqsAction, isFaqsSaving] = useActionState(upsertStructuredKnowledge, null);
+
+  // Pricing state
+  const existingPricing = knowledgeItems.find((i) => i.category === "pricing");
+  const [showPricingDialog, setShowPricingDialog] = useState(false);
+  const [pricingData, setPricingData] = useState<PricingData>(
+    () => (existingPricing?.structured_data as unknown as PricingData) ?? { ...DEFAULT_PRICING }
+  );
+  const [pricingState, pricingAction, isPricingSaving] = useActionState(upsertStructuredKnowledge, null);
+
+  // Location & Contact state
+  const existingLocation = knowledgeItems.find((i) => i.category === "location_contact");
+  const [showLocationDialog, setShowLocationDialog] = useState(false);
+  const [locationData, setLocationData] = useState<LocationContactData>(
+    () => (existingLocation?.structured_data as unknown as LocationContactData) ?? { ...DEFAULT_LOCATION_CONTACT }
+  );
+  const [locationState, locationAction, isLocationSaving] = useActionState(upsertStructuredKnowledge, null);
+
+  // Policies state
+  const existingPolicies = knowledgeItems.find((i) => i.category === "policies");
+  const [showPoliciesDialog, setShowPoliciesDialog] = useState(false);
+  const [policiesData, setPoliciesData] = useState<PoliciesData>(
+    () => (existingPolicies?.structured_data as unknown as PoliciesData) ?? { ...DEFAULT_POLICIES }
+  );
+  const [policiesState, policiesAction, isPoliciesSaving] = useActionState(upsertStructuredKnowledge, null);
+
+  // Structured categories (not free_text)
+  const STRUCTURED_CATEGORIES: KnowledgeCategory[] = ["business_hours", "faqs", "pricing", "location_contact", "policies"];
+
   // Filter free-text items for the list
-  const freeTextItems = knowledgeItems.filter((i) => i.category !== "business_hours");
+  const freeTextItems = knowledgeItems.filter((i) => !STRUCTURED_CATEGORIES.includes(i.category));
 
   // Smooth scroll to top so user sees feedback banners
   // Dashboard layout uses <main> with overflow-y-auto, not window scroll
@@ -188,6 +240,20 @@ export function AiSettingsClient({
       scrollToTop();
     }
   }, [bhState]);
+
+  // Close structured knowledge dialogs on successful save
+  useEffect(() => {
+    if (faqsState?.success) { setShowFaqsDialog(false); scrollToTop(); }
+  }, [faqsState]);
+  useEffect(() => {
+    if (pricingState?.success) { setShowPricingDialog(false); scrollToTop(); }
+  }, [pricingState]);
+  useEffect(() => {
+    if (locationState?.success) { setShowLocationDialog(false); scrollToTop(); }
+  }, [locationState]);
+  useEffect(() => {
+    if (policiesState?.success) { setShowPoliciesDialog(false); scrollToTop(); }
+  }, [policiesState]);
 
   // Scroll to top on main save success/error
   useEffect(() => {
@@ -854,6 +920,218 @@ export function AiSettingsClient({
             )}
           </Card>
 
+          {/* ── FAQs Card ── */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <HelpCircle className="h-4 w-4 text-cta" />
+                  <CardTitle className="text-base">
+                    {t("faqs.title")}
+                  </CardTitle>
+                  {existingFaqs && (
+                    <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                      {t("faqs.configured")}
+                    </Badge>
+                  )}
+                </div>
+                <Button
+                  size="sm"
+                  variant={existingFaqs ? "outline" : "default"}
+                  onClick={() => {
+                    if (existingFaqs?.structured_data) {
+                      setFaqsData(existingFaqs.structured_data as unknown as FAQsData);
+                    } else {
+                      setFaqsData({ ...DEFAULT_FAQS });
+                    }
+                    setShowFaqsDialog(true);
+                  }}
+                >
+                  {existingFaqs ? (
+                    <>
+                      <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                      {t("faqs.edit")}
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="mr-1.5 h-3.5 w-3.5" />
+                      {t("faqs.title")}
+                    </>
+                  )}
+                </Button>
+              </div>
+              <CardDescription className="mt-1">
+                {t("faqs.description")}
+              </CardDescription>
+            </CardHeader>
+            {existingFaqs && (
+              <CardContent className="pt-0">
+                <p className="line-clamp-3 text-xs text-muted-foreground whitespace-pre-line">
+                  {existingFaqs.content}
+                </p>
+              </CardContent>
+            )}
+          </Card>
+
+          {/* ── Pricing Card ── */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-cta" />
+                  <CardTitle className="text-base">
+                    {t("pricing.title")}
+                  </CardTitle>
+                  {existingPricing && (
+                    <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                      {t("pricing.configured")}
+                    </Badge>
+                  )}
+                </div>
+                <Button
+                  size="sm"
+                  variant={existingPricing ? "outline" : "default"}
+                  onClick={() => {
+                    if (existingPricing?.structured_data) {
+                      setPricingData(existingPricing.structured_data as unknown as PricingData);
+                    } else {
+                      setPricingData({ ...DEFAULT_PRICING });
+                    }
+                    setShowPricingDialog(true);
+                  }}
+                >
+                  {existingPricing ? (
+                    <>
+                      <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                      {t("pricing.edit")}
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="mr-1.5 h-3.5 w-3.5" />
+                      {t("pricing.title")}
+                    </>
+                  )}
+                </Button>
+              </div>
+              <CardDescription className="mt-1">
+                {t("pricing.description")}
+              </CardDescription>
+            </CardHeader>
+            {existingPricing && (
+              <CardContent className="pt-0">
+                <p className="line-clamp-3 text-xs text-muted-foreground whitespace-pre-line">
+                  {existingPricing.content}
+                </p>
+              </CardContent>
+            )}
+          </Card>
+
+          {/* ── Location & Contact Card ── */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-cta" />
+                  <CardTitle className="text-base">
+                    {t("locationContact.title")}
+                  </CardTitle>
+                  {existingLocation && (
+                    <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                      {t("locationContact.configured")}
+                    </Badge>
+                  )}
+                </div>
+                <Button
+                  size="sm"
+                  variant={existingLocation ? "outline" : "default"}
+                  onClick={() => {
+                    if (existingLocation?.structured_data) {
+                      setLocationData(existingLocation.structured_data as unknown as LocationContactData);
+                    } else {
+                      setLocationData({ ...DEFAULT_LOCATION_CONTACT });
+                    }
+                    setShowLocationDialog(true);
+                  }}
+                >
+                  {existingLocation ? (
+                    <>
+                      <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                      {t("locationContact.edit")}
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="mr-1.5 h-3.5 w-3.5" />
+                      {t("locationContact.title")}
+                    </>
+                  )}
+                </Button>
+              </div>
+              <CardDescription className="mt-1">
+                {t("locationContact.description")}
+              </CardDescription>
+            </CardHeader>
+            {existingLocation && (
+              <CardContent className="pt-0">
+                <p className="line-clamp-3 text-xs text-muted-foreground whitespace-pre-line">
+                  {existingLocation.content}
+                </p>
+              </CardContent>
+            )}
+          </Card>
+
+          {/* ── Policies Card ── */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-cta" />
+                  <CardTitle className="text-base">
+                    {t("policies.title")}
+                  </CardTitle>
+                  {existingPolicies && (
+                    <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                      {t("policies.configured")}
+                    </Badge>
+                  )}
+                </div>
+                <Button
+                  size="sm"
+                  variant={existingPolicies ? "outline" : "default"}
+                  onClick={() => {
+                    if (existingPolicies?.structured_data) {
+                      setPoliciesData(existingPolicies.structured_data as unknown as PoliciesData);
+                    } else {
+                      setPoliciesData({ ...DEFAULT_POLICIES });
+                    }
+                    setShowPoliciesDialog(true);
+                  }}
+                >
+                  {existingPolicies ? (
+                    <>
+                      <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                      {t("policies.edit")}
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="mr-1.5 h-3.5 w-3.5" />
+                      {t("policies.title")}
+                    </>
+                  )}
+                </Button>
+              </div>
+              <CardDescription className="mt-1">
+                {t("policies.description")}
+              </CardDescription>
+            </CardHeader>
+            {existingPolicies && (
+              <CardContent className="pt-0">
+                <p className="line-clamp-3 text-xs text-muted-foreground whitespace-pre-line">
+                  {existingPolicies.content}
+                </p>
+              </CardContent>
+            )}
+          </Card>
+
           {/* ── Free Text Knowledge ── */}
           <Card>
             <CardHeader>
@@ -1098,6 +1376,182 @@ export function AiSettingsClient({
                   </>
                 ) : (
                   t("businessHours.save")
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── FAQs Dialog ── */}
+      <Dialog open={showFaqsDialog} onOpenChange={setShowFaqsDialog}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("faqs.dialogTitle")}</DialogTitle>
+            <DialogDescription>
+              {t("faqs.dialogDescription")}
+            </DialogDescription>
+          </DialogHeader>
+          <form action={faqsAction}>
+            <input type="hidden" name="organizationId" value={selectedOrgId} />
+            <input type="hidden" name="category" value="faqs" />
+            <input type="hidden" name="knowledgeId" value={existingFaqs?.id ?? ""} />
+            <input type="hidden" name="structuredData" value={JSON.stringify(faqsData)} />
+            <div className="py-2">
+              <FAQsForm
+                data={faqsData}
+                onChange={setFaqsData}
+                t={(key, values) => t(`faqs.${key}`, values as Record<string, string | number | Date> | undefined)}
+              />
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowFaqsDialog(false)}
+              >
+                {tCommon("cancel")}
+              </Button>
+              <Button type="submit" disabled={isFaqsSaving || faqsData.items.length === 0}>
+                {isFaqsSaving ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                    {t("faqs.saving")}
+                  </>
+                ) : (
+                  t("faqs.save")
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Pricing Dialog ── */}
+      <Dialog open={showPricingDialog} onOpenChange={setShowPricingDialog}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("pricing.dialogTitle")}</DialogTitle>
+            <DialogDescription>
+              {t("pricing.dialogDescription")}
+            </DialogDescription>
+          </DialogHeader>
+          <form action={pricingAction}>
+            <input type="hidden" name="organizationId" value={selectedOrgId} />
+            <input type="hidden" name="category" value="pricing" />
+            <input type="hidden" name="knowledgeId" value={existingPricing?.id ?? ""} />
+            <input type="hidden" name="structuredData" value={JSON.stringify(pricingData)} />
+            <div className="py-2">
+              <PricingForm
+                data={pricingData}
+                onChange={setPricingData}
+                t={(key, values) => t(`pricing.${key}`, values as Record<string, string | number | Date> | undefined)}
+              />
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowPricingDialog(false)}
+              >
+                {tCommon("cancel")}
+              </Button>
+              <Button type="submit" disabled={isPricingSaving || pricingData.items.length === 0}>
+                {isPricingSaving ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                    {t("pricing.saving")}
+                  </>
+                ) : (
+                  t("pricing.save")
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Location & Contact Dialog ── */}
+      <Dialog open={showLocationDialog} onOpenChange={setShowLocationDialog}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("locationContact.dialogTitle")}</DialogTitle>
+            <DialogDescription>
+              {t("locationContact.dialogDescription")}
+            </DialogDescription>
+          </DialogHeader>
+          <form action={locationAction}>
+            <input type="hidden" name="organizationId" value={selectedOrgId} />
+            <input type="hidden" name="category" value="location_contact" />
+            <input type="hidden" name="knowledgeId" value={existingLocation?.id ?? ""} />
+            <input type="hidden" name="structuredData" value={JSON.stringify(locationData)} />
+            <div className="py-2">
+              <LocationContactForm
+                data={locationData}
+                onChange={setLocationData}
+                t={(key, values) => t(`locationContact.${key}`, values as Record<string, string | number | Date> | undefined)}
+              />
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowLocationDialog(false)}
+              >
+                {tCommon("cancel")}
+              </Button>
+              <Button type="submit" disabled={isLocationSaving}>
+                {isLocationSaving ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                    {t("locationContact.saving")}
+                  </>
+                ) : (
+                  t("locationContact.save")
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Policies Dialog ── */}
+      <Dialog open={showPoliciesDialog} onOpenChange={setShowPoliciesDialog}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("policies.dialogTitle")}</DialogTitle>
+            <DialogDescription>
+              {t("policies.dialogDescription")}
+            </DialogDescription>
+          </DialogHeader>
+          <form action={policiesAction}>
+            <input type="hidden" name="organizationId" value={selectedOrgId} />
+            <input type="hidden" name="category" value="policies" />
+            <input type="hidden" name="knowledgeId" value={existingPolicies?.id ?? ""} />
+            <input type="hidden" name="structuredData" value={JSON.stringify(policiesData)} />
+            <div className="py-2">
+              <PoliciesForm
+                data={policiesData}
+                onChange={setPoliciesData}
+                t={(key, values) => t(`policies.${key}`, values as Record<string, string | number | Date> | undefined)}
+              />
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowPoliciesDialog(false)}
+              >
+                {tCommon("cancel")}
+              </Button>
+              <Button type="submit" disabled={isPoliciesSaving || policiesData.items.length === 0}>
+                {isPoliciesSaving ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                    {t("policies.saving")}
+                  </>
+                ) : (
+                  t("policies.save")
                 )}
               </Button>
             </DialogFooter>
