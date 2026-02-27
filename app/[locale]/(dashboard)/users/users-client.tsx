@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Dialog,
@@ -50,9 +51,10 @@ interface SimpleOrg {
 interface UsersClientProps {
   users: SerializedUser[];
   organizations: SimpleOrg[];
+  currentUserId: string;
 }
 
-export function UsersClient({ users, organizations }: UsersClientProps) {
+export function UsersClient({ users, organizations, currentUserId }: UsersClientProps) {
   const t = useTranslations("users");
   const tc = useTranslations("common");
   const te = useTranslations("admin");
@@ -61,6 +63,7 @@ export function UsersClient({ users, organizations }: UsersClientProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<SerializedUser | null>(null);
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  const [isSuperAdminValue, setIsSuperAdminValue] = useState(false);
   const [orgValue, setOrgValue] = useState("");
   const [roleValue, setRoleValue] = useState("admin");
   const [showPassword, setShowPassword] = useState(false);
@@ -140,6 +143,7 @@ export function UsersClient({ users, organizations }: UsersClientProps) {
 
   const openCreate = () => {
     setEditingUser(null);
+    setIsSuperAdminValue(false);
     setOrgValue("");
     setRoleValue("admin");
     setShowPassword(false);
@@ -150,7 +154,8 @@ export function UsersClient({ users, organizations }: UsersClientProps) {
 
   const openEdit = (user: SerializedUser) => {
     setEditingUser(user);
-    setOrgValue(user.membership?.organizationId || "");
+    setIsSuperAdminValue(user.isSuperAdmin);
+    setOrgValue(user.isSuperAdmin ? "" : (user.membership?.organizationId || ""));
     setRoleValue(user.membership?.role || "admin");
     setDialogOpen(true);
   };
@@ -259,7 +264,7 @@ export function UsersClient({ users, organizations }: UsersClientProps) {
                     })}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {!u.isSuperAdmin && (
+                    {u.id !== currentUserId && (
                       <div className="flex items-center justify-end gap-1">
                         <Button
                           variant="ghost"
@@ -402,37 +407,47 @@ export function UsersClient({ users, organizations }: UsersClientProps) {
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="organizationId">{t("organization")}</Label>
-              <Select
-                name="organizationId"
-                value={orgValue}
-                onValueChange={setOrgValue}
-              >
-                <SelectTrigger className="bg-background">
-                  <SelectValue placeholder={t("selectOrganization")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">{t("noOrganization")}</SelectItem>
-                  {organizations.map((org) => (
-                    <SelectItem key={org.id} value={org.id}>
-                      {org.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Super Admin toggle */}
+            <div className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
+              <div className="space-y-0.5">
+                <Label htmlFor="isSuperAdmin" className="text-sm font-medium">
+                  <Shield className="mr-1.5 inline-block h-3.5 w-3.5 text-amber-500" />
+                  {t("makeSuperAdmin")}
+                </Label>
+                <p className="text-[11px] text-muted-foreground">{t("makeSuperAdminHint")}</p>
+              </div>
+              <Switch
+                id="isSuperAdmin"
+                checked={isSuperAdminValue}
+                onCheckedChange={(checked) => {
+                  setIsSuperAdminValue(checked);
+                  if (checked) {
+                    setOrgValue("");
+                  }
+                }}
+              />
             </div>
+            <input type="hidden" name="isSuperAdmin" value={isSuperAdminValue ? "true" : ""} />
 
-            {orgValue && orgValue !== "none" && (
+            {/* Organization — hidden when Super Admin is on */}
+            {!isSuperAdminValue && (
               <div className="space-y-2">
-                <Label htmlFor="role">{t("role")}</Label>
-                <Select name="role" value={roleValue} onValueChange={setRoleValue}>
+                <Label htmlFor="organizationId">{t("organization")}</Label>
+                <Select
+                  name="organizationId"
+                  value={orgValue}
+                  onValueChange={setOrgValue}
+                >
                   <SelectTrigger className="bg-background">
-                    <SelectValue placeholder={t("selectRole")} />
+                    <SelectValue placeholder={t("selectOrganization")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="admin">{t("roles.admin")}</SelectItem>
-                    <SelectItem value="agent">{t("roles.agent")}</SelectItem>
+                    <SelectItem value="none">{t("noOrganization")}</SelectItem>
+                    {organizations.map((org) => (
+                      <SelectItem key={org.id} value={org.id}>
+                        {org.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

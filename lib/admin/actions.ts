@@ -182,14 +182,16 @@ const createUserSchema = z.object({
   fullName: z.string().min(1).max(100),
   password: z.string().min(8).max(128),
   organizationId: z.string().uuid().optional().or(z.literal("")),
-  role: z.enum(["admin", "agent"]).optional(),
+  role: z.enum(["admin"]).optional(),
+  isSuperAdmin: z.coerce.boolean().optional(),
 });
 
 const updateUserSchema = z.object({
   id: z.string().uuid(),
   fullName: z.string().min(1).max(100),
   organizationId: z.string().uuid().optional().or(z.literal("")),
-  role: z.enum(["admin", "agent"]).optional(),
+  role: z.enum(["admin"]).optional(),
+  isSuperAdmin: z.coerce.boolean().optional(),
 });
 
 export async function createUser(
@@ -205,6 +207,7 @@ export async function createUser(
       password: formData.get("password"),
       organizationId: formData.get("organizationId") || "",
       role: formData.get("role") || undefined,
+      isSuperAdmin: formData.get("isSuperAdmin") || undefined,
     });
 
     if (!parsed.success) {
@@ -235,25 +238,29 @@ export async function createUser(
 
     // Step 2: Create in Prisma (with rollback if fails)
     try {
+      const isSuperAdmin = parsed.data.isSuperAdmin ?? false;
+
       await prisma.user.create({
         data: {
           id: supabaseUserId,
           email: parsed.data.email,
           fullName: parsed.data.fullName,
-          isSuperAdmin: false,
+          isSuperAdmin,
         },
       });
 
-      // Step 3: Assign to organization if specified
-      const orgId = parsed.data.organizationId;
-      if (orgId && orgId !== "") {
-        await prisma.organizationMember.create({
-          data: {
-            userId: supabaseUserId,
-            organizationId: orgId,
-            role: parsed.data.role || "admin",
-          },
-        });
+      // Step 3: Assign to organization if specified (skip for super admins)
+      if (!isSuperAdmin) {
+        const orgId = parsed.data.organizationId;
+        if (orgId && orgId !== "") {
+          await prisma.organizationMember.create({
+            data: {
+              userId: supabaseUserId,
+              organizationId: orgId,
+              role: parsed.data.role || "admin",
+            },
+          });
+        }
       }
     } catch (e) {
       // Rollback: delete from Supabase Auth if Prisma fails
@@ -282,26 +289,34 @@ export async function updateUser(
       fullName: formData.get("fullName"),
       organizationId: formData.get("organizationId") || "",
       role: formData.get("role") || undefined,
+      isSuperAdmin: formData.get("isSuperAdmin") || undefined,
     });
 
     if (!parsed.success) {
       return { error: "createFailed" };
     }
 
+    const isSuperAdmin = parsed.data.isSuperAdmin ?? false;
+
     // Atomic: update name + membership in a single transaction
     await prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: parsed.data.id },
-        data: { fullName: parsed.data.fullName },
+        data: {
+          fullName: parsed.data.fullName,
+          isSuperAdmin,
+        },
       });
 
       const orgId = parsed.data.organizationId;
 
+      // Always clean up existing memberships
       await tx.organizationMember.deleteMany({
         where: { userId: parsed.data.id },
       });
 
-      if (orgId && orgId !== "") {
+      // Only create new membership if not super admin
+      if (!isSuperAdmin && orgId && orgId !== "") {
         await tx.organizationMember.create({
           data: {
             userId: parsed.data.id,

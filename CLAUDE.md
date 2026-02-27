@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.3.6 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.3.8 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -73,4 +73,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.3.6** - Smart Knowledge Categories: FAQs, Pricing/Services, Location & Contact, Policies. Each category: type file with Zod schema + `composeText()` for RAG, form component (accordion for FAQs/Policies, card rows for Pricing, structured form for Location), ~80 i18n keys (EN+ES). Generic `upsertStructuredKnowledge` server action dispatches by category. No SQL migration needed — existing `category VARCHAR(50)` + `structured_data JSONB` columns. Knowledge Base tab now has 6 categories (Business Hours + 4 new + Free Text). Accordion component (`components/ui/accordion.tsx`) via Radix UI. Prominent active tab styling with teal border + indicator bar. Pendiente: rate limiting (Upstash Redis — deferred a produccion), mock data removal, typing indicators, handoffEnabled toggle funcional (future).
+**v0.3.8** - Post-Chat Experience (frontend). Widget Appearance Customization (v0.3.7): per-channel colors + bilingual header texts in `Channel.config.widgetAppearance` JSONB, live preview (60/40 split), `GET /api/widget/config` endpoint, embed code card. Post-Chat Settings (v0.3.8): 4th tab in AI Settings — transcript email toggle, rating toggle, CC email, logo URL, bilingual email template customization (subject/greeting/closing/footer), live email preview with EN/ES toggle. Types + Zod in `lib/widget/post-chat.ts`, server action `upsertPostChatSettings`. Pendiente backend: Resend integration, `POST /api/widget/transcript`, `POST /api/widget/rating`, widget JS multi-step flow, Supabase Storage for logo upload. Otros pendientes: rate limiting (Upstash Redis — deferred), mock data removal, typing indicators.

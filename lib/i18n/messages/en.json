@@ -591,14 +591,13 @@
     "pwNumber": "One number",
     "pwSymbol": "One special character (!@#$...)",
     "selectOrganization": "Select organization",
-    "selectRole": "Select role",
     "roles": {
-      "admin": "Admin",
-      "agent": "Agent",
-      "owner": "Owner"
+      "admin": "Admin"
     },
     "superAdmin": "Super Admin",
     "noOrganization": "No organization",
+    "makeSuperAdmin": "Super Admin",
+    "makeSuperAdminHint": "Full platform access — no organization needed",
     "deleteConfirm": "Are you sure you want to delete this user? This action cannot be undone.",
     "deleteConfirmDescription": "This will permanently remove the user from the platform."
   },

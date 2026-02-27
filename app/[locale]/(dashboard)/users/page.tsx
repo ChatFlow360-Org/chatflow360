@@ -43,5 +43,5 @@ export default async function UsersPage() {
     name: org.name,
   }));
 
-  return <UsersClient users={serializedUsers} organizations={serializedOrgs} />;
+  return <UsersClient users={serializedUsers} organizations={serializedOrgs} currentUserId={user.id} />;
 }
