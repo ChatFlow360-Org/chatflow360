@@ -8,10 +8,12 @@ import {
   Building2,
   Plus,
   Trash2,
+  Bot,
   BookOpen,
   FileText,
   Loader2,
   Pencil,
+  Palette,
   LayoutTemplate,
   AlertTriangle,
   ChevronDown,
@@ -440,9 +442,18 @@ export function AiSettingsClient({
       {/* Tabs */}
       <Tabs defaultValue="instructions">
         <TabsList>
-          <TabsTrigger value="instructions">{t("tabs.instructions")}</TabsTrigger>
-          <TabsTrigger value="knowledge">{t("tabs.knowledge")}</TabsTrigger>
-          <TabsTrigger value="appearance">{t("tabs.appearance")}</TabsTrigger>
+          <TabsTrigger value="instructions" className="group/tab">
+            <Bot className="h-4 w-4" />
+            <span className="hidden group-data-[state=active]/tab:inline sm:inline">{t("tabs.instructions")}</span>
+          </TabsTrigger>
+          <TabsTrigger value="knowledge" className="group/tab">
+            <BookOpen className="h-4 w-4" />
+            <span className="hidden group-data-[state=active]/tab:inline sm:inline">{t("tabs.knowledge")}</span>
+          </TabsTrigger>
+          <TabsTrigger value="appearance" className="group/tab">
+            <Palette className="h-4 w-4" />
+            <span className="hidden group-data-[state=active]/tab:inline sm:inline">{t("tabs.appearance")}</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* ── Instructions Tab ── */}

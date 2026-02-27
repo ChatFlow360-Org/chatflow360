@@ -131,7 +131,7 @@ export function AppearanceForm({
         </div>
       )}
 
-      {/* Texts Section */}
+      {/* Texts Section — full width */}
       <Card>
         <CardHeader className="pb-4">
           <CardTitle className="text-base">{t("sectionTexts")}</CardTitle>
@@ -168,105 +168,108 @@ export function AppearanceForm({
         </CardContent>
       </Card>
 
-      {/* Header Section */}
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="text-base">{t("sectionHeader")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <ColorRow
-            label={t("headerColor")}
-            value={appearance.headerColor}
-            onChange={(v) => update("headerColor", v)}
-          />
-          <Separator />
-          <ColorRow
-            label={t("headerIconColor")}
-            value={appearance.headerIconColor}
-            onChange={(v) => update("headerIconColor", v)}
-          />
-        </CardContent>
-      </Card>
+      {/* Color Sections — 2-col grid on desktop */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {/* Header */}
+        <Card>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base">{t("sectionHeader")}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <ColorRow
+              label={t("headerColor")}
+              value={appearance.headerColor}
+              onChange={(v) => update("headerColor", v)}
+            />
+            <Separator />
+            <ColorRow
+              label={t("headerIconColor")}
+              value={appearance.headerIconColor}
+              onChange={(v) => update("headerIconColor", v)}
+            />
+          </CardContent>
+        </Card>
 
-      {/* Floating Button Section */}
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="text-base">
-            {t("sectionFloatingButton")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <ColorRow
-            label={t("bubbleColor")}
-            value={appearance.bubbleColor}
-            onChange={(v) => update("bubbleColor", v)}
-          />
-          <Separator />
-          <ColorRow
-            label={t("bubbleIconColor")}
-            value={appearance.bubbleIconColor}
-            onChange={(v) => update("bubbleIconColor", v)}
-          />
-        </CardContent>
-      </Card>
+        {/* Floating Button */}
+        <Card>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base">
+              {t("sectionFloatingButton")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <ColorRow
+              label={t("bubbleColor")}
+              value={appearance.bubbleColor}
+              onChange={(v) => update("bubbleColor", v)}
+            />
+            <Separator />
+            <ColorRow
+              label={t("bubbleIconColor")}
+              value={appearance.bubbleIconColor}
+              onChange={(v) => update("bubbleIconColor", v)}
+            />
+          </CardContent>
+        </Card>
 
-      {/* Visitor Messages Section */}
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="text-base">
-            {t("sectionVisitorBubble")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <ColorRow
-            label={t("visitorBubbleBg")}
-            value={appearance.visitorBubbleBg}
-            onChange={(v) => update("visitorBubbleBg", v)}
-          />
-          <Separator />
-          <ColorRow
-            label={t("visitorBubbleText")}
-            value={appearance.visitorBubbleText}
-            onChange={(v) => update("visitorBubbleText", v)}
-          />
-        </CardContent>
-      </Card>
+        {/* Visitor Messages */}
+        <Card>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base">
+              {t("sectionVisitorBubble")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <ColorRow
+              label={t("visitorBubbleBg")}
+              value={appearance.visitorBubbleBg}
+              onChange={(v) => update("visitorBubbleBg", v)}
+            />
+            <Separator />
+            <ColorRow
+              label={t("visitorBubbleText")}
+              value={appearance.visitorBubbleText}
+              onChange={(v) => update("visitorBubbleText", v)}
+            />
+          </CardContent>
+        </Card>
 
-      {/* AI/Agent Messages Section */}
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="text-base">{t("sectionAiBubble")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <ColorRow
-            label={t("aiBubbleBg")}
-            value={appearance.aiBubbleBg}
-            onChange={(v) => update("aiBubbleBg", v)}
-          />
-          <Separator />
-          <ColorRow
-            label={t("aiBubbleText")}
-            value={appearance.aiBubbleText}
-            onChange={(v) => update("aiBubbleText", v)}
-          />
-        </CardContent>
-      </Card>
+        {/* AI/Agent Messages */}
+        <Card>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base">{t("sectionAiBubble")}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <ColorRow
+              label={t("aiBubbleBg")}
+              value={appearance.aiBubbleBg}
+              onChange={(v) => update("aiBubbleBg", v)}
+            />
+            <Separator />
+            <ColorRow
+              label={t("aiBubbleText")}
+              value={appearance.aiBubbleText}
+              onChange={(v) => update("aiBubbleText", v)}
+            />
+          </CardContent>
+        </Card>
 
-      {/* Send Button Section */}
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="text-base">
-            {t("sectionSendButton")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ColorRow
-            label={t("sendButtonColor")}
-            value={appearance.sendButtonColor}
-            onChange={(v) => update("sendButtonColor", v)}
-          />
-        </CardContent>
-      </Card>
+        {/* Send Button — spans full width on its own */}
+        <Card className="sm:col-span-2">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base">
+              {t("sectionSendButton")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ColorRow
+              label={t("sendButtonColor")}
+              value={appearance.sendButtonColor}
+              onChange={(v) => update("sendButtonColor", v)}
+            />
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Actions */}
       <div className="flex items-center justify-between gap-4">
