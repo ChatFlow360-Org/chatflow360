@@ -49,6 +49,12 @@
 - **Super admins can create other super admins** from the dashboard UI
 - **Self-edit/delete protection** — users cannot edit or delete their own account from the Users page
 - **Edit other super admins** — previously blocked; now allowed (except self)
+- **Role dropdown** — appears when an organization is selected, pre-selects "Admin" (future-ready for additional roles)
+
+### Database Connection Pool Fix
+
+- **PrismaPg pool limit** — set `max: 2` connections per serverless instance to prevent PgBouncer saturation (`MaxClientsInSessionMode` error)
+- **Supabase PgBouncer Transaction mode** — switched `DATABASE_URL` from port 5432 (Session mode) to port 6543 (Transaction mode) with `?pgbouncer=true` — correct mode for serverless environments
 
 ---
 
