@@ -1,6 +1,6 @@
 # ChatFlow360 - Security Checklist
 
-> Auditoria de seguridad del proyecto. Actualizado en v0.3.9 (2026-03-01).
+> Auditoria de seguridad del proyecto. Actualizado en v0.3.9 (2026-03-01) — Security Hardening commit c7ecb58.
 > Audit completo: `docs/SECURITY-AUDIT-v0.2.2.md` (21 findings, OWASP ASVS v4.0)
 
 ## Security Model — 3 Layers (v0.3.3)
@@ -156,7 +156,7 @@ Without `setAuth`, all Realtime subscriptions on RLS-enabled tables silently rec
 
 | ID | Severidad | Issue | Accion | Esfuerzo |
 |----|-----------|-------|--------|----------|
-| MED-02 | Medio | Sin rate limiting en login y widget API | `@upstash/ratelimit` + Redis — deferred to production phase (not needed during MVP/testing). Will use `@upstash/ratelimit` for per-IP limiting on `/api/chat` endpoints to protect against API abuse and OpenAI token exhaustion. | 30-60 min |
+| CRIT-01 | Critico | Sin rate limiting en login y widget API | `@upstash/ratelimit` + Redis — deferred to production phase (not needed during MVP/testing). Will use `@upstash/ratelimit` for per-IP limiting on `/api/chat` endpoints to protect against API abuse and OpenAI token exhaustion. | 30-60 min |
 | ~~MED-03~~ | ~~Medio~~ | ~~Sin CORS infrastructure~~ | **Resuelto en v0.3.1/v0.3.2** — `lib/api/cors.ts` implementado con PATCH support; synced with `next.config.ts` | Done |
 
 ### Resuelto en v0.3.3 (Security Fixes — Cascade, TOCTOU, AutoComplete)
@@ -175,11 +175,24 @@ Without `setAuth`, all Realtime subscriptions on RLS-enabled tables silently rec
 | SEC-RT-01 | Bajo | Transcript endpoint expone detalles del template de email | `GET /api/widget/config` retorna solo `{ enableRating, enableTranscript }` — ningun campo de template, logo, ni email CC se expone al browser |
 | SEC-RT-02 | Bajo | Content injection en HTML de email | `escapeHtml()` aplicado a todos los campos variables en `lib/email/transcript.ts` (visitor name, org name, message content, labels) |
 
+## Resuelto en v0.3.9 (Security Hardening — commit c7ecb58)
+
+| ID | Severidad | Issue | Solucion |
+|----|-----------|-------|----------|
+| CRIT-02 | Critico | Transcript endpoint sin proteccion anti-spam | `POST /api/widget/transcript` verifica `conversation.metadata.transcriptSent` antes de enviar. Si el flag esta activo retorna 409. Flag se escribe atomicamente despues de Resend delivery exitoso. |
+| HIGH-01 | Alto | Tenant isolation faltante en server actions admin | `getConversationMessages`, `closeConversation`, `sendAgentMessage` en `lib/admin/actions.ts` ahora filtran por `organizationId` del usuario autenticado. Un org admin no puede acceder a datos de otra org aunque tenga un `conversationId` valido. |
+| HIGH-03 | Alto | Header injection via orgName en email From | `orgName` sanitizado antes de interpolar en campo `from` de Resend: strip de caracteres de control ASCII (0x00-0x1F, 0x7F), remocion de angle brackets, truncado a 50 chars. |
+| MED-02 | Medio | `logoUrl` aceptaba cualquier URL | Schema Zod de `logoUrl` ahora solo acepta: string vacio, URLs HTTPS (`https://…`), o data URIs (`data:image/…`). HTTP y otros esquemas rechazados con error de validacion. |
+| MED-03 | Medio | Body size check confiaba en header `Content-Length` (spoofable) | Todas las rutas POST/PATCH del widget ahora leen el body con `request.text()` y verifican el tamaño real antes de parsear. Aplica a: `POST /api/chat`, `PATCH /api/chat/[id]`, `POST /api/widget/rating`, `POST /api/widget/transcript`. |
+| MED-04 | Medio | CSS injection via colores del widget config | Funcion `safeHex()` agregada a `chatflow360.js`. Valida cada color de `/api/widget/config` contra regex `#RGB`/`#RRGGBB` antes de interpolarlo en estilos CSS inline. Fallback a color seguro si no pasa validacion. |
+| MED-06 | Medio | Sin limite en query de mensajes por conversacion | `getConversationMessages` ahora usa `take: 200` en la query Prisma. Previene agotamiento de memoria en conversaciones muy largas. |
+| LOW-04 | Bajo | `escapeHtml()` no escapaba comillas simples | `escapeHtml()` en `lib/email/transcript.ts` ahora escapa `'` → `&#39;`. Cierra vector XSS menor en valores de atributos HTML dentro del email renderer. |
+
 ## Pendiente: Phase 3 (Pendientes restantes)
 
 | ID | Severidad | Issue | Accion | Esfuerzo |
 |----|-----------|-------|--------|----------|
-| MED-06 | Medio | Channel update sin ownership check | Verificar org membership cuando RBAC exista | 15 min |
+| MED-05-CH | Medio | Channel update sin ownership check | Verificar org membership cuando RBAC exista | 15 min |
 | LOW-03 | Bajo | Translation keys dinamicas | Set de error keys conocidos como safeguard (riesgo teorico — keys hardcodeadas en server actions) | 10 min |
 
 ## Pendiente: Backend Original (de v0.1.8)
@@ -219,6 +232,9 @@ Without `setAuth`, all Realtime subscriptions on RLS-enabled tables silently rec
 - [x] `requireSuperAdmin()` guard en todas las acciones admin
 - [x] Error responses genericas (no exponer stack traces)
 - [x] Logging de errores server-side (`console.error("[fn]")`)
+- [x] Tenant isolation en server actions admin: `getConversationMessages`, `closeConversation`, `sendAgentMessage` filtran por `organizationId` (HIGH-01, v0.3.9)
+- [x] Body size check via `request.text()` real read — no confiar en `Content-Length` header (MED-03, v0.3.9)
+- [x] Transcript anti-spam: 1 transcript por conversacion via `metadata.transcriptSent` flag (CRIT-02, v0.3.9)
 - [ ] Rate limiting con `@upstash/ratelimit`
 
 ### OpenAI / IA
@@ -243,7 +259,9 @@ Without `setAuth`, all Realtime subscriptions on RLS-enabled tables silently rec
 - [ ] Rate limit por IP para el widget publico
 - [x] No exponer datos internos via `GET /api/widget/config` — solo `enableRating` y `enableTranscript` se exponen (v0.3.9)
 - [x] `POST /api/widget/rating` — body size limit 1KB, Zod validation, ownership check (visitorId match), escapeHtml en email HTML
-- [x] `POST /api/widget/transcript` — body size limit 4KB, Zod validation, ownership check, `enableTranscript` feature gate, escapeHtml en todo el HTML del email
+- [x] `POST /api/widget/transcript` — body size limit 4KB, Zod validation, ownership check, `enableTranscript` feature gate, anti-spam flag, escapeHtml en todo el HTML del email (incluyendo single quotes)
+- [x] Widget CSS color sanitization — `safeHex()` valida colores de config antes de interpolacion CSS (MED-04, v0.3.9)
+- [x] `logoUrl` Zod validation — solo HTTPS URLs, data:image/ URIs, o string vacio (MED-02, v0.3.9)
 - [ ] CSP del widget: restringir a dominio de ChatFlow360
 
 ### Variables de Entorno

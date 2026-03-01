@@ -12,6 +12,7 @@ import {
   Mail,
   ImageIcon,
 } from "lucide-react";
+import { LogoCropModal } from "@/components/widget/logo-crop-modal";
 import {
   Card,
   CardContent,
@@ -65,6 +66,8 @@ export function PostChatForm({
   } | null>(null);
 
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   // Form state
   const [settings, setSettings] = useState<Required<PostChatSettings>>(() => ({
@@ -191,23 +194,19 @@ export function PostChatForm({
           <input
             ref={logoInputRef}
             type="file"
-            accept="image/png,image/svg+xml,image/jpeg,image/webp"
+            accept="image/png,image/jpeg,image/webp"
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (!file) return;
-              if (file.size > 100_000) {
+              if (file.size > 2 * 1024 * 1024) {
                 setFeedback({ type: "error", msg: t("logoTooLarge") });
                 setTimeout(() => setFeedback(null), 3000);
+                e.target.value = "";
                 return;
               }
-              const reader = new FileReader();
-              reader.onload = () => {
-                if (typeof reader.result === "string") {
-                  update("logoUrl", reader.result);
-                }
-              };
-              reader.readAsDataURL(file);
+              const url = URL.createObjectURL(file);
+              setCropSrc(url);
               e.target.value = "";
             }}
           />
@@ -221,43 +220,88 @@ export function PostChatForm({
                   className="max-h-16 object-contain"
                 />
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => update("logoUrl", "")}
-                className="w-full"
-              >
-                {t("removeLogo")}
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <button
-                type="button"
-                onClick={() => logoInputRef.current?.click()}
-                className="w-full rounded-lg border-2 border-dashed border-border/60 bg-muted/20 p-6 text-center hover:border-cta/40 hover:bg-muted/30 transition-colors cursor-pointer"
-              >
-                <Upload className="mx-auto h-8 w-8 text-muted-foreground/50" />
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {t("logoDropzone")}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground/70">
-                  {t("logoDimensions")}
-                </p>
-              </button>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">
-                  {t("logoUrlLabel")}
-                </Label>
-                <Input
-                  value={settings.logoUrl}
-                  onChange={(e) => update("logoUrl", e.target.value)}
-                  placeholder={t("logoUrlPlaceholder")}
-                  className="text-xs"
-                />
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => logoInputRef.current?.click()}
+                  disabled={uploading}
+                  className="flex-1"
+                >
+                  <Upload className="mr-1.5 h-4 w-4" />
+                  {t("changeLogo")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => update("logoUrl", "")}
+                  disabled={uploading}
+                  className="flex-1"
+                >
+                  {t("removeLogo")}
+                </Button>
               </div>
             </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => logoInputRef.current?.click()}
+              disabled={uploading}
+              className="w-full rounded-lg border-2 border-dashed border-border/60 bg-muted/20 p-6 text-center hover:border-cta/40 hover:bg-muted/30 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {uploading ? (
+                <Loader2 className="mx-auto h-8 w-8 text-muted-foreground/50 animate-spin" />
+              ) : (
+                <Upload className="mx-auto h-8 w-8 text-muted-foreground/50" />
+              )}
+              <p className="mt-2 text-sm text-muted-foreground">
+                {uploading ? t("logoUploading") : t("logoDropzone")}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground/70">
+                {t("logoDimensions")}
+              </p>
+            </button>
+          )}
+
+          {/* Crop Modal */}
+          {cropSrc && (
+            <LogoCropModal
+              open={!!cropSrc}
+              imageSrc={cropSrc}
+              onClose={() => {
+                URL.revokeObjectURL(cropSrc);
+                setCropSrc(null);
+              }}
+              onCropped={async (blob) => {
+                URL.revokeObjectURL(cropSrc);
+                setCropSrc(null);
+                setUploading(true);
+                try {
+                  const form = new FormData();
+                  form.append("file", blob, "logo.png");
+                  const res = await fetch(
+                    `/api/upload/logo?channelId=${channelId}`,
+                    { method: "POST", body: form }
+                  );
+                  if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || "Upload failed");
+                  }
+                  const { url } = await res.json();
+                  update("logoUrl", url);
+                } catch (err) {
+                  setFeedback({
+                    type: "error",
+                    msg: err instanceof Error ? err.message : t("saveError"),
+                  });
+                  setTimeout(() => setFeedback(null), 3000);
+                } finally {
+                  setUploading(false);
+                }
+              }}
+            />
           )}
         </CardContent>
       </Card>

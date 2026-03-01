@@ -175,10 +175,12 @@ POST  /api/widget/transcript             # Generar y enviar email de transcripci
 **POST /api/widget/transcript:**
 - Body: `{ conversationId: UUID, visitorId: UUID, email: string, name: string, lang: "en" | "es" }` — validado con `transcriptSchema` (Zod)
 - Verifica ownership, verifica `enableTranscript` en `Channel.config.postChatSettings`
-- Fetch de messages + channel config + org name via Prisma
-- Renderiza HTML email via `lib/email/transcript.ts`
+- **Anti-spam:** verifica `conversation.metadata.transcriptSent` — retorna 409 si ya se envio un transcript para esta conversacion. Flag escrito atomicamente post-envio exitoso.
+- Fetch de messages (max 200) + channel config + org name via Prisma
+- Renderiza HTML email via `lib/email/transcript.ts` (`escapeHtml` aplicado a todos los campos variables incluyendo comillas simples)
+- **`orgName` sanitizado** en campo `from`: strip control chars, remocion de `<>`, max 50 chars (header injection prevention)
 - Envia via Resend: `from: "{orgName} <noreply@chatflow360.com>"`, `to: [visitor email]`, `cc: [ccEmail si configurado]`
-- Body size limit: 4KB
+- Body size: verificado via `request.text()` (no confia en `Content-Length` header), limite 4KB
 
 ### Dashboard — Server Actions (Implementadas)
 
@@ -191,7 +193,7 @@ lib/admin/actions.ts:
   - CRUD Channels (create, update, delete — plan limits enforced)
   - upsertAiSettings (AI config per org)
   - upsertPlatformKey (global API key — super_admin)
-  - getConversationMessages (fetch messages by conversation)
+  - getConversationMessages (fetch messages by conversation — max 200, org-scoped tenant isolation)
   - createPromptTemplate, updatePromptTemplate, deletePromptTemplate (super_admin — dual revalidatePath: /settings/ai + /prompt-templates)
   - upsertWidgetAppearance (widget colors + header texts per channel)
   - upsertPostChatSettings (post-chat config per channel)

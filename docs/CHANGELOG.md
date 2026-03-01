@@ -4,6 +4,42 @@
 
 ## v0.3.9 (2026-03-01)
 
+### Security Hardening (commit c7ecb58)
+
+#### Widget API — Transcript Anti-Spam (CRIT-02)
+- **1 transcript per conversation** — `POST /api/widget/transcript` now checks `conversation.metadata.transcriptSent` before sending. Returns 409 `{ error: "Transcript already sent" }` if flag is set. Flag is written atomically after successful Resend delivery.
+
+#### Tenant Isolation — Admin Server Actions (HIGH-01)
+- **`getConversationMessages`** — added `organizationId` filter so an org admin cannot fetch messages from another org's conversation even if they supply a valid `conversationId`
+- **`closeConversation`** — same `organizationId` guard; unauthorized close attempt returns `notAllowed` error
+- **`sendAgentMessage`** — same `organizationId` guard; agent cannot inject messages into a foreign conversation
+
+#### Email From Header Sanitization (HIGH-03)
+- **`orgName` sanitized** before interpolation into the Resend `from` field: strips ASCII control characters (0x00-0x1F, 0x7F), removes angle brackets (`<` `>`), truncates to 50 characters. Prevents header injection attacks via malicious org names.
+
+#### Logo URL Validation (MED-02)
+- **`logoUrl` Zod schema** now rejects arbitrary URLs. Accepts only: empty string, HTTPS URLs (`https://…`), or data URIs (`data:image/…`). HTTP URLs and blob/file schemes are rejected with a validation error.
+
+#### Body Size Check — Actual Read (MED-03)
+- **All 4 POST/PATCH widget routes** now read the request body via `request.text()` before parsing, checking actual byte length instead of trusting the `Content-Length` header (which can be spoofed). Applies to: `POST /api/chat`, `PATCH /api/chat/[id]`, `POST /api/widget/rating`, `POST /api/widget/transcript`.
+
+#### Widget CSS Color Sanitization (MED-04)
+- **`safeHex()` function** added to `chatflow360.js` — re-validates all color values fetched from `/api/widget/config` before interpolating into inline CSS styles. Accepts only `#RGB` and `#RRGGBB` formats. Falls back to a safe default if the value does not match the allowlist pattern. Prevents CSS injection via a compromised or man-in-the-middled config response.
+
+#### Conversation Messages Pagination Limit (MED-06)
+- **`getConversationMessages`** now caps results at **200 messages per request** via `take: 200` in the Prisma query. Prevents memory exhaustion on extremely long conversations.
+
+#### HTML Email — Single Quote Escaping (LOW-04)
+- **`escapeHtml()`** in `lib/email/transcript.ts` now escapes single quotes (`'` → `&#39;`). Closes a minor XSS vector in HTML attribute values within the email renderer.
+
+#### Logo Upload — Functional (UX)
+- **Base64 data URL flow** implemented — file picker opens on logo click, reads file as base64 data URI, stores in `PostChatSettings.logoUrl`, renders in email preview and sent emails. Max file size: 100KB (enforced client-side before encoding).
+
+#### Mock Data Cleanup
+- **`lib/mock/data.ts` deleted** — unused mock data file removed from the codebase. Dashboard uses server-fetched data exclusively.
+
+---
+
 ### Post-Chat Backend (End-to-End)
 
 #### Rating Endpoint

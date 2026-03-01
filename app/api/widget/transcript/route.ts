@@ -5,7 +5,9 @@ import { resolvePostChat } from "@/lib/widget/post-chat";
 import { renderTranscriptEmail } from "@/lib/email/transcript";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY!);
+}
 
 export async function OPTIONS() {
   return handleOptions();
@@ -105,7 +107,7 @@ export async function POST(request: Request) {
     const safeOrgName = orgName.replace(/[\r\n\t<>]/g, "").slice(0, 50);
 
     // Send via Resend
-    const { error } = await resend.emails.send({
+    const { error } = await getResend().emails.send({
       from: `${safeOrgName} <noreply@chatflow360.com>`,
       to,
       cc,

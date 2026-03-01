@@ -63,10 +63,10 @@ export const postChatSchema = z.object({
     z.string().email(),
     z.literal(""),
   ]).optional().default(""),
-  logoUrl: z.string().max(150_000)
+  logoUrl: z.string().max(500)
     .refine(
-      (val) => val === "" || val.startsWith("https://") || val.startsWith("data:image/"),
-      { message: "Logo must be an HTTPS URL or uploaded image" }
+      (val) => val === "" || (val.startsWith("https://") && val.includes(".supabase.co/")),
+      { message: "Logo must be uploaded via the dashboard" }
     )
     .optional().default(""),
   emailSubjectEn: z.string().max(100).optional().default(DEFAULT_POST_CHAT.emailSubjectEn),
