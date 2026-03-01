@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { handleOptions, jsonResponse, errorResponse } from "@/lib/api/cors";
 import { resolveAppearance } from "@/lib/widget/appearance";
+import { resolvePostChat } from "@/lib/widget/post-chat";
 
 export async function OPTIONS() {
   return handleOptions();
@@ -21,11 +22,17 @@ export async function GET(request: NextRequest) {
       return errorResponse("Channel not found", 404);
     }
 
-    const appearance = resolveAppearance(
-      channel.config as Record<string, unknown> | null,
-    );
+    const configObj = channel.config as Record<string, unknown> | null;
+    const appearance = resolveAppearance(configObj);
+    const postChatFull = resolvePostChat(configObj);
 
-    return jsonResponse({ appearance });
+    // Only expose what the widget needs (no email template details)
+    const postChat = {
+      enableRating: postChatFull.enableRating,
+      enableTranscript: postChatFull.enableTranscript,
+    };
+
+    return jsonResponse({ appearance, postChat });
   } catch (e) {
     console.error(
       "[widget/config]",

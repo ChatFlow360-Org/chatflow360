@@ -63,7 +63,18 @@
       endConversation: "End conversation",
       confirmEnd: "Are you sure you want to end this conversation?",
       yes: "Yes",
-      no: "No"
+      no: "No",
+      rateTitle: "How was your experience?",
+      rateThanks: "Thanks for your feedback!",
+      rateSkip: "Skip",
+      transcriptTitle: "Get a transcript via email",
+      transcriptName: "Your name",
+      transcriptEmail: "Your email",
+      transcriptSend: "Send transcript",
+      transcriptSkip: "No thanks",
+      transcriptSuccess: "Transcript sent! Check your inbox.",
+      transcriptError: "Could not send transcript. Please try again.",
+      postChatDone: "Conversation ended"
     },
     es: {
       chatWithUs: "Chatea con nosotros",
@@ -76,7 +87,18 @@
       endConversation: "Finalizar conversaci\u00f3n",
       confirmEnd: "\u00bfSeguro que deseas finalizar esta conversaci\u00f3n?",
       yes: "S\u00ed",
-      no: "No"
+      no: "No",
+      rateTitle: "\u00bfC\u00f3mo fue tu experiencia?",
+      rateThanks: "\u00a1Gracias por tu opinión!",
+      rateSkip: "Omitir",
+      transcriptTitle: "Recibe la transcripci\u00f3n por email",
+      transcriptName: "Tu nombre",
+      transcriptEmail: "Tu email",
+      transcriptSend: "Enviar transcripci\u00f3n",
+      transcriptSkip: "No, gracias",
+      transcriptSuccess: "\u00a1Transcripci\u00f3n enviada! Revisa tu bandeja.",
+      transcriptError: "No se pudo enviar. Int\u00e9ntalo de nuevo.",
+      postChatDone: "Conversaci\u00f3n finalizada"
     }
   };
 
@@ -182,7 +204,8 @@
     pollingTimer: null,
     lastMessageId: null,
     resolved: false,
-    realtimeConfig: null
+    realtimeConfig: null,
+    postChatConfig: null // fetched from /api/widget/config
   };
 
   // ─── Realtime Typing via Supabase Broadcast (Phoenix Channels) ──
@@ -538,6 +561,48 @@
       ".cf360-confirm-btn--yes{background:#ef4444;color:#fff;}",
       ".cf360-confirm-btn--no{background:#e2e8f0;color:#475569;}",
 
+      // Post-chat overlay
+      ".cf360-postchat{",
+      "  display:none;position:absolute;top:0;left:0;right:0;bottom:0;",
+      "  background:#ffffff;z-index:10;flex-direction:column;align-items:center;",
+      "  justify-content:center;padding:32px 24px;text-align:center;",
+      "}",
+      ".cf360-postchat--show{display:flex;}",
+      ".cf360-postchat-title{font-size:15px;font-weight:600;color:#1e293b;margin-bottom:20px;}",
+
+      // Rating stars
+      ".cf360-stars{display:flex;gap:6px;justify-content:center;margin-bottom:20px;}",
+      ".cf360-star{",
+      "  width:36px;height:36px;cursor:pointer;background:none;border:none;padding:0;",
+      "  transition:transform 0.15s;",
+      "}",
+      ".cf360-star:hover{transform:scale(1.2);}",
+      ".cf360-star svg{width:36px;height:36px;fill:#d1d5db;transition:fill 0.15s;}",
+      ".cf360-star--active svg{fill:#f59e0b;}",
+      ".cf360-star--hover svg{fill:#fbbf24;}",
+
+      // Transcript form
+      ".cf360-transcript-form{width:100%;max-width:260px;display:flex;flex-direction:column;gap:10px;}",
+      ".cf360-transcript-input{",
+      "  width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:8px;",
+      "  font-size:14px;font-family:inherit;outline:none;transition:border-color 0.15s;",
+      "  box-sizing:border-box;",
+      "}",
+      ".cf360-transcript-input:focus{border-color:" + primaryColor + ";}",
+      ".cf360-postchat-btn{",
+      "  padding:10px 20px;border:none;border-radius:8px;cursor:pointer;",
+      "  font-size:14px;font-family:inherit;font-weight:500;transition:all 0.15s;",
+      "}",
+      ".cf360-postchat-btn--primary{background:" + primaryColor + ";color:#fff;}",
+      ".cf360-postchat-btn--primary:hover{opacity:0.9;}",
+      ".cf360-postchat-btn--ghost{background:none;color:#6b7280;font-size:13px;}",
+      ".cf360-postchat-btn--ghost:hover{color:#1e293b;}",
+      ".cf360-postchat-actions{display:flex;flex-direction:column;gap:8px;width:100%;max-width:260px;margin-top:4px;}",
+      ".cf360-postchat-msg{font-size:14px;color:#6b7280;margin-bottom:12px;}",
+      ".cf360-postchat-check{width:48px;height:48px;margin-bottom:12px;}",
+      ".cf360-postchat-check svg{fill:#10b981;width:48px;height:48px;}",
+      ".cf360-postchat-error{color:#ef4444;}",
+
       // New conversation button
       ".cf360-new-conv{",
       "  padding:10px 16px;background:#f1f5f9;border:none;cursor:pointer;font-size:13px;",
@@ -592,7 +657,7 @@
 
   // ─── DOM Elements ─────────────────────────────────────────────────
   var container, bubble, badge, chatWindow, messagesArea, inputField, sendBtn;
-  var typingEl, connectingEl, newConvBtn, endConvEl, confirmEl, expandBtn;
+  var typingEl, connectingEl, newConvBtn, endConvEl, confirmEl, expandBtn, postChatEl;
   var isExpanded = false;
 
   function buildDOM() {
@@ -697,6 +762,10 @@
     confirmEl.appendChild(confirmText);
     confirmEl.appendChild(confirmActions);
     chatWindow.appendChild(confirmEl);
+
+    // Post-chat overlay (rating + transcript)
+    postChatEl = el("div", "cf360-postchat");
+    chatWindow.appendChild(postChatEl);
 
     // Footer
     var footer = el("div", "cf360-footer");
@@ -1158,6 +1227,8 @@
     state.resolved = false;
     endConvEl.classList.remove("cf360-end-conv--show");
     confirmEl.classList.remove("cf360-confirm--show");
+    postChatEl.classList.remove("cf360-postchat--show");
+    postChatEl.innerHTML = "";
     showWelcome();
     inputField.focus();
   }
@@ -1169,13 +1240,235 @@
 
   function confirmEndConversation() {
     confirmEl.classList.remove("cf360-confirm--show");
-    closeConversationApi(state.conversationId);
-    startNewConversation();
+    var closingConvId = state.conversationId;
+    closeConversationApi(closingConvId);
+
+    // Check if we have post-chat steps
+    var cfg = state.postChatConfig;
+    var hasRating = cfg && cfg.enableRating;
+    var hasTranscript = cfg && cfg.enableTranscript;
+
+    if (hasRating || hasTranscript) {
+      showPostChatFlow(closingConvId, hasRating, hasTranscript);
+    } else {
+      startNewConversation();
+    }
   }
 
   function cancelEndConversation() {
     confirmEl.classList.remove("cf360-confirm--show");
     endConvEl.classList.add("cf360-end-conv--show");
+  }
+
+  // ─── Post-Chat Multi-Step Flow ──────────────────────────────────
+
+  function showPostChatFlow(convId, showRating, showTranscript) {
+    // Hide input area and other controls
+    endConvEl.classList.remove("cf360-end-conv--show");
+    postChatEl.innerHTML = "";
+    postChatEl.classList.add("cf360-postchat--show");
+
+    if (showRating) {
+      showRatingStep(convId, showTranscript);
+    } else if (showTranscript) {
+      showTranscriptStep(convId);
+    }
+  }
+
+  function showRatingStep(convId, showTranscript) {
+    postChatEl.innerHTML = "";
+
+    var titleEl = el("div", "cf360-postchat-title");
+    titleEl.textContent = t("rateTitle");
+    postChatEl.appendChild(titleEl);
+
+    var starsContainer = el("div", "cf360-stars");
+    var selectedRating = 0;
+
+    var STAR_SVG = '<svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
+
+    for (var i = 1; i <= 5; i++) {
+      (function (rating) {
+        var starBtn = el("button", "cf360-star");
+        starBtn.type = "button";
+        starBtn.innerHTML = STAR_SVG;
+        starBtn.setAttribute("aria-label", rating + " star" + (rating > 1 ? "s" : ""));
+        starBtn.addEventListener("mouseenter", function () {
+          highlightStars(starsContainer, rating);
+        });
+        starBtn.addEventListener("mouseleave", function () {
+          highlightStars(starsContainer, selectedRating);
+        });
+        starBtn.addEventListener("click", function () {
+          selectedRating = rating;
+          highlightStars(starsContainer, rating);
+          // Submit rating
+          submitRating(convId, rating, showTranscript);
+        });
+        starsContainer.appendChild(starBtn);
+      })(i);
+    }
+    postChatEl.appendChild(starsContainer);
+
+    var skipBtn = el("button", "cf360-postchat-btn cf360-postchat-btn--ghost");
+    skipBtn.textContent = t("rateSkip");
+    skipBtn.type = "button";
+    skipBtn.addEventListener("click", function () {
+      if (showTranscript) {
+        showTranscriptStep(convId);
+      } else {
+        showPostChatDone();
+      }
+    });
+    postChatEl.appendChild(skipBtn);
+  }
+
+  function highlightStars(container, upTo) {
+    var stars = container.children;
+    for (var i = 0; i < stars.length; i++) {
+      if (i < upTo) {
+        stars[i].classList.add("cf360-star--active");
+      } else {
+        stars[i].classList.remove("cf360-star--active");
+      }
+    }
+  }
+
+  function submitRating(convId, rating, showTranscript) {
+    fetch(apiUrl("/api/widget/rating"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        conversationId: convId,
+        visitorId: visitorId,
+        rating: rating
+      })
+    }).catch(function () { /* fire-and-forget */ });
+
+    // Brief "thanks" then next step
+    postChatEl.innerHTML = "";
+    var msg = el("div", "cf360-postchat-msg");
+    msg.textContent = t("rateThanks");
+    postChatEl.appendChild(msg);
+
+    setTimeout(function () {
+      if (showTranscript) {
+        showTranscriptStep(convId);
+      } else {
+        showPostChatDone();
+      }
+    }, 1200);
+  }
+
+  function showTranscriptStep(convId) {
+    postChatEl.innerHTML = "";
+
+    var titleEl = el("div", "cf360-postchat-title");
+    titleEl.textContent = t("transcriptTitle");
+    postChatEl.appendChild(titleEl);
+
+    var form = el("div", "cf360-transcript-form");
+
+    var nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.className = "cf360-transcript-input";
+    nameInput.placeholder = t("transcriptName");
+    nameInput.maxLength = 100;
+    nameInput.setAttribute("autocomplete", "name");
+
+    var emailInput = document.createElement("input");
+    emailInput.type = "email";
+    emailInput.className = "cf360-transcript-input";
+    emailInput.placeholder = t("transcriptEmail");
+    emailInput.maxLength = 254;
+    emailInput.setAttribute("autocomplete", "email");
+
+    form.appendChild(nameInput);
+    form.appendChild(emailInput);
+    postChatEl.appendChild(form);
+
+    var actions = el("div", "cf360-postchat-actions");
+
+    var sendTranscriptBtn = el("button", "cf360-postchat-btn cf360-postchat-btn--primary");
+    sendTranscriptBtn.textContent = t("transcriptSend");
+    sendTranscriptBtn.type = "button";
+
+    var skipBtn = el("button", "cf360-postchat-btn cf360-postchat-btn--ghost");
+    skipBtn.textContent = t("transcriptSkip");
+    skipBtn.type = "button";
+
+    actions.appendChild(sendTranscriptBtn);
+    actions.appendChild(skipBtn);
+    postChatEl.appendChild(actions);
+
+    sendTranscriptBtn.addEventListener("click", function () {
+      var name = nameInput.value.trim();
+      var email = emailInput.value.trim();
+      if (!name || !email) return;
+      // Basic email validation
+      if (email.indexOf("@") === -1 || email.indexOf(".") === -1) return;
+
+      sendTranscriptBtn.disabled = true;
+      sendTranscriptBtn.textContent = "...";
+
+      fetch(apiUrl("/api/widget/transcript"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversationId: convId,
+          visitorId: visitorId,
+          email: email,
+          name: name,
+          lang: lang
+        })
+      })
+        .then(function (res) {
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          showTranscriptSuccess();
+        })
+        .catch(function () {
+          showTranscriptError(convId, sendTranscriptBtn);
+        });
+    });
+
+    skipBtn.addEventListener("click", function () {
+      showPostChatDone();
+    });
+
+    nameInput.focus();
+  }
+
+  function showTranscriptSuccess() {
+    postChatEl.innerHTML = "";
+
+    var checkEl = el("div", "cf360-postchat-check");
+    checkEl.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>';
+    postChatEl.appendChild(checkEl);
+
+    var msg = el("div", "cf360-postchat-msg");
+    msg.textContent = t("transcriptSuccess");
+    postChatEl.appendChild(msg);
+
+    setTimeout(function () {
+      showPostChatDone();
+    }, 2000);
+  }
+
+  function showTranscriptError(convId, btn) {
+    btn.disabled = false;
+    btn.textContent = t("transcriptSend");
+    // Show inline error briefly
+    var existing = postChatEl.querySelector(".cf360-postchat-error");
+    if (existing) existing.remove();
+    var errEl = el("div", "cf360-postchat-msg cf360-postchat-error");
+    errEl.textContent = t("transcriptError");
+    postChatEl.appendChild(errEl);
+  }
+
+  function showPostChatDone() {
+    postChatEl.innerHTML = "";
+    postChatEl.classList.remove("cf360-postchat--show");
+    startNewConversation();
   }
 
   // ─── Apply Appearance Config ─────────────────────────────────────
@@ -1250,6 +1543,9 @@
         .then(function (data) {
           if (data && data.appearance) {
             applyAppearance(data.appearance);
+          }
+          if (data && data.postChat) {
+            state.postChatConfig = data.postChat;
           }
         })
         .catch(function () { /* use data-color defaults — config fetch is non-blocking */ });

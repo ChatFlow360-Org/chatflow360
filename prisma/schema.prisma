@@ -162,6 +162,7 @@ model Conversation {
   status         String    @default("open") // open | pending | resolved | closed
   responderMode  String    @default("ai") @map("responder_mode") // ai | human
   assignedTo     String?   @map("assigned_to") @db.Uuid
+  rating         Int?      @db.SmallInt
   metadata       Json      @default("{}")
   lastMessageAt  DateTime  @default(now()) @map("last_message_at")
   resolvedAt     DateTime? @map("resolved_at")
