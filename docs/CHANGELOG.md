@@ -2,6 +2,32 @@
 
 > Historial completo de versiones y cambios del proyecto.
 
+## v0.3.10 (2026-03-01)
+
+### Logo Upload — Supabase Storage + Crop Modal
+- **`react-easy-crop`** library added — crop modal with fixed 10:3 aspect ratio (400x120 output, 2x retina), zoom slider, touch-friendly (pinch-to-zoom on mobile)
+- **`POST /api/upload/logo`** — authenticated endpoint, validates org membership, max 2MB, only PNG/JPEG/WebP, uploads to Supabase Storage bucket `logos`, returns public HTTPS URL
+- **Supabase Storage** bucket `logos` — public, file size limit 4MB, MIME restricted to image/png, image/jpeg, image/webp
+- **Removed** base64 data URL approach and external URL input — logos are now upload-only via Supabase Storage
+- **Zod schema** updated — `logoUrl` now only accepts empty string or `*.supabase.co` HTTPS URLs (max 500 chars)
+- **CSP** updated — `img-src` now includes `https://*.supabase.co` for Supabase Storage images
+- **i18n** — new keys: `cropTitle`, `cropHint`, `cropCancel`, `cropAccept`, `changeLogo`, `logoUploading` (EN + ES)
+
+### Post-Chat Widget Design — Gradient Wave
+- **All post-chat steps** (rating, thanks, transcript form, success) redesigned with:
+  - Gradient hero band matching widget header colors (`#1c2e47 → primaryColor`)
+  - Org logo displayed centered in the gradient (from `postChatConfig.logoUrl`)
+  - SVG wave separator for smooth transition to white content area
+  - Staggered `fadeUp` animation on content elements (0.35s ease-out with delays)
+- **Appearance override** — `applyAppearance()` now also updates `.cf360-postchat-hero` gradient when custom header color is set
+- **`buildPostChatLayout()`** — new shared helper function used by all 4 post-chat steps for consistent layout
+
+### Fixes
+- **Email preview subject** — dark mode text unreadable (white on white). Fixed by using fixed gray colors (`gray-50`/`gray-600`/`gray-800`) instead of semantic tokens for the email subject bar
+- **Resend lazy init** — `new Resend()` was executing at module scope during build (without env vars), causing build failure. Changed to `getResend()` factory function called at request time
+
+---
+
 ## v0.3.9 (2026-03-01)
 
 ### Security Hardening (commit c7ecb58)

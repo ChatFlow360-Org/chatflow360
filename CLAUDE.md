@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.3.9 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.3.10 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -73,4 +73,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.3.9** - Post-Chat Backend (end-to-end) + Security Hardening. Rating endpoint (`POST /api/widget/rating`), transcript email via Resend (`POST /api/widget/transcript`), branded HTML email renderer (`lib/email/transcript.ts`), widget JS multi-step flow (confirm → rating → transcript → success). Domain `chatflow360.com` verified in Resend. Security fixes deployed (commit c7ecb58): transcript anti-spam (1 per conversation via `metadata.transcriptSent`), tenant isolation in admin server actions (`getConversationMessages`, `closeConversation`, `sendAgentMessage`), orgName header injection prevention, logoUrl Zod allowlist (HTTPS/data:image only), body size via `request.text()` (all 4 routes), widget `safeHex()` CSS color guard, 200-message query cap, single-quote escaping in email HTML. Logo upload functional (base64 data URL, 100KB max). Mock data removed. Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).
+**v0.3.10** - Logo Upload (Supabase Storage + Crop Modal) + Post-Chat Widget Redesign. `react-easy-crop` modal (10:3 aspect, touch zoom), `POST /api/upload/logo` endpoint, Supabase Storage bucket `logos`. Removed base64/URL input — upload-only. Zod schema restricts to `*.supabase.co` URLs. CSP updated for Supabase images. Post-chat widget steps redesigned: gradient hero band + org logo + SVG wave separator + fadeUp animation on all 4 steps (rating, thanks, transcript, success). Email preview dark mode fix (subject bar). Resend lazy init fix. Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).
