@@ -641,27 +641,39 @@ export async function getConversationMessages(conversationId: string) {
 
   z.string().uuid().parse(conversationId);
 
-  const [conversation, messages] = await Promise.all([
-    prisma.conversation.findUnique({
-      where: { id: conversationId },
-      select: { status: true, responderMode: true },
-    }),
-    prisma.message.findMany({
-      where: { conversationId },
-      orderBy: { createdAt: "asc" },
-      select: {
-        id: true,
-        senderType: true,
-        content: true,
-        createdAt: true,
-        sender: { select: { fullName: true } },
-      },
-    }),
-  ]);
+  const conversation = await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    select: {
+      status: true,
+      responderMode: true,
+      channel: { select: { organizationId: true } },
+    },
+  });
+
+  if (!conversation) throw new Error("Not found");
+
+  if (!user.isSuperAdmin) {
+    const isMember = user.memberships.some(
+      (m) => m.organizationId === conversation.channel.organizationId
+    );
+    if (!isMember) throw new Error("Unauthorized");
+  }
+
+  const messages = await prisma.message.findMany({
+    where: { conversationId },
+    orderBy: { createdAt: "asc" },
+    select: {
+      id: true,
+      senderType: true,
+      content: true,
+      createdAt: true,
+      sender: { select: { fullName: true } },
+    },
+  });
 
   return {
-    status: (conversation?.status || "open") as "open" | "pending" | "resolved" | "closed",
-    responderMode: (conversation?.responderMode || "ai") as "ai" | "human",
+    status: (conversation.status || "open") as "open" | "pending" | "resolved" | "closed",
+    responderMode: (conversation.responderMode || "ai") as "ai" | "human",
     messages: messages.map((m) => ({
       id: m.id,
       conversationId,
@@ -693,10 +705,18 @@ export async function closeConversation(
 
     const conversation = await prisma.conversation.findUnique({
       where: { id: conversationId },
-      select: { id: true, status: true },
+      select: { id: true, status: true, channel: { select: { organizationId: true } } },
     });
 
     if (!conversation) return { success: false, error: "Conversation not found" };
+
+    if (!user.isSuperAdmin) {
+      const isMember = user.memberships.some(
+        (m) => m.organizationId === conversation.channel.organizationId
+      );
+      if (!isMember) return { success: false, error: "Unauthorized" };
+    }
+
     if (conversation.status === "closed") return { success: true }; // Already closed
 
     await prisma.conversation.update({
@@ -735,10 +755,18 @@ export async function sendAgentMessage(
     // Verify conversation exists
     const conversation = await prisma.conversation.findUnique({
       where: { id: parsed.data.conversationId },
-      select: { id: true, status: true, responderMode: true },
+      select: { id: true, status: true, responderMode: true, channel: { select: { organizationId: true } } },
     });
 
     if (!conversation) return { success: false, error: "Conversation not found" };
+
+    if (!user.isSuperAdmin) {
+      const isMember = user.memberships.some(
+        (m) => m.organizationId === conversation.channel.organizationId
+      );
+      if (!isMember) return { success: false, error: "Unauthorized" };
+    }
+
     if (conversation.status === "closed") return { success: false, error: "Conversation is closed" };
 
     // Create agent message

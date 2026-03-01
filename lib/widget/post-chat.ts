@@ -63,7 +63,12 @@ export const postChatSchema = z.object({
     z.string().email(),
     z.literal(""),
   ]).optional().default(""),
-  logoUrl: z.string().max(150_000).optional().default(""),
+  logoUrl: z.string().max(150_000)
+    .refine(
+      (val) => val === "" || val.startsWith("https://") || val.startsWith("data:image/"),
+      { message: "Logo must be an HTTPS URL or uploaded image" }
+    )
+    .optional().default(""),
   emailSubjectEn: z.string().max(100).optional().default(DEFAULT_POST_CHAT.emailSubjectEn),
   emailSubjectEs: z.string().max(100).optional().default(DEFAULT_POST_CHAT.emailSubjectEs),
   emailGreetingEn: z.string().max(200).optional().default(DEFAULT_POST_CHAT.emailGreetingEn),

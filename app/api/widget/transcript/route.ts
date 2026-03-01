@@ -13,15 +13,19 @@ export async function OPTIONS() {
 
 export async function POST(request: Request) {
   try {
-    // Body size limit (4KB)
-    const contentLength = request.headers.get("content-length");
-    if (contentLength && parseInt(contentLength, 10) > 4096) {
+    // Body size limit (4KB) — read raw text to prevent Content-Length spoofing
+    let rawBody: string;
+    try {
+      rawBody = await request.text();
+    } catch {
+      return errorResponse("Failed to read body", 400);
+    }
+    if (rawBody.length > 4096) {
       return errorResponse("Request body too large", 413);
     }
-
     let body: unknown;
     try {
-      body = await request.json();
+      body = JSON.parse(rawBody);
     } catch {
       return errorResponse("Invalid JSON", 400);
     }
@@ -38,6 +42,7 @@ export async function POST(request: Request) {
       where: { id: conversationId, visitorId },
       select: {
         id: true,
+        metadata: true,
         messages: {
           orderBy: { createdAt: "asc" },
           select: {
@@ -63,6 +68,11 @@ export async function POST(request: Request) {
 
     if (conversation.messages.length === 0) {
       return errorResponse("No messages to send", 400);
+    }
+
+    // CRIT-02: Prevent duplicate transcript emails
+    if ((conversation.metadata as any)?.transcriptSent) {
+      return errorResponse("Transcript already sent", 429);
     }
 
     const orgName = conversation.channel.organization.name;
@@ -91,9 +101,12 @@ export async function POST(request: Request) {
     const to = [email];
     const cc = settings.ccEmail ? [settings.ccEmail] : undefined;
 
+    // HIGH-03: Sanitize orgName for email sender field
+    const safeOrgName = orgName.replace(/[\r\n\t<>]/g, "").slice(0, 50);
+
     // Send via Resend
     const { error } = await resend.emails.send({
-      from: `${orgName} <noreply@chatflow360.com>`,
+      from: `${safeOrgName} <noreply@chatflow360.com>`,
       to,
       cc,
       subject,
@@ -104,6 +117,12 @@ export async function POST(request: Request) {
       console.error("[POST /api/widget/transcript] Resend error:", error);
       return errorResponse("Failed to send email", 500);
     }
+
+    // CRIT-02: Mark transcript as sent to prevent re-sends
+    await prisma.conversation.update({
+      where: { id: conversationId },
+      data: { metadata: { ...(conversation.metadata as any), transcriptSent: true } },
+    });
 
     return jsonResponse({ success: true });
   } catch (error) {

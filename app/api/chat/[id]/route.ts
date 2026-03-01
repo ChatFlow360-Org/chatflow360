@@ -46,6 +46,7 @@ export async function GET(
         createdAt: true,
         messages: {
           orderBy: { createdAt: "asc" },
+          take: 200,
           select: {
             id: true,
             senderType: true,
@@ -93,16 +94,21 @@ export async function PATCH(
       return errorResponse("Invalid conversation ID", 400);
     }
 
-    // FIX-5: Body size limit before parsing (1KB for PATCH)
-    const contentLength = request.headers.get("content-length");
-    if (contentLength && parseInt(contentLength, 10) > 1024) {
+    // FIX-5: Body size limit — read raw text to prevent Content-Length spoofing
+    let rawBody: string;
+    try {
+      rawBody = await request.text();
+    } catch {
+      return errorResponse("Failed to read body", 400);
+    }
+    if (rawBody.length > 16384) {
       return errorResponse("Request body too large", 413);
     }
 
     // FIX-6: Safe JSON parsing
     let body: unknown;
     try {
-      body = await request.json();
+      body = JSON.parse(rawBody);
     } catch {
       return errorResponse("Invalid JSON", 400);
     }

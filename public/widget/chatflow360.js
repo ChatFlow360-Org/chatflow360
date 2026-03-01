@@ -349,6 +349,11 @@
     };
   }
 
+  /** Validate hex color to prevent CSS injection via server-provided values. */
+  function safeHex(color, fallback) {
+    return /^#[0-9A-Fa-f]{6}$/.test(color) ? color : fallback;
+  }
+
   var rgb = hexToRgb(primaryColor);
   var primaryAlpha15 = "rgba(" + rgb.r + "," + rgb.g + "," + rgb.b + ",0.15)";
   var primaryAlpha80 = "rgba(" + rgb.r + "," + rgb.g + "," + rgb.b + ",0.80)";
@@ -1486,16 +1491,16 @@
     if (cfgTitle && titleEl) titleEl.textContent = cfgTitle;
     if (cfgSubtitle && subtitleEl) subtitleEl.textContent = cfgSubtitle;
 
-    // Build CSS overrides
-    var hc = cfg.headerColor || primaryColor;
-    var hic = cfg.headerIconColor || "#ffffff";
-    var bc = cfg.bubbleColor || primaryColor;
-    var bic = cfg.bubbleIconColor || "#ffffff";
-    var vbg = cfg.visitorBubbleBg || primaryColor;
-    var vbt = cfg.visitorBubbleText || "#ffffff";
-    var abg = cfg.aiBubbleBg || "#e8ecf1";
-    var abt = cfg.aiBubbleText || "#1e293b";
-    var sbc = cfg.sendButtonColor || primaryColor;
+    // Build CSS overrides (safeHex prevents CSS injection via malformed color values)
+    var hc = safeHex(cfg.headerColor, primaryColor);
+    var hic = safeHex(cfg.headerIconColor, "#ffffff");
+    var bc = safeHex(cfg.bubbleColor, primaryColor);
+    var bic = safeHex(cfg.bubbleIconColor, "#ffffff");
+    var vbg = safeHex(cfg.visitorBubbleBg, primaryColor);
+    var vbt = safeHex(cfg.visitorBubbleText, "#ffffff");
+    var abg = safeHex(cfg.aiBubbleBg, "#e8ecf1");
+    var abt = safeHex(cfg.aiBubbleText, "#1e293b");
+    var sbc = safeHex(cfg.sendButtonColor, primaryColor);
 
     // Compute derived values
     var bcRgb = hexToRgb(bc);

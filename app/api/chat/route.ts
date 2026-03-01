@@ -24,16 +24,21 @@ export async function OPTIONS() {
 
 export async function POST(request: NextRequest) {
   try {
-    // FIX-5: Body size limit before parsing (16KB for POST)
-    const contentLength = request.headers.get("content-length");
-    if (contentLength && parseInt(contentLength, 10) > 16384) {
+    // FIX-5: Body size limit — read raw text to prevent Content-Length spoofing
+    let rawBody: string;
+    try {
+      rawBody = await request.text();
+    } catch {
+      return errorResponse("Failed to read body", 400);
+    }
+    if (rawBody.length > 16384) {
       return errorResponse("Request body too large", 413);
     }
 
     // FIX-6: Safe JSON parsing
     let body: unknown;
     try {
-      body = await request.json();
+      body = JSON.parse(rawBody);
     } catch {
       return errorResponse("Invalid JSON", 400);
     }

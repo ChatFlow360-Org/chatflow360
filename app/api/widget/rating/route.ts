@@ -8,15 +8,19 @@ export async function OPTIONS() {
 
 export async function POST(request: Request) {
   try {
-    // Body size limit (1KB)
-    const contentLength = request.headers.get("content-length");
-    if (contentLength && parseInt(contentLength, 10) > 1024) {
+    // Body size limit (1KB) — read raw text to prevent Content-Length spoofing
+    let rawBody: string;
+    try {
+      rawBody = await request.text();
+    } catch {
+      return errorResponse("Failed to read body", 400);
+    }
+    if (rawBody.length > 1024) {
       return errorResponse("Request body too large", 413);
     }
-
     let body: unknown;
     try {
-      body = await request.json();
+      body = JSON.parse(rawBody);
     } catch {
       return errorResponse("Invalid JSON", 400);
     }
