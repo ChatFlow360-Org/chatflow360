@@ -173,6 +173,49 @@ const handoffKeywords = channel.handoffKeywords.length > 0
 **Campos configurables por org admin:** systemPrompt, handoffEnabled, handoffKeywords
 **Campos configurables por super admin:** type, isActive, config, publicKey
 
+#### Channel.config JSONB Structure
+
+El campo `config` es un objeto JSONB flexible. Actualmente contiene dos secciones anidadas:
+
+```json
+{
+  "widgetAppearance": {
+    "headerTitleEn": "",
+    "headerTitleEs": "",
+    "headerSubtitleEn": "",
+    "headerSubtitleEs": "",
+    "headerColor": "#1c2e47",
+    "headerIconColor": "#ffffff",
+    "bubbleColor": "#2f92ad",
+    "bubbleIconColor": "#ffffff",
+    "visitorBubbleBg": "#2f92ad",
+    "visitorBubbleText": "#ffffff",
+    "aiBubbleBg": "#e8ecf1",
+    "aiBubbleText": "#1e293b",
+    "sendButtonColor": "#2f92ad"
+  },
+  "postChatSettings": {
+    "enableTranscript": true,
+    "enableRating": true,
+    "ccEmail": "",
+    "logoUrl": "",
+    "emailSubjectEn": "Your conversation transcript",
+    "emailSubjectEs": "Transcripción de tu conversación",
+    "emailGreetingEn": "Hi {{visitor_name}},",
+    "emailGreetingEs": "Hola {{visitor_name}},",
+    "emailClosingEn": "Thank you for chatting with us!",
+    "emailClosingEs": "¡Gracias por chatear con nosotros!",
+    "emailHeaderColor": "#1c2e47",
+    "emailFooterTextEn": "This transcript was sent from {{org_name}}",
+    "emailFooterTextEs": "Esta transcripción fue enviada desde {{org_name}}"
+  }
+}
+```
+
+**Types + validation:** `lib/widget/appearance.ts` (`WidgetAppearance`, `widgetAppearanceSchema`, `resolveAppearance()`) and `lib/widget/post-chat.ts` (`PostChatSettings`, `postChatSchema`, `resolvePostChat()`).
+
+**Template variables** for `postChatSettings` email fields: `{{visitor_name}}`, `{{org_name}}`, `{{date}}` — resolved at send time in `lib/email/transcript.ts`.
+
 ### ChannelKnowledge (Conocimiento RAG)
 
 > Tabla manejada via SQL directo (no Prisma) porque usa tipo VECTOR de pgvector.
@@ -207,6 +250,7 @@ const handoffKeywords = channel.handoffKeywords.length > 0
 | status | String | "open" | 'open' / 'pending' / 'resolved' / 'closed' |
 | responderMode | String | "ai" | 'ai' / 'human' |
 | assignedTo | UUID? | null | FK User (agente asignado) |
+| rating | SmallInt? | null | Calificacion del visitante 1-5 (guardada via POST /api/widget/rating, v0.3.9) |
 | metadata | Json | {} | Metadata flexible |
 | lastMessageAt | DateTime | now() | Ultimo mensaje |
 | resolvedAt | DateTime? | null | Cuando se resolvio |
@@ -282,10 +326,11 @@ Los tokens NUNCA se muestran al cliente. Son herramienta interna para entender c
 | Modelo | Campo | Valores |
 |--------|-------|---------|
 | Organization | plan | `starter`, `pro`, `growth` |
-| OrganizationMember | role | `owner`, `admin`, `agent` |
+| OrganizationMember | role | `owner`, `admin` (field kept for future multi-role support; `agent` role removed from UI in v0.3.8) |
 | Channel | type | `website`, `whatsapp`, `facebook` |
 | Conversation | status | `open`, `pending`, `resolved`, `closed` |
 | Conversation | responderMode | `ai`, `human` |
+| Conversation | rating | `1`–`5` SmallInt (null = not rated) |
 | Message | senderType | `visitor`, `ai`, `agent` |
 
 ## Mapping DB (snake_case)

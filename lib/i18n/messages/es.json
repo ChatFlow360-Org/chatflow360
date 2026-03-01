@@ -470,6 +470,7 @@
       "logoUrlLabel": "O pega la URL de tu logo",
       "logoUrlPlaceholder": "https://tusitio.com/logo.png",
       "removeLogo": "Eliminar logo",
+      "logoTooLarge": "El logo debe ser menor a 100KB. Usa una imagen más pequeña.",
       "sectionTemplate": "Template del Email",
       "sectionTemplateHint": "Personaliza el email de transcripción que reciben tus visitantes",
       "variablesHint": "Variables disponibles:",

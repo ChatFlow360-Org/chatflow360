@@ -71,12 +71,16 @@ chatflow360-dashboard/
 │   │   ├── chat/
 │   │   │   ├── route.ts        # POST — widget chat + AI response
 │   │   │   └── [id]/
-│   │   │       └── route.ts    # GET — conversation history
+│   │   │       └── route.ts    # GET — conversation history, PATCH — close conversation
 │   │   ├── auth/
 │   │   │   └── callback/       # Supabase auth callback (code exchange)
 │   │   ├── widget/
-│   │   │   └── config/
-│   │   │       └── route.ts    # GET — widget appearance config by publicKey
+│   │   │   ├── config/
+│   │   │   │   └── route.ts    # GET — widget appearance + postChat config by publicKey
+│   │   │   ├── rating/
+│   │   │   │   └── route.ts    # POST — save visitor rating (v0.3.9)
+│   │   │   └── transcript/
+│   │   │       └── route.ts    # POST — send transcript email via Resend (v0.3.9)
 │   │   └── webhooks/           # Future: WhatsApp, Messenger
 ├── components/
 │   ├── ui/                     # Shadcn components (tooltip, alert-dialog, confirm-dialog, drawer, date-range-picker)
@@ -114,12 +118,16 @@ chatflow360-dashboard/
 │   │   ├── client.ts           # Browser client (realtime, auth)
 │   │   ├── server.ts           # Server client (auth verification)
 │   │   └── admin.ts            # Admin client (SERVICE_ROLE_KEY)
+│   ├── email/
+│   │   └── transcript.ts       # renderTranscriptEmail() — branded HTML email renderer (v0.3.9)
 │   ├── widget/
-│   │   └── post-chat.ts        # PostChatSettings types, Zod schema, defaults
+│   │   ├── appearance.ts       # WidgetAppearance types, Zod schema, defaults, resolveAppearance()
+│   │   └── post-chat.ts        # PostChatSettings types, Zod schema, defaults, resolvePostChat()
 │   └── utils/
 ├── hooks/
 │   ├── use-realtime-conversations.ts  # Supabase Realtime for conversations list
-│   └── use-realtime-messages.ts       # Supabase Realtime for conversation detail messages
+│   ├── use-realtime-messages.ts       # Supabase Realtime for conversation detail messages
+│   └── use-typing-indicator.ts        # Bidirectional typing indicator via Supabase Broadcast
 ├── middleware.ts                # Supabase auth + next-intl locale routing
 ├── prisma/
 │   ├── schema.prisma
@@ -136,13 +144,15 @@ chatflow360-dashboard/
 
 ## API Routes
 
-### Publicas (Widget) — Implementadas v0.3.0 / v0.3.1 / v0.3.7
+### Publicas (Widget) — Implementadas v0.3.0 / v0.3.1 / v0.3.7 / v0.3.9
 
 ```
 POST  /api/chat                          # Enviar mensaje + respuesta IA automatica
 GET   /api/chat/[conversationId]         # Historial (validacion visitorId)
 PATCH /api/chat/[conversationId]         # Cerrar conversacion desde widget (v0.3.1)
-GET   /api/widget/config?key=PUBLIC_KEY  # Widget appearance config (v0.3.7)
+GET   /api/widget/config?key=PUBLIC_KEY  # Widget appearance + postChat config (v0.3.7 / v0.3.9)
+POST  /api/widget/rating                 # Guardar rating 1-5 del visitante (v0.3.9)
+POST  /api/widget/transcript             # Generar y enviar email de transcripcion via Resend (v0.3.9)
 ```
 
 **Autenticacion:** via `publicKey` (UUID del canal) + `visitorId` (generado por widget). Sin JWT — API publica con CORS abierto.
@@ -154,7 +164,21 @@ GET   /api/widget/config?key=PUBLIC_KEY  # Widget appearance config (v0.3.7)
 - Response: `{ id, status: "closed" }`
 - Invocado por el widget en dos momentos: confirmacion "End conversation" + session timeout auto-reset
 
-**CORS:** `lib/api/cors.ts` incluye `PATCH` en `Access-Control-Allow-Methods` (`GET, POST, PATCH, OPTIONS`).
+**CORS:** `lib/api/cors.ts` incluye todos los metodos en `Access-Control-Allow-Methods` (`GET, POST, PATCH, OPTIONS`). Los endpoints de rating y transcript siguen el mismo patron de seguridad (body size limits, Zod validation, safe JSON parsing).
+
+**POST /api/widget/rating:**
+- Body: `{ conversationId: UUID, visitorId: UUID, rating: 1-5 }` — validado con `ratingSchema` (Zod)
+- Verifica ownership: la conversacion debe pertenecer al `visitorId` (mismo patron que GET/PATCH)
+- Guarda `rating` en `conversations.rating` (SmallInt)
+- Body size limit: 1KB
+
+**POST /api/widget/transcript:**
+- Body: `{ conversationId: UUID, visitorId: UUID, email: string, name: string, lang: "en" | "es" }` — validado con `transcriptSchema` (Zod)
+- Verifica ownership, verifica `enableTranscript` en `Channel.config.postChatSettings`
+- Fetch de messages + channel config + org name via Prisma
+- Renderiza HTML email via `lib/email/transcript.ts`
+- Envia via Resend: `from: "{orgName} <noreply@chatflow360.com>"`, `to: [visitor email]`, `cc: [ccEmail si configurado]`
+- Body size limit: 4KB
 
 ### Dashboard — Server Actions (Implementadas)
 
@@ -385,41 +409,51 @@ Widget JS init → GET /api/widget/config?key=PUBLIC_KEY → applies colors + he
 
 **Dashboard UI:** 60/40 split layout — form on left, live React preview widget on right (sticky on desktop, FAB + Vaul drawer on mobile).
 
-### Post-Chat Experience (v0.3.8)
+### Post-Chat Experience (v0.3.8 frontend / v0.3.9 backend)
 
 Post-chat settings control what happens after a conversation ends: visitor rating collection, transcript email delivery, and email branding customization. Settings are stored in `Channel.config` JSONB under `postChatSettings`, alongside `widgetAppearance`.
 
-**Post-chat flow (planned):**
+**Post-chat flow (implemented v0.3.9):**
 
 ```
 Conversation ends in widget
-    → Rating prompt (if enabled) → visitor submits 1-5 stars
-    → Transcript email prompt (if enabled) → visitor enters email
-    → POST /api/widget/rating (stores rating)
-    → POST /api/widget/transcript (generates + sends email via Resend)
+    → End conversation confirmation overlay (Yes / No)
+    → Rating step (if enableRating) — 1-5 star UI, hover/click highlighting, Skip button
+        → POST /api/widget/rating — stores rating in conversations.rating (SmallInt)
+    → Transcript step (if enableTranscript) — name + email form
+        → POST /api/widget/transcript — fetches messages + config, renders HTML, sends via Resend
+    → Success / error state → new conversation
 ```
 
 **Configuration stored in `Channel.config.postChatSettings`:**
 
 | Field | Type | Purpose |
 |-------|------|---------|
-| `transcriptEnabled` | boolean | Toggle transcript email feature |
-| `ratingEnabled` | boolean | Toggle rating prompt feature |
-| `emailCc` | string | Organization CC for transcript copies |
-| `logoUrl` | string | Logo URL (Supabase Storage) for email branding |
-| `emailSubject` | bilingual (EN/ES) | Custom email subject line |
-| `emailGreeting` | bilingual (EN/ES) | Custom greeting text |
-| `emailClosing` | bilingual (EN/ES) | Custom closing text |
-| `headerColor` | string | Email header background color |
-| `footerText` | bilingual (EN/ES) | Custom footer text |
+| `enableTranscript` | boolean | Toggle transcript email feature |
+| `enableRating` | boolean | Toggle rating prompt feature |
+| `ccEmail` | string | Organization CC email for transcript copies |
+| `logoUrl` | string | Logo URL for email header branding |
+| `emailSubjectEn` / `emailSubjectEs` | string | Bilingual custom email subject line |
+| `emailGreetingEn` / `emailGreetingEs` | string | Bilingual custom greeting text |
+| `emailClosingEn` / `emailClosingEs` | string | Bilingual custom closing text |
+| `emailHeaderColor` | string (hex) | Email header background color |
+| `emailFooterTextEn` / `emailFooterTextEs` | string | Bilingual custom footer text |
 
-**Types + validation:** `lib/widget/post-chat.ts` — Zod schema, TypeScript types, and default values.
+**Template variables** supported in subject, greeting, closing, and footer fields: `{{visitor_name}}`, `{{org_name}}`, `{{date}}`.
+
+**Types + validation:** `lib/widget/post-chat.ts` — `PostChatSettings` interface, Zod schema (`postChatSchema`), default values (`DEFAULT_POST_CHAT`), and `resolvePostChat()` resolver.
+
+**Email renderer:** `lib/email/transcript.ts` — `renderTranscriptEmail()` function. Responsive table-based HTML layout (email client compatible). Branded header with logo image or org name fallback. Message bubbles with sender label (visitor name / AI / Agent) and timestamp. `escapeHtml()` utility for XSS safety in email content.
+
+**Resend integration:** `resend` npm package. Domain `chatflow360.com` verified. Emails sent `from: "{orgName} <noreply@chatflow360.com>"`. CC to `ccEmail` if configured. `RESEND_API_KEY` env var required.
+
+**Widget config endpoint:** `GET /api/widget/config` returns `{ appearance, postChat }` where `postChat` exposes only `{ enableRating, enableTranscript }` — no email template details are sent to the browser.
 
 **Server action:** `upsertPostChatSettings` — validates with Zod, persists to `Channel.config` JSONB.
 
 **Dashboard UI:** 4th tab in AI Settings page ("Post-Chat"), with 60/40 split layout (form + live email preview), matching the Widget tab pattern.
 
-**Pending backend:** Resend integration, transcript API endpoint, rating API endpoint, widget JS flow implementation.
+**Remaining:** Supabase Storage integration for logo upload (currently accepts URL string as fallback).
 
 ### Conversation Auto-Cleanup — Modelo de 3 Capas (v0.3.1)
 
@@ -613,6 +647,38 @@ const realtimeChannel = supabase
 
 Both hooks share the same pattern: `setAuth()` on mount, `onAuthStateChange` for token refresh, UUID validation on filter IDs, and a 30s visibility-aware polling safety net.
 
+### Typing Indicators (v0.3.9)
+
+Bidirectional typing indicators between agents (dashboard) and visitors (widget) via Supabase Realtime **Broadcast** channel. Does not use `postgres_changes` — no DB writes are needed for ephemeral typing state.
+
+**Hook: `hooks/use-typing-indicator.ts`**
+
+```typescript
+// Bidirectional: each side listens for the opposite role
+const remoteRole = role === "agent" ? "visitor" : "agent";
+
+channel
+  .on("broadcast", { event: "typing" }, (payload) => {
+    const data = payload.payload as { role?: string; isTyping?: boolean };
+    if (data.role !== remoteRole) return;   // Ignore own broadcasts
+    setIsRemoteTyping(data.isTyping ?? false);
+    // Auto-clear after 3s timeout if no stop event received
+  })
+  .subscribe();
+```
+
+**Key design decisions:**
+
+| Decision | Rationale |
+|----------|-----------|
+| Broadcast (not postgres_changes) | Typing state is ephemeral — no DB persistence needed, lower latency |
+| 2s throttle on outgoing events | Prevents flooding; one event per keystroke burst |
+| 3s auto-timeout on remote typing | Guards against missed stop events (tab close, network drop) |
+| `config: { broadcast: { self: false } }` | Prevents echoing own events back to sender |
+| `channelName` from HMAC | Derived from conversation ID for uniqueness; passed as prop to hook |
+
+**UI:** Wave-dots CSS animation rendered in the conversation detail panel when `isRemoteTyping === true`.
+
 ### API Key Encryption
 
 **Algoritmo:** AES-256-GCM (Node.js crypto nativo, zero dependencies)
@@ -669,9 +735,9 @@ ENCRYPTION_KEY=                     # 64 hex chars (openssl rand -hex 32)
 # App
 NEXT_PUBLIC_APP_URL=https://app.chatflow360.com
 
-# Email
-RESEND_API_KEY=
-EMAIL_FROM=
+# Email (Resend — v0.3.9)
+RESEND_API_KEY=                     # API key de Resend (dominio chatflow360.com verificado)
+# EMAIL_FROM — no se usa; el from se construye dinamicamente: "{orgName} <noreply@chatflow360.com>"
 ```
 
 ## Billing y Control de Uso
@@ -713,12 +779,15 @@ Los tokens se registran en cada mensaje IA (`Message.tokensUsed`) y se resumen e
 
 ## Alcance del MVP
 
-### Implementado (v0.3.8)
+### Implementado (v0.3.9)
 
 - Multi-tenant con Super Admin (CRUD orgs, users, channels). 2 user types: Super Admin (platform-level, can create other super admins) and Org Admin (organization-level). Self-edit/delete protection
 - Website widget embebible (vanilla JS, DOM injection, bilingue, maximize/minimize, end conversation, session timeout)
 - Widget Appearance Customization — per-channel colors + bilingual header texts, stored in `Channel.config` JSONB, live preview, `GET /api/widget/config` endpoint
-- Post-Chat Experience (frontend) — rating toggle, transcript email toggle, email CC, logo upload, bilingual email template customization, live email preview
+- Post-Chat Experience — rating toggle, transcript email toggle, email CC, logo URL, bilingual email template customization, live email preview (dashboard UI v0.3.8 + full backend v0.3.9)
+- Post-Chat Backend — `POST /api/widget/rating` (saves SmallInt to `conversations.rating`), `POST /api/widget/transcript` (Resend email via `lib/email/transcript.ts`), widget JS multi-step flow (confirm → rating → transcript → success)
+- Resend integration — domain `chatflow360.com` verified, emails from `noreply@chatflow360.com`, bilingual (EN/ES)
+- Typing indicators — `hooks/use-typing-indicator.ts` — bidirectional via Supabase Realtime Broadcast, throttled at 2s, 3s auto-timeout, wave dots animation
 - Respuestas IA con OpenAI (GPT-4o-mini default)
 - Human takeover (keyword-based, bilateral EN/ES, 19 default keywords)
 - API key management (AES-256-GCM, 3-tier resolution, UI-based)
@@ -726,7 +795,7 @@ Los tokens se registran en cada mensaje IA (`Message.tokensUsed`) y se resumen e
 - Conversation detail with Realtime messages (live message updates via postgres_changes)
 - Supabase Realtime with RLS: setAuth + denormalized `organization_id` + token refresh + 30s polling safety net
 - RLS policies on `conversations`, `messages`, and `prompt_templates` tables (org-scoped tenant isolation + super_admin gate)
-- Dashboard basico (5 stat cards, top pages, recent conversations — aun mock)
+- Dashboard basico (5 stat cards, top pages, recent conversations)
 - AI Settings page (structured prompt fields, model config, handoff, preview widget, "Use Template" selector, Widget appearance, Post-Chat) + RBAC split (business vs technical params)
 - Prompt Templates page (`/prompt-templates`) — super_admin CRUD with card grid layout, separate from AI Settings. Responsive card grid, duplicate template, action tooltips (Radix), emerald badges with truncation. RLS defense-in-depth on table.
 - App-wide ConfirmDialog (`components/ui/confirm-dialog.tsx`) — replaces ALL native confirm() calls. Uses shadcn/ui AlertDialog. Applied to: prompt-templates, organizations (org + channel delete), users
@@ -736,7 +805,7 @@ Los tokens se registran en cada mensaje IA (`Message.tokensUsed`) y se resumen e
 - Prominent Tabs active state — teal CTA border, bottom indicator bar, semibold text, card background (`components/ui/tabs.tsx`)
 - Scroll-to-top on save in AI Settings — targets `<main>` container so feedback banners are always visible
 - Autenticacion real (Supabase Auth — login, logout, forgot/update password)
-- Bilingue (EN/ES) — ~470+ strings traducidas
+- Bilingue (EN/ES) — ~484+ strings traducidas (including 14 new post-chat flow strings in v0.3.9)
 - Token tracking (Message.tokensUsed + UsageTracking monthly)
 - Security hardened (CSP, HSTS, crypto passwords, transaction atomicity, OWASP widget API hardening)
 - 3-layer conversation cleanup (PATCH + client timeout + pg_cron)
@@ -744,7 +813,7 @@ Los tokens se registran en cada mensaje IA (`Message.tokensUsed`) y se resumen e
 
 ### Pendiente (Post-MVP)
 
-- Post-Chat backend: Resend integration, transcript API endpoint, rating API endpoint, widget JS flow
+- Logo upload via Supabase Storage — bucket `logos`, `POST /api/upload/logo` endpoint; actualmente el form acepta URL string como fallback
 - RAG/Knowledge Base (pgvector) — tab dice "coming soon"
 - Enviar mensajes como agente desde dashboard
 - Rate limiting (@upstash/ratelimit — deferred to production phase)
@@ -753,12 +822,12 @@ Los tokens se registran en cada mensaje IA (`Message.tokensUsed`) y se resumen e
 - Push notifications / email notifications
 - RBAC enforcement middleware (business/technical split done, super_admin/org_admin enforced, full middleware pending)
 - Canales WhatsApp / Facebook
-- File attachments, typing indicators, read receipts
+- File attachments, read receipts
 - Integraciones n8n (automatizaciones laterales)
 
 ### Future-Ready (estructura en DB)
 
-- Roles de usuario (2 functional types: Super Admin platform-level, Org Admin organization-level — Agent role removed)
+- Roles de usuario (2 functional types: Super Admin platform-level, Org Admin organization-level — Agent role removed; `role` field in `OrganizationMember` kept for future multi-role support)
 - Channel types enum (para WhatsApp, FB)
 - UsageTracking model (monthly summary per org)
 - PlatformSettings model (global config key-value)

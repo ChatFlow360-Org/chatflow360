@@ -2,6 +2,39 @@
 
 > Historial completo de versiones y cambios del proyecto.
 
+## v0.3.9 (2026-03-01)
+
+### Post-Chat Backend (End-to-End)
+
+#### Rating Endpoint
+- **`POST /api/widget/rating`** — receives `{ conversationId, visitorId, rating: 1-5 }`, validates with Zod, verifies conversation ownership, saves to `conversations.rating` column
+- **`rating SmallInt?`** column added to `Conversation` model in Prisma schema (migrated via raw SQL)
+
+#### Transcript Email Endpoint
+- **`POST /api/widget/transcript`** — receives `{ conversationId, visitorId, email, name, lang }`, fetches conversation messages + channel config + org name, renders branded HTML email, sends via Resend
+- **Resend integration** — transactional email service (`resend` npm package), domain verified (`chatflow360.com`), emails sent from `{orgName} <noreply@chatflow360.com>`
+- **`lib/email/transcript.ts`** — HTML email renderer using `PostChatSettings` template variables (`{{visitor_name}}`, `{{org_name}}`, `{{date}}`), branded header with logo or org name, message bubbles with sender labels and timestamps, responsive table-based layout, bilingual (EN/ES)
+
+#### Widget Config Endpoint Update
+- **`GET /api/widget/config`** — now returns `postChat` settings alongside `appearance` (only `enableRating` and `enableTranscript` exposed — no email template details)
+
+#### Widget JS Multi-Step Post-Chat Flow
+- **End conversation confirmation** — "Are you sure?" overlay with Yes/No buttons
+- **Rating step** — 1-5 star rating UI with hover/click highlighting, Skip button, submits to `/api/widget/rating`
+- **Transcript step** — name + email form, submits to `/api/widget/transcript`, success/error states
+- **14 new bilingual translation keys** (EN + ES) for the entire post-chat flow
+- **CSS styles** for post-chat overlay, rating stars, transcript form — all inline within the widget
+
+#### Zod Validation Schemas
+- **`ratingSchema`** — conversationId (uuid), visitorId (uuid), rating (int 1-5)
+- **`transcriptSchema`** — conversationId (uuid), visitorId (uuid), email (max 254), name (max 100), lang (en|es, default en)
+
+#### Production Verification
+- Full end-to-end test on leon33.com: message → end conversation → 5-star rating → transcript email → email delivered to inbox (not spam)
+- Email arrives from `Hispanic Market Advisors <noreply@chatflow360.com>`, signed by chatflow360.com, TLS encrypted
+
+---
+
 ## v0.3.8 (2026-02-27)
 
 ### Post-Chat Experience (Frontend)
@@ -35,12 +68,12 @@
 
 - **~50 new translation keys** (EN + ES): post-chat tab labels, toggle descriptions, email template field labels/placeholders, preview labels, upload guidance
 
-#### Pending Backend
+#### Pending Backend (Completed in v0.3.9)
 
-- Resend integration for sending transcript emails
-- `POST /api/widget/transcript` endpoint for generating and sending transcripts
-- `POST /api/widget/rating` endpoint for collecting visitor ratings
-- Widget JS flow: rating prompt → email collection → transcript send
+- ~~Resend integration for sending transcript emails~~ ✅
+- ~~`POST /api/widget/transcript` endpoint~~ ✅
+- ~~`POST /api/widget/rating` endpoint~~ ✅
+- ~~Widget JS flow: rating prompt → email collection → transcript send~~ ✅
 
 ### User Management Improvements
 

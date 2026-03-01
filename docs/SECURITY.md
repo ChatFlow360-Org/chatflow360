@@ -1,6 +1,6 @@
 # ChatFlow360 - Security Checklist
 
-> Auditoria de seguridad del proyecto. Actualizado en v0.3.3 (2026-02-23).
+> Auditoria de seguridad del proyecto. Actualizado en v0.3.9 (2026-03-01).
 > Audit completo: `docs/SECURITY-AUDIT-v0.2.2.md` (21 findings, OWASP ASVS v4.0)
 
 ## Security Model — 3 Layers (v0.3.3)
@@ -167,11 +167,18 @@ Without `setAuth`, all Realtime subscriptions on RLS-enabled tables silently rec
 | LOW-02 | Bajo | Slug TOCTOU race condition | `createOrganization` eliminado el `findUnique` check previo. Crea directamente y captura error Prisma `P2002` (unique constraint violation). Atomico — sin race condition posible. |
 | LOW-04 | Bajo | autoComplete en admin forms | `autoComplete="off"` agregado en 3 inputs de organizations: org name, org slug, channel name. Users form y AI Settings ya lo tenian. |
 
-## Pendiente: Phase 3 (Cuando Conecte Backend)
+## Resuelto en v0.3.9 (Post-Chat Backend + Mock Data Removal)
+
+| ID | Severidad | Issue | Solucion |
+|----|-----------|-------|----------|
+| MED-04 | Medio | Mock data en bundles cliente | `lib/mock/data.ts` eliminado (v0.3.9). Dashboard ahora usa server-fetched data. |
+| SEC-RT-01 | Bajo | Transcript endpoint expone detalles del template de email | `GET /api/widget/config` retorna solo `{ enableRating, enableTranscript }` — ningun campo de template, logo, ni email CC se expone al browser |
+| SEC-RT-02 | Bajo | Content injection en HTML de email | `escapeHtml()` aplicado a todos los campos variables en `lib/email/transcript.ts` (visitor name, org name, message content, labels) |
+
+## Pendiente: Phase 3 (Pendientes restantes)
 
 | ID | Severidad | Issue | Accion | Esfuerzo |
 |----|-----------|-------|--------|----------|
-| MED-04 | Medio | Mock data en bundles cliente | Eliminar `lib/mock/data.ts`, reemplazar con server-fetched data | Parte del backend |
 | MED-06 | Medio | Channel update sin ownership check | Verificar org membership cuando RBAC exista | 15 min |
 | LOW-03 | Bajo | Translation keys dinamicas | Set de error keys conocidos como safeguard (riesgo teorico — keys hardcodeadas en server actions) | 10 min |
 
@@ -234,7 +241,9 @@ Without `setAuth`, all Realtime subscriptions on RLS-enabled tables silently rec
 - [ ] CORS restrictivo: solo origenes registrados por canal
 - [ ] Validar `channelId` + `origin` en cada request del widget
 - [ ] Rate limit por IP para el widget publico
-- [ ] No exponer datos internos de la organizacion via el widget
+- [x] No exponer datos internos via `GET /api/widget/config` — solo `enableRating` y `enableTranscript` se exponen (v0.3.9)
+- [x] `POST /api/widget/rating` — body size limit 1KB, Zod validation, ownership check (visitorId match), escapeHtml en email HTML
+- [x] `POST /api/widget/transcript` — body size limit 4KB, Zod validation, ownership check, `enableTranscript` feature gate, escapeHtml en todo el HTML del email
 - [ ] CSP del widget: restringir a dominio de ChatFlow360
 
 ### Variables de Entorno

@@ -470,6 +470,7 @@
       "logoUrlLabel": "Or paste a logo URL",
       "logoUrlPlaceholder": "https://yoursite.com/logo.png",
       "removeLogo": "Remove logo",
+      "logoTooLarge": "Logo must be under 100KB. Please use a smaller image.",
       "sectionTemplate": "Email Template",
       "sectionTemplateHint": "Customize the transcript email your visitors receive",
       "variablesHint": "Available variables:",

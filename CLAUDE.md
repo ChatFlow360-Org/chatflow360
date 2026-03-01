@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.3.8 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.3.9 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -73,4 +73,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.3.8** - Post-Chat Experience (frontend) + User Management + DB Connection Fix. Widget Appearance (v0.3.7): per-channel colors + bilingual header texts in `Channel.config.widgetAppearance` JSONB, live preview, `GET /api/widget/config` endpoint, embed code card. Post-Chat Settings (v0.3.8): 4th tab in AI Settings — transcript/rating toggles, CC email, logo, bilingual email template, live preview. User Management: Super Admin toggle (mutually exclusive with org), role dropdown (future-ready), agent role removed, self-edit/delete protection. DB: PrismaPg pool `max: 2` + Supabase PgBouncer Transaction mode (port 6543). Pendiente backend: Resend integration, `POST /api/widget/transcript`, `POST /api/widget/rating`, widget JS multi-step flow, Supabase Storage for logo upload. Otros pendientes: rate limiting (Upstash Redis — deferred), mock data removal, typing indicators.
+**v0.3.9** - Post-Chat Backend (end-to-end). Rating endpoint (`POST /api/widget/rating`), transcript email via Resend (`POST /api/widget/transcript`), branded HTML email renderer (`lib/email/transcript.ts`), widget JS multi-step flow (confirm → rating → transcript → success). Domain `chatflow360.com` verified in Resend, emails from `noreply@chatflow360.com`. Widget config endpoint now returns `postChat` alongside `appearance`. Previous: Widget Appearance (v0.3.7), Post-Chat frontend + User Management + DB pool fix (v0.3.8). Mock data removed, typing indicators already implemented. Pendientes: Supabase Storage for logo upload, rate limiting (Upstash Redis — deferred).

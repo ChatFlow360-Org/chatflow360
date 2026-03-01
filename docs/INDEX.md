@@ -58,6 +58,6 @@
 ---
 
 **Proyecto:** ChatFlow360 - Multi-tenant Live Chat SaaS con IA
-**Version actual:** v0.3.0 (MVP)
+**Version actual:** v0.3.9
 **Fase:** MVP Development - Semanas 1-6
 **Produccion:** https://app.chatflow360.com

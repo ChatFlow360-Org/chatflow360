@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import { useTranslations } from "next-intl";
 import {
   RotateCcw,
@@ -63,6 +63,8 @@ export function PostChatForm({
     type: "success" | "error";
     msg: string;
   } | null>(null);
+
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
   const [settings, setSettings] = useState<Required<PostChatSettings>>(() => ({
@@ -185,6 +187,31 @@ export function PostChatForm({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
+          {/* Hidden file input */}
+          <input
+            ref={logoInputRef}
+            type="file"
+            accept="image/png,image/svg+xml,image/jpeg,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              if (file.size > 100_000) {
+                setFeedback({ type: "error", msg: t("logoTooLarge") });
+                setTimeout(() => setFeedback(null), 3000);
+                return;
+              }
+              const reader = new FileReader();
+              reader.onload = () => {
+                if (typeof reader.result === "string") {
+                  update("logoUrl", reader.result);
+                }
+              };
+              reader.readAsDataURL(file);
+              e.target.value = "";
+            }}
+          />
+
           {settings.logoUrl ? (
             <div className="space-y-3">
               <div className="relative rounded-lg border border-border bg-muted/30 p-4 flex items-center justify-center">
@@ -206,7 +233,11 @@ export function PostChatForm({
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="rounded-lg border-2 border-dashed border-border/60 bg-muted/20 p-6 text-center">
+              <button
+                type="button"
+                onClick={() => logoInputRef.current?.click()}
+                className="w-full rounded-lg border-2 border-dashed border-border/60 bg-muted/20 p-6 text-center hover:border-cta/40 hover:bg-muted/30 transition-colors cursor-pointer"
+              >
                 <Upload className="mx-auto h-8 w-8 text-muted-foreground/50" />
                 <p className="mt-2 text-sm text-muted-foreground">
                   {t("logoDropzone")}
@@ -214,7 +245,7 @@ export function PostChatForm({
                 <p className="mt-1 text-xs text-muted-foreground/70">
                   {t("logoDimensions")}
                 </p>
-              </div>
+              </button>
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">
                   {t("logoUrlLabel")}
