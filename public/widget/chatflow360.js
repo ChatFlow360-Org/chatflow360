@@ -570,9 +570,30 @@
       ".cf360-postchat{",
       "  display:none;position:absolute;top:0;left:0;right:0;bottom:0;",
       "  background:#ffffff;z-index:10;flex-direction:column;align-items:center;",
-      "  justify-content:center;padding:32px 24px;text-align:center;",
+      "  overflow:hidden;",
       "}",
       ".cf360-postchat--show{display:flex;}",
+      // Gradient header band
+      ".cf360-postchat-hero{",
+      "  width:100%;padding:28px 24px 40px;display:flex;align-items:center;justify-content:center;",
+      "  background:linear-gradient(135deg,#1c2e47 0%," + primaryColor + " 100%);",
+      "  position:relative;flex-shrink:0;",
+      "}",
+      ".cf360-postchat-hero img{max-height:36px;max-width:160px;object-fit:contain;}",
+      // Wave separator
+      ".cf360-postchat-wave{",
+      "  width:100%;margin-top:-24px;flex-shrink:0;display:block;",
+      "}",
+      ".cf360-postchat-wave svg{display:block;width:100%;height:24px;}",
+      // Content area
+      ".cf360-postchat-body{",
+      "  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;",
+      "  padding:12px 24px 32px;text-align:center;",
+      "}",
+      "@keyframes cf360FadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}",
+      ".cf360-postchat-body>*{animation:cf360FadeUp 0.35s ease-out both;}",
+      ".cf360-postchat-body>*:nth-child(2){animation-delay:0.08s;}",
+      ".cf360-postchat-body>*:nth-child(3){animation-delay:0.16s;}",
       ".cf360-postchat-title{font-size:15px;font-weight:600;color:#1e293b;margin-bottom:20px;}",
 
       // Rating stars
@@ -1280,12 +1301,39 @@
     }
   }
 
-  function showRatingStep(convId, showTranscript) {
+  // Build gradient hero + wave + body container for post-chat steps
+  function buildPostChatLayout() {
     postChatEl.innerHTML = "";
+    var cfg = state.postChatConfig;
+    var logoUrl = cfg && cfg.logoUrl ? cfg.logoUrl : "";
+
+    // Gradient hero with optional logo
+    var hero = el("div", "cf360-postchat-hero");
+    if (logoUrl) {
+      var logoImg = document.createElement("img");
+      logoImg.src = logoUrl;
+      logoImg.alt = "Logo";
+      hero.appendChild(logoImg);
+    }
+    postChatEl.appendChild(hero);
+
+    // Wave SVG separator
+    var wave = el("div", "cf360-postchat-wave");
+    wave.innerHTML = '<svg viewBox="0 0 400 24" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 24V0c66.7 16 133.3 24 200 24S333.3 16 400 0v24z" fill="#fff"/></svg>';
+    postChatEl.appendChild(wave);
+
+    // Body container (content goes here)
+    var body = el("div", "cf360-postchat-body");
+    postChatEl.appendChild(body);
+    return body;
+  }
+
+  function showRatingStep(convId, showTranscript) {
+    var body = buildPostChatLayout();
 
     var titleEl = el("div", "cf360-postchat-title");
     titleEl.textContent = t("rateTitle");
-    postChatEl.appendChild(titleEl);
+    body.appendChild(titleEl);
 
     var starsContainer = el("div", "cf360-stars");
     var selectedRating = 0;
@@ -1313,7 +1361,7 @@
         starsContainer.appendChild(starBtn);
       })(i);
     }
-    postChatEl.appendChild(starsContainer);
+    body.appendChild(starsContainer);
 
     var skipBtn = el("button", "cf360-postchat-btn cf360-postchat-btn--ghost");
     skipBtn.textContent = t("rateSkip");
@@ -1325,7 +1373,7 @@
         showPostChatDone();
       }
     });
-    postChatEl.appendChild(skipBtn);
+    body.appendChild(skipBtn);
   }
 
   function highlightStars(container, upTo) {
@@ -1351,10 +1399,10 @@
     }).catch(function () { /* fire-and-forget */ });
 
     // Brief "thanks" then next step
-    postChatEl.innerHTML = "";
+    var body = buildPostChatLayout();
     var msg = el("div", "cf360-postchat-msg");
     msg.textContent = t("rateThanks");
-    postChatEl.appendChild(msg);
+    body.appendChild(msg);
 
     setTimeout(function () {
       if (showTranscript) {
@@ -1366,11 +1414,11 @@
   }
 
   function showTranscriptStep(convId) {
-    postChatEl.innerHTML = "";
+    var body = buildPostChatLayout();
 
     var titleEl = el("div", "cf360-postchat-title");
     titleEl.textContent = t("transcriptTitle");
-    postChatEl.appendChild(titleEl);
+    body.appendChild(titleEl);
 
     var form = el("div", "cf360-transcript-form");
 
@@ -1390,7 +1438,7 @@
 
     form.appendChild(nameInput);
     form.appendChild(emailInput);
-    postChatEl.appendChild(form);
+    body.appendChild(form);
 
     var actions = el("div", "cf360-postchat-actions");
 
@@ -1404,7 +1452,7 @@
 
     actions.appendChild(sendTranscriptBtn);
     actions.appendChild(skipBtn);
-    postChatEl.appendChild(actions);
+    body.appendChild(actions);
 
     sendTranscriptBtn.addEventListener("click", function () {
       var name = nameInput.value.trim();
@@ -1444,15 +1492,15 @@
   }
 
   function showTranscriptSuccess() {
-    postChatEl.innerHTML = "";
+    var body = buildPostChatLayout();
 
     var checkEl = el("div", "cf360-postchat-check");
     checkEl.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>';
-    postChatEl.appendChild(checkEl);
+    body.appendChild(checkEl);
 
     var msg = el("div", "cf360-postchat-msg");
     msg.textContent = t("transcriptSuccess");
-    postChatEl.appendChild(msg);
+    body.appendChild(msg);
 
     setTimeout(function () {
       showPostChatDone();
@@ -1463,11 +1511,12 @@
     btn.disabled = false;
     btn.textContent = t("transcriptSend");
     // Show inline error briefly
-    var existing = postChatEl.querySelector(".cf360-postchat-error");
+    var bodyEl = postChatEl.querySelector(".cf360-postchat-body") || postChatEl;
+    var existing = bodyEl.querySelector(".cf360-postchat-error");
     if (existing) existing.remove();
     var errEl = el("div", "cf360-postchat-msg cf360-postchat-error");
     errEl.textContent = t("transcriptError");
-    postChatEl.appendChild(errEl);
+    bodyEl.appendChild(errEl);
   }
 
   function showPostChatDone() {
@@ -1512,6 +1561,7 @@
 
     var overrides = [
       ".cf360-header{background:linear-gradient(135deg,#1c2e47 0%," + hc + " 100%);}",
+      ".cf360-postchat-hero{background:linear-gradient(135deg,#1c2e47 0%," + hc + " 100%);}",
       ".cf360-header-btn{color:" + hic + ";}",
       ".cf360-header-avatar svg{fill:" + hic + ";}",
       ".cf360-bubble{background:linear-gradient(135deg," + bc + "," + bcDarker + ");color:" + bic + ";}",
