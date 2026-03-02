@@ -1914,6 +1914,7 @@ export function AiSettingsClient({
                     }));
                   }
                   setSelectedRuleIds(new Set());
+                  setTemplateDrawerField(null);
                 }}
               >
                 {t("agentInstructions.applySelectedRules", { count: selectedRuleIds.size })}
