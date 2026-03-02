@@ -1593,9 +1593,6 @@
       sendTranscriptBtn.disabled = true;
       sendTranscriptBtn.textContent = "...";
 
-      // Save visitor info to localStorage for future pre-fill (code + number separate)
-      saveVisitorInfo({ name: name, email: email, phoneCode: code, phoneNumber: num });
-
       fetch(apiUrl("/api/widget/transcript"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1670,6 +1667,7 @@
     rtCleanup();
     state.realtimeConfig = null;
     clearConversationId();
+    try { localStorage.removeItem(VISITOR_INFO_KEY); } catch (e) { /* noop */ }
     state.conversationId = null;
     state.lastMessageId = null;
     state.resolved = false;
