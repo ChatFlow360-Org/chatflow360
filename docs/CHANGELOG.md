@@ -2,6 +2,25 @@
 
 > Historial completo de versiones y cambios del proyecto.
 
+## v0.3.12 (2026-03-02)
+
+### Modular Prompt Templates by Business Category (9bd5f03)
+- **`BusinessCategory` model** — new table `business_categories` (name, slug, sortOrder). Organizations now have an optional FK to a category.
+- **`PromptPiece` model** — new table `prompt_pieces` (categoryId, type, name, content, sortOrder). Types: `role`, `rule`, `personality`. Pieces are organized by category and type.
+- **Prompt Templates page redesigned** — replaced card grid with two-panel layout: left sidebar lists categories with piece counts, right panel shows pieces grouped by type (Agent Roles, Rules, Personalities) with inline CRUD.
+- **Server actions** — `createBusinessCategory`, `updateBusinessCategory`, `deleteBusinessCategory`, `createPromptPiece`, `updatePromptPiece`, `deletePromptPiece` (all super_admin only).
+
+### Global Mandatory Rules (ea6413f)
+- **Schema change** — `PromptPiece.categoryId` now nullable (`String?`). Global rules = pieces with `categoryId: null`.
+- **Migration** — `20260302_global_mandatory_rules`: `ALTER TABLE "prompt_pieces" ALTER COLUMN "category_id" DROP NOT NULL`.
+- **Prompt Templates (Super Admin)** — new "Global Rules" tab alongside "By Category". CRUD for global rules with name + content. Empty state with Globe icon.
+- **AI Settings (Org Admin)** — global rules render above custom rules with Shield icon (amber), locked (no remove button). Hint: "These rules are set by the platform administrator".
+- **System prompt integration** — on save, global rules are prepended to `promptStructure.rules` so `composeSystemPrompt()` includes them.
+- **Server actions** — `createGlobalRule`, `updateGlobalRule`, `deleteGlobalRule` (super_admin only).
+- **i18n** — 14 new keys (EN + ES) for global rules UI.
+
+---
+
 ## v0.3.11 (2026-03-01)
 
 ### Lead Capture System

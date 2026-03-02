@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.3.11 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.3.12 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -74,4 +74,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.3.11** - Lead Capture System. AI name extraction (hidden tag + fallback regex). Widget phone field + name pre-fill from AI + localStorage for returning visitors. Prisma `Lead` model. `POST /api/widget/transcript` creates Lead (name, email, phone, IP, pageUrl). Dashboard `/leads` page with table + mobile cards + delete. i18n EN/ES. Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).
+**v0.3.12** - Modular Prompt Templates + Global Mandatory Rules. `BusinessCategory` + `PromptPiece` models replace card-grid templates. Prompt Templates page: "By Category" tab (2-panel: category sidebar + pieces by type) + "Global Rules" tab (rules that apply to ALL orgs). `PromptPiece.categoryId` nullable (null = global rule). AI Settings shows global rules as locked (Shield amber, no X). Server actions for category/piece/global-rule CRUD. i18n EN/ES. Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).

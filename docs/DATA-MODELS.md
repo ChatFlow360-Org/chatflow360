@@ -18,6 +18,9 @@ Organization (1)
             └── Conversation (1:N) ─── User? (assignedTo)
                     └── Message (1:N) ─── User? (sender) + tokensUsed
 
+BusinessCategory (global) ─── Categorías de negocio (SOLO super_admin CRUD)
+    └── PromptPiece (1:N) ─── Piezas de prompt por tipo (role/rule/personality)
+PromptPiece (categoryId=null) ─── Global Rules (aplican a TODAS las orgs)
 PromptTemplate (global) ─── Plantillas reutilizables (SOLO super_admin CRUD)
 PlatformSettings (global) ─── Config plataforma: API keys (SOLO super_admin)
 ```
@@ -128,6 +131,42 @@ const handoffKeywords = channel.handoffKeywords.length > 0
 |-----------|-------------|-------|
 | model, temperature, maxTokens, encryptedApiKey | Super Admin | Control de costos y calidad |
 | systemPrompt, promptStructure, handoffKeywords | Super Admin + Org Admin | El cliente conoce su negocio |
+
+### BusinessCategory (Global — SOLO Super Admin, v0.3.12)
+
+> Categorías de negocio para organizar prompt pieces. Las organizaciones pueden asociarse a una categoría.
+
+| Campo | Tipo | Default | Descripcion |
+|-------|------|---------|-------------|
+| id | UUID | auto | PK |
+| name | String (unique) | - | Nombre de la categoría (ej: "Lawyers", "Doctors") |
+| slug | String (unique) | - | URL-friendly identifier |
+| sortOrder | Int | 0 | Orden de aparición |
+
+**Relaciones:** organizations (1:N), pieces (1:N PromptPiece)
+**Acceso:** SOLO `user.isSuperAdmin === true`
+
+### PromptPiece (Global — SOLO Super Admin, v0.3.12)
+
+> Piezas individuales de prompt organizadas por categoría y tipo. Cuando `categoryId` es null, la pieza es una **Global Rule** que aplica a TODAS las organizaciones.
+
+| Campo | Tipo | Default | Descripcion |
+|-------|------|---------|-------------|
+| id | UUID | auto | PK |
+| categoryId | UUID? | null | FK BusinessCategory. **null = Global Rule** (aplica a todas las orgs) |
+| type | String | - | `role` / `rule` / `personality` |
+| name | String | - | Nombre descriptivo de la pieza |
+| content | String (Text) | - | Contenido de la pieza |
+| sortOrder | Int | 0 | Orden de aparición |
+
+**Relaciones:** category (BusinessCategory, optional, cascade delete)
+**Indice:** `(categoryId, type)`
+**Acceso:** SOLO `user.isSuperAdmin === true` (CRUD)
+
+**Global Rules (categoryId = null):**
+- Super Admin las crea/edita/elimina en la tab "Global Rules" de Prompt Templates
+- Org admins las ven en AI Settings como reglas locked (Shield amber, sin botón X)
+- Se prepend a `promptStructure.rules` al guardar AI Settings → incluidas en `composeSystemPrompt()`
 
 ### PromptTemplate (Global — SOLO Super Admin)
 
@@ -374,6 +413,8 @@ Prisma usa camelCase en el codigo pero las tablas y columnas en PostgreSQL usan 
 | User | users |
 | OrganizationMember | organization_members |
 | AiSettings | ai_settings |
+| BusinessCategory | business_categories |
+| PromptPiece | prompt_pieces |
 | PromptTemplate | prompt_templates |
 | PlatformSettings | platform_settings |
 | Channel | channels |

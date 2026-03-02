@@ -331,21 +331,25 @@ The first structured category is `business_hours`, backed by a purpose-built Rea
 
 **Migration:** `supabase/migrations/20260226_add_knowledge_categories.sql` — backward compatible; existing rows receive `'free_text'` default with no data loss.
 
-### Prompt Templates Page
+### Prompt Templates Page (v0.3.12 — Modular Pieces + Global Rules)
 
 **Ruta:** `/[locale]/prompt-templates`
 
 | Capa | Archivo | Responsabilidad |
 |------|---------|-----------------|
-| Server page | `app/[locale]/(dashboard)/prompt-templates/page.tsx` | Fetch all PromptTemplates, guard: super_admin only |
-| Client component | `prompt-templates-client.tsx` | Card grid layout, create/edit/delete dialogs, `useActionState` |
-| Server actions | `createPromptTemplate`, `updatePromptTemplate`, `deletePromptTemplate` in `lib/admin/actions.ts` | Zod validation, `requireSuperAdmin()`, dual `revalidatePath` |
+| Server page | `app/[locale]/(dashboard)/prompt-templates/page.tsx` | Fetch BusinessCategories, PromptPieces, global rules; guard: super_admin only |
+| Client component | `prompt-templates-client.tsx` | Two tabs: "By Category" (2-panel layout with category sidebar + pieces by type) and "Global Rules" (CRUD for mandatory rules) |
+| Server actions | `lib/admin/actions.ts` | Category CRUD (`createBusinessCategory`, etc.), Piece CRUD (`createPromptPiece`, etc.), Global Rule CRUD (`createGlobalRule`, `updateGlobalRule`, `deleteGlobalRule`) |
 
-**Access control:** super_admin only — page and all CRUD actions are guarded. Org admins can only consume templates via the "Use Template" selector in AI Settings (read-only).
+**Two tabs:**
+- **By Category** — left sidebar lists `BusinessCategory` items with piece counts. Right panel shows `PromptPiece` items grouped by type (Agent Roles, Rules, Personalities) with inline create/edit/delete.
+- **Global Rules** — CRUD for `PromptPiece` items with `categoryId = null`. These rules apply to ALL organizations. Empty state with Globe icon.
+
+**Access control:** super_admin only — page and all CRUD actions are guarded. Org admins see global rules as locked items in AI Settings.
+
+**Global Rules in AI Settings:** Org admins see global rules above their custom rules with Shield icon (amber), no remove button. Hint text explains these are platform-level rules. On save, global rules are prepended to `promptStructure.rules` so `composeSystemPrompt()` includes them.
 
 **Sidebar:** "Prompt Templates" item appears in the admin section of the sidebar, positioned before "API Keys".
-
-**Relation to AI Settings:** AI Settings retains only the "Use Template" dialog (read-only selector). Template management (create/edit/delete) was moved out of AI Settings to avoid mixing super_admin CRUD with org admin configuration on the same page.
 
 #### RLS on prompt_templates
 
@@ -799,7 +803,7 @@ Los tokens se registran en cada mensaje IA (`Message.tokensUsed`) y se resumen e
 - RLS policies on `conversations`, `messages`, and `prompt_templates` tables (org-scoped tenant isolation + super_admin gate)
 - Dashboard basico (5 stat cards, top pages, recent conversations)
 - AI Settings page (structured prompt fields, model config, handoff, preview widget, "Use Template" selector, Widget appearance, Post-Chat) + RBAC split (business vs technical params)
-- Prompt Templates page (`/prompt-templates`) — super_admin CRUD with card grid layout, separate from AI Settings. Responsive card grid, duplicate template, action tooltips (Radix), emerald badges with truncation. RLS defense-in-depth on table.
+- Prompt Templates page (`/prompt-templates`) — super_admin CRUD with two tabs: "By Category" (2-panel layout: category sidebar + pieces by type) and "Global Rules" (mandatory rules for all orgs). BusinessCategory + PromptPiece models. Global rules (categoryId=null) appear locked in AI Settings. RLS defense-in-depth on table.
 - App-wide ConfirmDialog (`components/ui/confirm-dialog.tsx`) — replaces ALL native confirm() calls. Uses shadcn/ui AlertDialog. Applied to: prompt-templates, organizations (org + channel delete), users
 - App-wide Tooltips (`components/ui/tooltip.tsx`) — shadcn/ui Tooltip with TooltipProvider in DashboardShell
 - Structured prompt fields (`lib/chat/prompt-builder.ts`): agentName, role, rules (max 50), personality, additionalInstructions — assembled via `composeSystemPrompt()`
