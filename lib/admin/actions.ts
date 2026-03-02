@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUser } from "@/lib/auth/user";
 import { DEFAULT_HANDOFF_KEYWORDS } from "@/lib/chat/defaults";
 import { deriveTypingChannel } from "@/lib/crypto/channel";
+import { broadcastToConversation } from "@/lib/realtime/broadcast";
 import {
   promptStructureSchema,
   composeSystemPrompt,
@@ -725,6 +726,9 @@ export async function closeConversation(
       data: { status: "closed", resolvedAt: new Date() },
     });
 
+    // Notify widget in real-time so it reflects the closed state
+    broadcastToConversation(conversationId, "conversation_closed", {});
+
     revalidatePath("/conversations");
     return { success: true };
   } catch (error) {
@@ -767,6 +771,9 @@ export async function takeoverConversation(
       where: { id: conversationId },
       data: { responderMode: "human" },
     });
+
+    // Notify widget so it starts polling for agent messages
+    broadcastToConversation(conversationId, "takeover", {});
 
     revalidatePath("/conversations");
     return { success: true };
@@ -814,7 +821,7 @@ export async function sendAgentMessage(
     if (conversation.status === "closed") return { success: false, error: "Conversation is closed" };
 
     // Create agent message
-    await prisma.message.create({
+    const agentMessage = await prisma.message.create({
       data: {
         conversationId: parsed.data.conversationId,
         senderType: "agent",
@@ -831,6 +838,16 @@ export async function sendAgentMessage(
         lastMessageAt: new Date(),
         ...(conversation.status === "pending" ? { status: "open" } : {}),
         responderMode: "human",
+      },
+    });
+
+    // Push message to widget in real-time via broadcast
+    broadcastToConversation(parsed.data.conversationId, "new_message", {
+      message: {
+        id: agentMessage.id,
+        senderType: "agent",
+        content: agentMessage.content,
+        createdAt: agentMessage.createdAt.toISOString(),
       },
     });
 

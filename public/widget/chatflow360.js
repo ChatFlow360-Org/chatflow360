@@ -301,6 +301,39 @@
               hideTyping();
             }
           }
+
+          // Agent took control (manual takeover from dashboard)
+          if (msg.event === "broadcast" && msg.payload && msg.payload.event === "takeover") {
+            connectingEl.textContent = t("connecting");
+            connectingEl.classList.add("cf360-connecting--show");
+            startPolling();
+          }
+
+          // New agent message pushed in real-time
+          if (msg.event === "broadcast" && msg.payload && msg.payload.event === "new_message") {
+            var msgPayload = (msg.payload.payload || {});
+            if (msgPayload.message) {
+              hideTyping();
+              appendMessage(msgPayload.message);
+              switchToConnectedBanner();
+              // Start polling as safety net if not already active
+              if (!state.polling) startPolling();
+              // Badge if widget is closed
+              if (!state.open) {
+                var curCount = parseInt(badge.textContent, 10) || 0;
+                badge.textContent = String(curCount + 1);
+                badge.classList.add("cf360-badge--show");
+              }
+            }
+          }
+
+          // Conversation closed from dashboard
+          if (msg.event === "broadcast" && msg.payload && msg.payload.event === "conversation_closed") {
+            connectingEl.classList.remove("cf360-connecting--show", "cf360-connecting--connected");
+            state.resolved = true;
+            newConvBtn.classList.add("cf360-new-conv--show");
+            stopPolling();
+          }
         } catch (e) { /* ignore malformed */ }
       };
 
