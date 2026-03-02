@@ -1514,20 +1514,15 @@
 
     // Pre-fill from AI extraction or localStorage (no autofill interference possible)
     var storedInfo = getStoredVisitorInfo();
+    // Clear corrupted legacy phone field (from old browser-autofill sessions)
+    if (storedInfo.phone && !storedInfo.phoneCode) {
+      delete storedInfo.phone;
+      saveVisitorInfo(storedInfo);
+    }
     var wantName = state.contactName || storedInfo.name || "";
     var wantEmail = storedInfo.email || "";
-    var wantCode = t("transcriptPhoneCode");
-    var wantNum = "";
-    if (storedInfo.phone) {
-      var stored = storedInfo.phone.replace(/\s+/g, "");
-      var codeMatch = stored.match(/^(\+\d{1,4})/);
-      if (codeMatch) {
-        wantCode = codeMatch[1];
-        wantNum = stored.slice(codeMatch[1].length).replace(/^[\s-]+/, "");
-      } else {
-        wantNum = storedInfo.phone;
-      }
-    }
+    var wantCode = storedInfo.phoneCode || t("transcriptPhoneCode");
+    var wantNum = storedInfo.phoneNumber || "";
     nameInput.textContent = wantName;
     emailInput.textContent = wantEmail;
     phoneCode.textContent = wantCode;
@@ -1571,8 +1566,8 @@
       sendTranscriptBtn.disabled = true;
       sendTranscriptBtn.textContent = "...";
 
-      // Save visitor info to localStorage for future pre-fill
-      saveVisitorInfo({ name: name, email: email, phone: phone });
+      // Save visitor info to localStorage for future pre-fill (code + number separate)
+      saveVisitorInfo({ name: name, email: email, phoneCode: code, phoneNumber: num });
 
       fetch(apiUrl("/api/widget/transcript"), {
         method: "POST",
