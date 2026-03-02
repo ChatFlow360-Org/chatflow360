@@ -147,19 +147,13 @@ export async function deleteOrganization(id: string): Promise<AdminActionState> 
     // Validate UUID to prevent injection
     z.string().uuid().parse(id);
 
-    // MED-05: Check cascade impact before deletion
+    // Cascade delete: members, channels, conversations, leads, etc.
     const org = await prisma.organization.findUnique({
       where: { id },
-      include: {
-        _count: { select: { members: true, channels: true, conversations: true } },
-      },
+      select: { id: true },
     });
 
     if (!org) return { error: "createFailed" };
-
-    if (org._count.members > 0) {
-      return { error: "orgHasMembers" };
-    }
 
     await prisma.organization.delete({
       where: { id },
