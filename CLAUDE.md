@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.3.13 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.3.14 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -74,4 +74,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.3.13** - Satisfaction Rating + Take Control + Realtime Broadcast. Rating widget on dashboard (avg + distribution by star). Rating display in conversation cards + detail panel. Take Control button for manual AI→Human takeover. `broadcastToConversation()` pushes takeover/new_message/close events to widget via Supabase Realtime REST API. Enhanced Recent Conversations: 10 items, zebra stripes, clickable (auto-opens conversation panel). Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).
+**v0.3.14** - Dynamic Global Rules + Widget Welcome Texts + Post-Chat on Close. Global rules now injected dynamically in chat endpoint (no longer saved in promptStructure, fixing duplication). Take Control button amber for visibility. Agent close triggers post-chat flow (rating+transcript) in widget. Customizable Welcome Title/Subtitle (EN/ES) in Settings > Widget > Texts. Connecting banner z-index fix. Contenteditable placeholder fix. Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).
