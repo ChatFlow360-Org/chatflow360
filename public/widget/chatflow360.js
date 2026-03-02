@@ -1456,14 +1456,14 @@
     nameInput.className = "cf360-transcript-input";
     nameInput.placeholder = t("transcriptName");
     nameInput.maxLength = 100;
-    nameInput.setAttribute("autocomplete", "name");
+    nameInput.setAttribute("autocomplete", "off");
 
     var emailInput = document.createElement("input");
     emailInput.type = "email";
     emailInput.className = "cf360-transcript-input";
     emailInput.placeholder = t("transcriptEmail");
     emailInput.maxLength = 254;
-    emailInput.setAttribute("autocomplete", "email");
+    emailInput.setAttribute("autocomplete", "off");
 
     var phoneRow = el("div", "cf360-phone-row");
 
@@ -1473,6 +1473,7 @@
     phoneCode.value = t("transcriptPhoneCode");
     phoneCode.maxLength = 5;
     phoneCode.setAttribute("inputmode", "tel");
+    phoneCode.setAttribute("autocomplete", "off");
     phoneCode.setAttribute("aria-label", "Country code");
     phoneCode.addEventListener("input", function () {
       phoneCode.value = phoneCode.value.replace(/[^0-9+]/g, "");
@@ -1486,7 +1487,7 @@
     phoneNumber.className = "cf360-transcript-input";
     phoneNumber.placeholder = t("transcriptPhoneNumber");
     phoneNumber.maxLength = 15;
-    phoneNumber.setAttribute("autocomplete", "tel-national");
+    phoneNumber.setAttribute("autocomplete", "off");
     phoneNumber.setAttribute("inputmode", "tel");
     phoneNumber.addEventListener("input", function () {
       phoneNumber.value = phoneNumber.value.replace(/[^0-9\-() ]/g, "");
