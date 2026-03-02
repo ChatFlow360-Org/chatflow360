@@ -96,10 +96,27 @@ export async function generateAiResponse(
   const handoffRequested = rawContent.includes("[HANDOFF]");
   const content = rawContent.replace(/\s*\[HANDOFF\]\s*/g, "").trim();
 
-  // Extract visitor name tag
+  // Extract visitor name tag (primary method)
   const nameMatch = content.match(/<!--cf360:name=(.+?)-->/);
-  const extractedName = nameMatch ? nameMatch[1].trim() : undefined;
+  let extractedName = nameMatch ? nameMatch[1].trim() : undefined;
   const finalContent = content.replace(/\s*<!--cf360:name=.+?-->\s*/g, "").trim();
+
+  // Fallback: detect name from AI greeting patterns when tag is missing
+  if (!extractedName) {
+    const greetPatterns = [
+      /(?:encantado|encantada|mucho gusto|un placer)[\s,]+(?:de conocer(?:lo|la|te))?[\s,]*([A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)*)/i,
+      /(?:nice to meet you|pleasure to meet you|hello|hi)[\s,]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
+      /(?:hola|bienvenido|bienvenida)[\s,]+([A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)*)/i,
+    ];
+    for (const pattern of greetPatterns) {
+      const m = finalContent.match(pattern);
+      if (m && m[1] && m[1].length >= 2 && m[1].length <= 60) {
+        // Strip trailing punctuation
+        extractedName = m[1].replace(/[.,!?;:]+$/, "").trim();
+        break;
+      }
+    }
+  }
 
   return { content: finalContent, tokensUsed, handoffRequested, extractedName };
 }
