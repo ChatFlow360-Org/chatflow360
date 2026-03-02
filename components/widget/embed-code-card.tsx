@@ -25,7 +25,7 @@ export function EmbedCodeCard({ publicKey }: EmbedCodeCardProps) {
   const [embedLang, setEmbedLang] = useState<"en" | "es">("en");
   const [copied, setCopied] = useState(false);
 
-  const langAttr = embedLang === "es" ? '\n  data-lang="es"' : "";
+  const langAttr = `\n  data-lang="${embedLang}"`;
   const code = `<script\n  src="https://app.chatflow360.com/widget/chatflow360.js"\n  data-key="${publicKey}"${langAttr}\n  defer><\/script>`;
 
   async function handleCopy() {
