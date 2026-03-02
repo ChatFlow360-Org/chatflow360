@@ -270,10 +270,36 @@ export function AiSettingsClient({
     if (policiesState?.success) { setShowPoliciesDialog(false); scrollToTop(); }
   }, [policiesState]);
 
-  // Scroll to top on main save success/error
+  // Auto-dismiss feedback banners after 4s
+  const [dismissedState, setDismissedState] = useState<unknown>(null);
+  const [dismissedCreate, setDismissedCreate] = useState<unknown>(null);
+  const [dismissedUpdate, setDismissedUpdate] = useState<unknown>(null);
+
+  // Scroll to top on main save success/error + auto-dismiss
   useEffect(() => {
-    if (state?.success || state?.error) scrollToTop();
+    if (state?.success || state?.error) {
+      scrollToTop();
+      setDismissedState(null);
+      const timer = setTimeout(() => setDismissedState(state), 4000);
+      return () => clearTimeout(timer);
+    }
   }, [state]);
+
+  useEffect(() => {
+    if (createState?.success || createState?.error) {
+      setDismissedCreate(null);
+      const timer = setTimeout(() => setDismissedCreate(createState), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [createState]);
+
+  useEffect(() => {
+    if (updateState?.success || updateState?.error) {
+      setDismissedUpdate(null);
+      const timer = setTimeout(() => setDismissedUpdate(updateState), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [updateState]);
 
   // Form state — technical params (editable by super_admin)
   const [model, setModel] = useState(aiSettings?.model || "gpt-4o-mini");
@@ -412,35 +438,35 @@ export function AiSettingsClient({
         <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
-      {/* Success/Error feedback */}
-      {state?.success && (
+      {/* Success/Error feedback (auto-dismiss after 4s) */}
+      {state?.success && dismissedState !== state && (
         <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400">
           {t("saved")}
         </div>
       )}
-      {state?.error && (
+      {state?.error && dismissedState !== state && (
         <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {tAdmin(state.error)}
         </div>
       )}
 
       {/* Knowledge feedback */}
-      {createState?.success && (
+      {createState?.success && dismissedCreate !== createState && (
         <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400">
           {t("knowledge.created")}
         </div>
       )}
-      {createState?.error && (
+      {createState?.error && dismissedCreate !== createState && (
         <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {t("knowledge.createError")}
         </div>
       )}
-      {updateState?.success && (
+      {updateState?.success && dismissedUpdate !== updateState && (
         <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400">
           {t("knowledge.updated")}
         </div>
       )}
-      {updateState?.error && (
+      {updateState?.error && dismissedUpdate !== updateState && (
         <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {t("knowledge.updateError")}
         </div>
