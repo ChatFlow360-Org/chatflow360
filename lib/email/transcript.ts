@@ -1,4 +1,5 @@
 import type { PostChatSettings } from "@/lib/widget/post-chat";
+import { normalizeAmPm } from "@/lib/utils/format";
 
 interface Message {
   senderType: string;
@@ -63,11 +64,12 @@ export function renderTranscriptEmail({
       const bgColor = isVisitor ? "#f0f4f8" : "#ffffff";
       const avatarBg = isVisitor ? visitorColor : headerColor;
       const avatarText = isVisitor ? visitorName.charAt(0).toUpperCase() : (isEs ? "IA" : "AI");
-      const time = new Date(m.createdAt).toLocaleTimeString(isEs ? "es" : "en", {
-        hour: "2-digit",
+      const time = normalizeAmPm(new Date(m.createdAt).toLocaleTimeString(isEs ? "es" : "en", {
+        hour: "numeric",
         minute: "2-digit",
+        hour12: true,
         timeZone: tz,
-      });
+      }));
 
       return `
         <tr>

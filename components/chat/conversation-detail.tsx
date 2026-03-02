@@ -19,7 +19,7 @@ import { ChatMessage } from "@/components/chat/chat-message";
 import { useRealtimeMessages } from "@/hooks/use-realtime-messages";
 import { useTypingIndicator } from "@/hooks/use-typing-indicator";
 import { getConversationMessages, sendAgentMessage, getTypingChannel, closeConversation } from "@/lib/admin/actions";
-import { formatRelativeTime } from "@/lib/utils/format";
+import { formatRelativeTime, normalizeAmPm } from "@/lib/utils/format";
 import type { Conversation, ConversationStatus, ResponderMode, Message } from "@/types";
 
 interface ConversationDetailProps {
@@ -223,12 +223,13 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
             {t("detail.started")}
           </span>
           <span className="text-foreground font-medium">
-            {new Date(conversation.createdAt).toLocaleDateString(locale, {
+            {normalizeAmPm(new Date(conversation.createdAt).toLocaleDateString(locale, {
               month: "short",
               day: "numeric",
-              hour: "2-digit",
+              hour: "numeric",
               minute: "2-digit",
-            })}
+              hour12: true,
+            }))}
           </span>
 
           <span className="flex items-center gap-1.5 text-muted-foreground">

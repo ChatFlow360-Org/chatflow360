@@ -49,7 +49,8 @@ AI responde con RAG (conocimiento) + instrucciones | Human takeover via keyword 
 6. **Seguridad:** RLS, validacion server-side, no exponer datos sensibles
 7. **RAG:** Tabla `channel_knowledge` con pgvector - NUNCA usar `prisma db push` (eliminaria columnas vector)
 8. **i18n obligatorio** - Todo string visible al usuario via `useTranslations()`, NUNCA hardcodear texto. Ver Regla 13
-9. **Verificacion 4-way** - Todo componente nuevo debe verse bien en Light EN, Light ES, Dark EN, Dark ES. Ver Regla 14
+9. **Verificacion 4-way** - Todo componente nuevo debe verse bien en Light EN, Light ES, Dark EN, Dark ES. Ver Regla 15
+10. **AM/PM uppercase** - Siempre normalizar con `normalizeAmPm()` de `@/lib/utils/format`. Ver Regla 14
 
 ## Enfoque Hibrido Prisma + Supabase
 

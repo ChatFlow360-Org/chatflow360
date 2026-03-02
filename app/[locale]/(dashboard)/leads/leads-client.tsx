@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Trash2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { normalizeAmPm } from "@/lib/utils/format";
 import { deleteLead } from "./actions";
 
 interface Lead {
@@ -44,14 +45,16 @@ export function LeadsClient({ leads: initialLeads }: { leads: Lead[] }) {
   };
 
   const formatDate = (iso: string) => {
-    return new Date(iso).toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
+    return normalizeAmPm(
+      new Date(iso).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      })
+    );
   };
 
   return (

@@ -157,7 +157,25 @@ types/i18n.d.ts         # IntlMessages type (autocomplete)
 | `dateRange` | presets, labels |
 | `time` | relative time strings |
 
-## Regla 14: Consistencia Visual - Matriz de Verificacion
+## Regla 14: Formato de Hora - AM/PM Uppercase
+
+Todo texto que muestre hora con AM/PM **DEBE** normalizar a mayusculas sin puntos ni espacios.
+
+- Spanish locale devuelve `"p. m."` / `"a. m."` — normalizar a `"PM"` / `"AM"`
+- Usar `normalizeAmPm()` de `@/lib/utils/format` al formatear fechas/horas con `hour12: true`
+- Siempre usar `hour12: true` en `toLocaleDateString` / `toLocaleTimeString` para consistencia
+
+```typescript
+import { normalizeAmPm } from "@/lib/utils/format";
+
+// Correcto
+normalizeAmPm(date.toLocaleDateString(locale, { hour: "numeric", minute: "2-digit", hour12: true }));
+
+// Incorrecto — no normalizado, puede mostrar "p. m."
+date.toLocaleDateString(locale, { hour: "numeric", minute: "2-digit" });
+```
+
+## Regla 15: Consistencia Visual - Matriz de Verificacion
 
 Todo componente nuevo **DEBE** verificarse en las 4 combinaciones antes de considerarse completo:
 

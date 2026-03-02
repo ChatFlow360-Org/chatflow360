@@ -24,6 +24,17 @@ export function formatRelativeTime(dateString: string, locale: string = "en"): s
   });
 }
 
+/**
+ * Normalizes locale-specific AM/PM variants (e.g. "p. m.", "a.m.") to uppercase "AM"/"PM".
+ * Project-wide rule: always display AM/PM in uppercase without dots or spaces.
+ */
+export function normalizeAmPm(str: string): string {
+  return str.replace(/[aApP]\.?\s?[mM]\.?/g, (m) => {
+    const clean = m.replace(/[\.\s]/g, "").toUpperCase();
+    return clean;
+  });
+}
+
 export function formatNumber(num: number): string {
   if (num >= 1000000) {
     return `${(num / 1000000).toFixed(1)}M`;
@@ -36,9 +47,11 @@ export function formatNumber(num: number): string {
 
 export function formatTime(dateString: string, locale: string = "en"): string {
   const date = new Date(dateString);
-  return date.toLocaleTimeString(locale, {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: locale === "en",
-  });
+  return normalizeAmPm(
+    date.toLocaleTimeString(locale, {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    })
+  );
 }
