@@ -201,6 +201,7 @@
       "applyTemplate": "Apply",
       "replaceTemplate": "Replace current",
       "alreadyAdded": "Added",
+      "templateDrawerDescription": "Select a template to apply",
       "noTemplatesAvailable": "No template pieces available for your business category.",
       "noCategoryAssigned": "No business category assigned to your organization. Contact your administrator.",
       "globalRules": "Global Rules",

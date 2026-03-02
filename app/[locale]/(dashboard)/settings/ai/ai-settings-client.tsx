@@ -57,10 +57,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import type { PieceType } from "@/lib/prompt-pieces";
 import {
   upsertAiSettings,
   createKnowledgeItem,
@@ -335,10 +338,8 @@ export function AiSettingsClient({
     () => !!(aiSettings?.promptStructure?.additionalInstructions) || hasLegacyPrompt
   );
 
-  // Popover open states for per-section Browse
-  const [rolePopoverOpen, setRolePopoverOpen] = useState(false);
-  const [rulesPopoverOpen, setRulesPopoverOpen] = useState(false);
-  const [personalityPopoverOpen, setPersonalityPopoverOpen] = useState(false);
+  // Template drawer state (which field is browsing, null = closed)
+  const [templateDrawerField, setTemplateDrawerField] = useState<PieceType | null>(null);
   const [globalRulesOpen, setGlobalRulesOpen] = useState(false);
 
   const resolveKeywords = (settings: AiSettingsData | null): string[] => {
@@ -587,46 +588,10 @@ export function AiSettingsClient({
                       <div className="flex items-center justify-between">
                         <Label>{t("agentInstructions.role")}</Label>
                         {promptPieces.filter(p => p.type === "role").length > 0 && (
-                          <Popover open={rolePopoverOpen} onOpenChange={setRolePopoverOpen}>
-                            <PopoverTrigger asChild>
-                              <Button type="button" variant="outline" size="sm">
-                                <LayoutTemplate className="mr-1.5 h-4 w-4" />
-                                {t("agentInstructions.browseTemplates")}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-80 p-3" align="end">
-                              {businessCategoryName && (
-                                <p className="mb-2 text-xs font-medium text-muted-foreground">
-                                  {t("agentInstructions.templateCategoryHeader", { category: businessCategoryName })}
-                                </p>
-                              )}
-                              <div className="max-h-64 space-y-2 overflow-y-auto">
-                                {promptPieces.filter(p => p.type === "role").map((piece) => (
-                                  <div
-                                    key={piece.id}
-                                    className="rounded-lg border bg-muted/30 p-3"
-                                  >
-                                    <div className="mb-1 text-sm font-medium">{piece.name}</div>
-                                    <p className="mb-2 text-xs text-muted-foreground line-clamp-3">{piece.content}</p>
-                                    <Button
-                                      type="button"
-                                      variant="secondary"
-                                      size="sm"
-                                      className="h-7 w-full text-xs"
-                                      onClick={() => {
-                                        setPromptStructure(prev => ({ ...prev, role: piece.content }));
-                                        setRolePopoverOpen(false);
-                                      }}
-                                    >
-                                      {promptStructure.role.trim()
-                                        ? t("agentInstructions.replaceTemplate")
-                                        : t("agentInstructions.applyTemplate")}
-                                    </Button>
-                                  </div>
-                                ))}
-                              </div>
-                            </PopoverContent>
-                          </Popover>
+                          <Button type="button" variant="outline" size="sm" onClick={() => setTemplateDrawerField("role")}>
+                            <LayoutTemplate className="mr-1.5 h-4 w-4" />
+                            {t("agentInstructions.browseTemplates")}
+                          </Button>
                         )}
                       </div>
                       <Textarea
@@ -649,57 +614,10 @@ export function AiSettingsClient({
                       <div className="flex items-center justify-between">
                         <Label>{t("agentInstructions.rules")}</Label>
                         {promptPieces.filter(p => p.type === "rule").length > 0 && (
-                          <Popover open={rulesPopoverOpen} onOpenChange={setRulesPopoverOpen}>
-                            <PopoverTrigger asChild>
-                              <Button type="button" variant="outline" size="sm">
-                                <LayoutTemplate className="mr-1.5 h-4 w-4" />
-                                {t("agentInstructions.browseTemplates")}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-80 p-3" align="end">
-                              {businessCategoryName && (
-                                <p className="mb-2 text-xs font-medium text-muted-foreground">
-                                  {t("agentInstructions.templateCategoryHeader", { category: businessCategoryName })}
-                                </p>
-                              )}
-                              <div className="max-h-64 space-y-2 overflow-y-auto">
-                                {promptPieces.filter(p => p.type === "rule").map((piece) => {
-                                  const isAdded = promptStructure.rules.includes(piece.content);
-                                  return (
-                                    <div
-                                      key={piece.id}
-                                      className={`rounded-lg border p-3 ${isAdded ? "border-emerald-500/30 bg-emerald-500/5" : "bg-muted/30"}`}
-                                    >
-                                      <div className="mb-1 text-sm font-medium">{piece.name}</div>
-                                      <p className="mb-2 text-xs text-muted-foreground line-clamp-3">{piece.content}</p>
-                                      {isAdded ? (
-                                        <div className="flex h-7 items-center justify-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                                          <Check className="h-3.5 w-3.5" />
-                                          {t("agentInstructions.alreadyAdded")}
-                                        </div>
-                                      ) : (
-                                        <Button
-                                          type="button"
-                                          variant="secondary"
-                                          size="sm"
-                                          className="h-7 w-full text-xs"
-                                          disabled={promptStructure.rules.length >= 50}
-                                          onClick={() => {
-                                            setPromptStructure(prev => ({
-                                              ...prev,
-                                              rules: [...prev.rules, piece.content],
-                                            }));
-                                          }}
-                                        >
-                                          {t("agentInstructions.applyTemplate")}
-                                        </Button>
-                                      )}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </PopoverContent>
-                          </Popover>
+                          <Button type="button" variant="outline" size="sm" onClick={() => setTemplateDrawerField("rule")}>
+                            <LayoutTemplate className="mr-1.5 h-4 w-4" />
+                            {t("agentInstructions.browseTemplates")}
+                          </Button>
                         )}
                       </div>
                       {/* Global mandatory rules (locked, collapsible) */}
@@ -787,46 +705,10 @@ export function AiSettingsClient({
                       <div className="flex items-center justify-between">
                         <Label>{t("agentInstructions.personality")}</Label>
                         {promptPieces.filter(p => p.type === "personality").length > 0 && (
-                          <Popover open={personalityPopoverOpen} onOpenChange={setPersonalityPopoverOpen}>
-                            <PopoverTrigger asChild>
-                              <Button type="button" variant="outline" size="sm">
-                                <LayoutTemplate className="mr-1.5 h-4 w-4" />
-                                {t("agentInstructions.browseTemplates")}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-80 p-3" align="end">
-                              {businessCategoryName && (
-                                <p className="mb-2 text-xs font-medium text-muted-foreground">
-                                  {t("agentInstructions.templateCategoryHeader", { category: businessCategoryName })}
-                                </p>
-                              )}
-                              <div className="max-h-64 space-y-2 overflow-y-auto">
-                                {promptPieces.filter(p => p.type === "personality").map((piece) => (
-                                  <div
-                                    key={piece.id}
-                                    className="rounded-lg border bg-muted/30 p-3"
-                                  >
-                                    <div className="mb-1 text-sm font-medium">{piece.name}</div>
-                                    <p className="mb-2 text-xs text-muted-foreground line-clamp-3">{piece.content}</p>
-                                    <Button
-                                      type="button"
-                                      variant="secondary"
-                                      size="sm"
-                                      className="h-7 w-full text-xs"
-                                      onClick={() => {
-                                        setPromptStructure(prev => ({ ...prev, personality: piece.content }));
-                                        setPersonalityPopoverOpen(false);
-                                      }}
-                                    >
-                                      {promptStructure.personality.trim()
-                                        ? t("agentInstructions.replaceTemplate")
-                                        : t("agentInstructions.applyTemplate")}
-                                    </Button>
-                                  </div>
-                                ))}
-                              </div>
-                            </PopoverContent>
-                          </Popover>
+                          <Button type="button" variant="outline" size="sm" onClick={() => setTemplateDrawerField("personality")}>
+                            <LayoutTemplate className="mr-1.5 h-4 w-4" />
+                            {t("agentInstructions.browseTemplates")}
+                          </Button>
                         )}
                       </div>
                       <Textarea
@@ -1885,6 +1767,87 @@ export function AiSettingsClient({
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* ── Template Drawer (Sheet from right) ── */}
+      <Sheet open={templateDrawerField !== null} onOpenChange={(open) => { if (!open) setTemplateDrawerField(null); }}>
+        <SheetContent side="right" className="sm:max-w-md flex flex-col">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <LayoutTemplate className="h-5 w-5" />
+              {t("agentInstructions.browseTemplates")}
+            </SheetTitle>
+            <SheetDescription>
+              {businessCategoryName
+                ? t("agentInstructions.templateCategoryHeader", { category: businessCategoryName })
+                : t("agentInstructions.templateDrawerDescription")}
+            </SheetDescription>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto px-4 pb-4">
+            <div className="space-y-3">
+              {promptPieces
+                .filter(p => p.type === templateDrawerField)
+                .map((piece) => {
+                  const isRule = templateDrawerField === "rule";
+                  const isAdded = isRule && promptStructure.rules.includes(piece.content);
+                  const hasContent = templateDrawerField === "role"
+                    ? promptStructure.role.trim()
+                    : templateDrawerField === "personality"
+                      ? promptStructure.personality.trim()
+                      : false;
+
+                  return (
+                    <div
+                      key={piece.id}
+                      className={`rounded-lg border p-4 ${isAdded ? "border-emerald-500/30 bg-emerald-500/5" : "bg-muted/30"}`}
+                    >
+                      <div className="mb-1.5 text-sm font-semibold">{piece.name}</div>
+                      <p className="mb-3 text-sm text-muted-foreground whitespace-pre-wrap">{piece.content}</p>
+                      {isAdded ? (
+                        <div className="flex h-8 items-center justify-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                          <Check className="h-4 w-4" />
+                          {t("agentInstructions.alreadyAdded")}
+                        </div>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          className="h-8 w-full"
+                          disabled={isRule && promptStructure.rules.length >= 50}
+                          onClick={() => {
+                            if (isRule) {
+                              setPromptStructure(prev => ({
+                                ...prev,
+                                rules: [...prev.rules, piece.content],
+                              }));
+                            } else if (templateDrawerField === "role") {
+                              setPromptStructure(prev => ({ ...prev, role: piece.content }));
+                              setTemplateDrawerField(null);
+                            } else if (templateDrawerField === "personality") {
+                              setPromptStructure(prev => ({ ...prev, personality: piece.content }));
+                              setTemplateDrawerField(null);
+                            }
+                          }}
+                        >
+                          {isRule
+                            ? t("agentInstructions.applyTemplate")
+                            : hasContent
+                              ? t("agentInstructions.replaceTemplate")
+                              : t("agentInstructions.applyTemplate")}
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              {promptPieces.filter(p => p.type === templateDrawerField).length === 0 && (
+                <p className="py-8 text-center text-sm text-muted-foreground">
+                  {t("templates.noTemplates")}
+                </p>
+              )}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

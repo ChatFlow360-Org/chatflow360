@@ -201,6 +201,7 @@
       "applyTemplate": "Aplicar",
       "replaceTemplate": "Reemplazar actual",
       "alreadyAdded": "Agregada",
+      "templateDrawerDescription": "Selecciona una plantilla para aplicar",
       "noTemplatesAvailable": "No hay piezas de plantilla disponibles para tu categoria de negocio.",
       "noCategoryAssigned": "No hay categoria de negocio asignada a tu organizacion. Contacta a tu administrador.",
       "globalRules": "Reglas Globales",
