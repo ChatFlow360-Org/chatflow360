@@ -562,7 +562,7 @@
       // Connecting banner
       ".cf360-connecting{",
       "  padding:8px 16px;background:#fef3c7;color:#92400e;font-size:12px;text-align:center;",
-      "  flex-shrink:0;display:none;",
+      "  flex-shrink:0;display:none;position:relative;z-index:2;",
       "}",
       ".cf360-connecting--show{display:block;}",
       ".cf360-connecting--connected{background:#dcfce7;color:#166534;}",
