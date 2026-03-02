@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.3.10 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.3.11 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -73,4 +73,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.3.10** - Logo Upload (Supabase Storage + Crop Modal) + Post-Chat Widget Redesign. `react-easy-crop` modal (10:3 aspect, touch zoom), `POST /api/upload/logo` endpoint, Supabase Storage bucket `logos`. Removed base64/URL input — upload-only. Zod schema restricts to `*.supabase.co` URLs. CSP updated for Supabase images. Post-chat widget steps redesigned: gradient hero band + org logo + SVG wave separator + fadeUp animation on all 4 steps (rating, thanks, transcript, success). Email preview dark mode fix (subject bar). Resend lazy init fix. Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).
+**v0.3.11** - Lead Capture System. AI name extraction (hidden tag + fallback regex). Widget phone field + name pre-fill from AI + localStorage for returning visitors. Prisma `Lead` model. `POST /api/widget/transcript` creates Lead (name, email, phone, IP, pageUrl). Dashboard `/leads` page with table + mobile cards + delete. i18n EN/ES. Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).

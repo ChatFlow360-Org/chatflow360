@@ -2,6 +2,21 @@
 
 > Historial completo de versiones y cambios del proyecto.
 
+## v0.3.11 (2026-03-01)
+
+### Lead Capture System
+- **Prisma `Lead` model** — new table `leads` with fields: name, email, phone (optional), IP, pageUrl, createdAt. FK cascade to Organization and Channel. Index on `(organizationId, createdAt DESC)`.
+- **AI name extraction** — system prompt instructs AI to append hidden tag `<!--cf360:name=VISITOR_NAME-->` when it identifies the visitor's name. Backend strips tag from visible content and saves to `conversation.contactInfo`.
+- **Fallback regex extraction** — when AI doesn't include the tag (common with gpt-4o-mini), regex patterns detect names from greeting patterns: "Encantado de conocerlo, X", "Nice to meet you, X", "Hola, X", etc.
+- **Widget phone field** — new optional phone input in transcript form with `+1` default prefix. Name + email required, phone optional.
+- **Widget name pre-fill** — `contactName` extracted by AI is used to pre-fill the "Your name" field in the transcript form. Smart focus: if name pre-filled → focus email; if both filled → focus phone.
+- **localStorage persistence** — `cf360_visitor_info` key stores name/email/phone for returning visitors. Pre-fills transcript form on subsequent visits.
+- **Lead creation** — `POST /api/widget/transcript` now creates a Lead record with name, email, phone, IP (from `x-forwarded-for`/`x-real-ip`), and pageUrl (from conversation metadata). Each form submission = 1 new lead.
+- **Dashboard Leads page** — new `/leads` route with sidebar item (ContactRound icon). Desktop: data table with Name, Email, Phone, Captured, IP Address, Page columns. Mobile: card layout. Delete with ConfirmDialog.
+- **i18n** — 14 new keys each (EN + ES) for leads page, sidebar item, phone field, and extraction-related strings.
+
+---
+
 ## v0.3.10 (2026-03-01)
 
 ### Logo Upload — Supabase Storage + Crop Modal
