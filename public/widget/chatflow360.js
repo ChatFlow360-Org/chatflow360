@@ -626,21 +626,23 @@
       ".cf360-star--active svg{fill:#f59e0b;}",
       ".cf360-star--hover svg{fill:#fbbf24;}",
 
-      // Transcript form
+      // Transcript form (contenteditable divs — immune to browser autofill)
       ".cf360-transcript-form{width:100%;max-width:260px;display:flex;flex-direction:column;gap:10px;}",
       ".cf360-transcript-input{",
       "  width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:8px;",
       "  font-size:14px;font-family:inherit;outline:none;transition:border-color 0.15s;",
-      "  box-sizing:border-box;",
+      "  box-sizing:border-box;min-height:20px;line-height:20px;white-space:nowrap;overflow:hidden;",
       "}",
       ".cf360-transcript-input:focus{border-color:" + primaryColor + ";}",
+      ".cf360-transcript-input:empty::before{content:attr(data-placeholder);color:#9ca3af;pointer-events:none;}",
       ".cf360-phone-row{display:flex;gap:8px;width:100%;}",
       ".cf360-phone-code{",
       "  width:56px;flex-shrink:0;padding:10px 6px;border:1.5px solid #e2e8f0;border-radius:8px;",
       "  font-size:14px;font-family:inherit;outline:none;transition:border-color 0.15s;",
-      "  box-sizing:border-box;text-align:center;",
+      "  box-sizing:border-box;text-align:center;min-height:20px;line-height:20px;white-space:nowrap;overflow:hidden;",
       "}",
       ".cf360-phone-code:focus{border-color:" + primaryColor + ";}",
+      ".cf360-phone-code:empty::before{content:attr(data-placeholder);color:#9ca3af;pointer-events:none;}",
       ".cf360-postchat-btn{",
       "  padding:10px 20px;border:none;border-radius:8px;cursor:pointer;",
       "  font-size:14px;font-family:inherit;font-weight:500;transition:all 0.15s;",
@@ -1451,56 +1453,55 @@
 
     var form = el("div", "cf360-transcript-form");
 
-    // Anti-autofill: readonly prevents browser autofill on DOM insertion.
-    // Random autocomplete value prevents heuristic matching.
-    // On focus: remove readonly so user can type.
-    // setTimeout after DOM insertion: force our values over any browser autofill.
-    function noAutofill(input) {
-      input.setAttribute("readonly", "readonly");
-      input.setAttribute("autocomplete", "cf360-" + Math.random().toString(36).slice(2, 8));
-      input.addEventListener("focus", function () { input.removeAttribute("readonly"); });
+    // Contenteditable fields — browsers NEVER autofill these (not form elements).
+    // Helper: create a contenteditable div that behaves like an input.
+    function ceField(className, placeholder, maxLen, filterFn) {
+      var d = document.createElement("div");
+      d.className = className;
+      d.setAttribute("contenteditable", "true");
+      d.setAttribute("role", "textbox");
+      d.setAttribute("data-placeholder", placeholder);
+      d.addEventListener("input", function () {
+        // Strip any HTML (paste protection) — keep plain text only
+        var txt = d.textContent || "";
+        if (filterFn) txt = filterFn(txt);
+        if (maxLen && txt.length > maxLen) txt = txt.slice(0, maxLen);
+        if (txt !== (d.textContent || "")) {
+          d.textContent = txt;
+          // Move cursor to end after sanitization
+          var range = document.createRange();
+          var sel = window.getSelection();
+          range.selectNodeContents(d);
+          range.collapse(false);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+      });
+      // Prevent Enter key (single line)
+      d.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") e.preventDefault();
+      });
+      // Paste as plain text only
+      d.addEventListener("paste", function (e) {
+        e.preventDefault();
+        var text = (e.clipboardData || window.clipboardData).getData("text/plain");
+        text = text.replace(/[\r\n]/g, "");
+        document.execCommand("insertText", false, text);
+      });
+      return d;
     }
 
-    var nameInput = document.createElement("input");
-    nameInput.type = "text";
-    nameInput.className = "cf360-transcript-input";
-    nameInput.placeholder = t("transcriptName");
-    nameInput.maxLength = 100;
-    noAutofill(nameInput);
-
-    var emailInput = document.createElement("input");
-    emailInput.type = "text";
-    emailInput.className = "cf360-transcript-input";
-    emailInput.placeholder = t("transcriptEmail");
-    emailInput.maxLength = 254;
-    emailInput.setAttribute("inputmode", "email");
-    noAutofill(emailInput);
+    var nameInput = ceField("cf360-transcript-input", t("transcriptName"), 100);
+    var emailInput = ceField("cf360-transcript-input", t("transcriptEmail"), 254);
 
     var phoneRow = el("div", "cf360-phone-row");
-
-    var phoneCode = document.createElement("input");
-    phoneCode.type = "text";
-    phoneCode.className = "cf360-phone-code";
-    phoneCode.maxLength = 5;
-    phoneCode.setAttribute("inputmode", "tel");
-    phoneCode.setAttribute("aria-label", "Country code");
-    noAutofill(phoneCode);
-    phoneCode.addEventListener("input", function () {
-      phoneCode.value = phoneCode.value.replace(/[^0-9+]/g, "");
-      if (phoneCode.value && phoneCode.value.charAt(0) !== "+") {
-        phoneCode.value = "+" + phoneCode.value;
-      }
+    var phoneCode = ceField("cf360-phone-code", "+1", 5, function (v) {
+      v = v.replace(/[^0-9+]/g, "");
+      if (v && v.charAt(0) !== "+") v = "+" + v;
+      return v;
     });
-
-    var phoneNumber = document.createElement("input");
-    phoneNumber.type = "text";
-    phoneNumber.className = "cf360-transcript-input";
-    phoneNumber.placeholder = t("transcriptPhoneNumber");
-    phoneNumber.maxLength = 15;
-    phoneNumber.setAttribute("inputmode", "tel");
-    noAutofill(phoneNumber);
-    phoneNumber.addEventListener("input", function () {
-      phoneNumber.value = phoneNumber.value.replace(/[^0-9\-() ]/g, "");
+    var phoneNumber = ceField("cf360-transcript-input", t("transcriptPhoneNumber"), 15, function (v) {
+      return v.replace(/[^0-9\-() ]/g, "");
     });
 
     phoneRow.appendChild(phoneCode);
@@ -1511,7 +1512,7 @@
     form.appendChild(phoneRow);
     body.appendChild(form);
 
-    // Compute our desired values BEFORE any browser autofill runs
+    // Pre-fill from AI extraction or localStorage (no autofill interference possible)
     var storedInfo = getStoredVisitorInfo();
     var wantName = state.contactName || storedInfo.name || "";
     var wantEmail = storedInfo.email || "";
@@ -1527,19 +1528,10 @@
         wantNum = storedInfo.phone;
       }
     }
-
-    // Apply values now (pre-autofill)
-    function applyOurValues() {
-      nameInput.value = wantName;
-      emailInput.value = wantEmail;
-      phoneCode.value = wantCode;
-      phoneNumber.value = wantNum;
-    }
-    applyOurValues();
-
-    // Force our values AGAIN after browser autofill cycle (~150ms after DOM insert)
-    setTimeout(applyOurValues, 150);
-    setTimeout(applyOurValues, 300);
+    nameInput.textContent = wantName;
+    emailInput.textContent = wantEmail;
+    phoneCode.textContent = wantCode;
+    phoneNumber.textContent = wantNum;
 
     var actions = el("div", "cf360-postchat-actions");
 
@@ -1556,10 +1548,10 @@
     body.appendChild(actions);
 
     sendTranscriptBtn.addEventListener("click", function () {
-      var name = nameInput.value.trim();
-      var email = emailInput.value.trim();
-      var code = phoneCode.value.trim();
-      var num = phoneNumber.value.trim();
+      var name = (nameInput.textContent || "").trim();
+      var email = (emailInput.textContent || "").trim();
+      var code = (phoneCode.textContent || "").trim();
+      var num = (phoneNumber.textContent || "").trim();
       var phone = num ? (code + num) : "";
       if (!name || !email) return;
       // Basic email validation
@@ -1607,18 +1599,16 @@
       showPostChatDone();
     });
 
-    // Smart focus: skip pre-filled fields (delayed to run after autofill override)
-    setTimeout(function () {
-      if (wantName) {
-        if (wantEmail) {
-          phoneNumber.focus();
-        } else {
-          emailInput.focus();
-        }
+    // Smart focus: skip pre-filled fields (no delay needed — no autofill to wait for)
+    if (wantName) {
+      if (wantEmail) {
+        phoneNumber.focus();
       } else {
-        nameInput.focus();
+        emailInput.focus();
       }
-    }, 350);
+    } else {
+      nameInput.focus();
+    }
   }
 
   function showTranscriptSuccess() {
