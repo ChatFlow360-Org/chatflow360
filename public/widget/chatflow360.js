@@ -1459,16 +1459,17 @@
     nameInput.setAttribute("autocomplete", "off");
 
     var emailInput = document.createElement("input");
-    emailInput.type = "email";
+    emailInput.type = "text";
     emailInput.className = "cf360-transcript-input";
     emailInput.placeholder = t("transcriptEmail");
     emailInput.maxLength = 254;
+    emailInput.setAttribute("inputmode", "email");
     emailInput.setAttribute("autocomplete", "off");
 
     var phoneRow = el("div", "cf360-phone-row");
 
     var phoneCode = document.createElement("input");
-    phoneCode.type = "tel";
+    phoneCode.type = "text";
     phoneCode.className = "cf360-phone-code";
     phoneCode.value = t("transcriptPhoneCode");
     phoneCode.maxLength = 5;
@@ -1483,7 +1484,7 @@
     });
 
     var phoneNumber = document.createElement("input");
-    phoneNumber.type = "tel";
+    phoneNumber.type = "text";
     phoneNumber.className = "cf360-transcript-input";
     phoneNumber.placeholder = t("transcriptPhoneNumber");
     phoneNumber.maxLength = 15;
