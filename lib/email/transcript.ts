@@ -13,6 +13,7 @@ interface TranscriptEmailParams {
   orgName: string;
   aiAgentName: string | null;
   lang: "en" | "es";
+  timezone: string;
 }
 
 /**
@@ -26,12 +27,16 @@ export function renderTranscriptEmail({
   orgName,
   aiAgentName,
   lang,
+  timezone,
 }: TranscriptEmailParams): { subject: string; html: string } {
   const isEs = lang === "es";
+  // Use visitor's timezone for all date/time formatting
+  const tz = timezone || "UTC";
   const dateStr = new Date().toLocaleDateString(isEs ? "es" : "en", {
     year: "numeric",
     month: "long",
     day: "numeric",
+    timeZone: tz,
   });
 
   // Resolve template variables
@@ -61,6 +66,7 @@ export function renderTranscriptEmail({
       const time = new Date(m.createdAt).toLocaleTimeString(isEs ? "es" : "en", {
         hour: "2-digit",
         minute: "2-digit",
+        timeZone: tz,
       });
 
       return `

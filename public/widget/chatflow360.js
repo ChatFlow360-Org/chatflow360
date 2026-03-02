@@ -1605,7 +1605,8 @@
           email: email,
           name: name,
           phone: phone || undefined,
-          lang: lang
+          lang: lang,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || ""
         })
       })
         .then(function (res) {

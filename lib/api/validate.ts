@@ -29,6 +29,7 @@ export const transcriptSchema = z.object({
   name: z.string().min(1).max(100),
   phone: z.string().max(20).optional(),
   lang: z.enum(["en", "es"]).optional().default("en"),
+  timezone: z.string().max(50).optional().default("UTC"),
 });
 
 export type ChatMessageInput = z.infer<typeof chatMessageSchema>;

@@ -37,7 +37,7 @@ export async function POST(request: Request) {
       return errorResponse("Invalid request", 400);
     }
 
-    const { conversationId, visitorId, email, name, phone, lang } = parsed.data;
+    const { conversationId, visitorId, email, name, phone, lang, timezone } = parsed.data;
 
     // Capture visitor IP for lead record
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
@@ -114,6 +114,7 @@ export async function POST(request: Request) {
       orgName,
       aiAgentName,
       lang,
+      timezone,
     });
 
     // Build recipients
