@@ -75,6 +75,7 @@
       transcriptSuccess: "Transcript sent! Check your inbox.",
       transcriptError: "Could not send transcript. Please try again.",
       transcriptPhone: "Phone (optional)",
+      transcriptPhoneHint: "Include country code, e.g. +19991234567",
       postChatDone: "Conversation ended"
     },
     es: {
@@ -100,6 +101,7 @@
       transcriptSuccess: "\u00a1Transcripci\u00f3n enviada! Revisa tu bandeja.",
       transcriptError: "No se pudo enviar. Int\u00e9ntalo de nuevo.",
       transcriptPhone: "Tel\u00e9fono (opcional)",
+      transcriptPhoneHint: "Incluir c\u00f3digo de pa\u00eds, ej: +19991234567",
       postChatDone: "Conversaci\u00f3n finalizada"
     }
   };
@@ -632,6 +634,7 @@
       "  box-sizing:border-box;",
       "}",
       ".cf360-transcript-input:focus{border-color:" + primaryColor + ";}",
+      ".cf360-transcript-hint{font-size:11px;color:#94a3b8;margin:-6px 0 0 2px;}",
       ".cf360-postchat-btn{",
       "  padding:10px 20px;border:none;border-radius:8px;cursor:pointer;",
       "  font-size:14px;font-family:inherit;font-weight:500;transition:all 0.15s;",
@@ -1462,10 +1465,18 @@
     phoneInput.placeholder = t("transcriptPhone");
     phoneInput.maxLength = 20;
     phoneInput.setAttribute("autocomplete", "tel");
+    phoneInput.setAttribute("inputmode", "tel");
+    phoneInput.addEventListener("input", function () {
+      phoneInput.value = phoneInput.value.replace(/[^0-9+\-() ]/g, "");
+    });
+
+    var phoneHint = el("div", "cf360-transcript-hint");
+    phoneHint.textContent = t("transcriptPhoneHint");
 
     form.appendChild(nameInput);
     form.appendChild(emailInput);
     form.appendChild(phoneInput);
+    form.appendChild(phoneHint);
     body.appendChild(form);
 
     // Pre-fill from AI extraction or localStorage
@@ -1503,6 +1514,11 @@
       if (!name || !email) return;
       // Basic email validation
       if (email.indexOf("@") === -1 || email.indexOf(".") === -1) return;
+      // Phone validation: if provided, must have at least 7 digits
+      if (phone && phone.replace(/\D/g, "").length < 7) {
+        phoneInput.focus();
+        return;
+      }
 
       sendTranscriptBtn.disabled = true;
       sendTranscriptBtn.textContent = "...";
