@@ -41,6 +41,7 @@ export interface Conversation {
   createdAt: string;
   channelName?: string;
   pageUrl?: string;
+  rating?: number | null;
 }
 
 export interface Message {

@@ -50,7 +50,10 @@
     "aiPerformance": "Rendimiento de IA",
     "handledByAi": "Manejadas por IA",
     "escalatedToHuman": "Escaladas a Humano",
-    "satisfactionRate": "Satisfaccion"
+    "satisfactionRate": "Satisfaccion",
+    "satisfactionRating": "Calificacion de Satisfaccion",
+    "noRatingsYet": "Sin calificaciones aun",
+    "totalRatings": "{count, plural, one {# calificacion} other {# calificaciones}}"
   },
   "conversations": {
     "title": "Conversaciones",
@@ -93,7 +96,8 @@
       "closeConversation": "Cerrar Conversacion",
       "reopenConversation": "Reabrir Conversacion",
       "assignToAgent": "Asignar a Agente",
-      "leadInfo": "Info del Lead"
+      "leadInfo": "Info del Lead",
+      "rating": "Calificacion"
     }
   },
   "leads": {

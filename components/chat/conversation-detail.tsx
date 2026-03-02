@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Info, X, Send, Bot, User, MessageSquare, Clock, Globe, Calendar, RefreshCw, ExternalLink } from "lucide-react";
+import { Info, X, Send, Bot, User, MessageSquare, Clock, Globe, Calendar, RefreshCw, ExternalLink, Star } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -239,6 +239,24 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
           <span className="text-foreground font-medium">
             {formatRelativeTime(conversation.lastMessageAt, locale)}
           </span>
+
+          {conversation.rating != null && (
+            <>
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <Star className="h-3.5 w-3.5" />
+                {t("detail.rating")}
+              </span>
+              <span className="inline-flex items-center gap-1 text-foreground font-medium">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <Star
+                    key={i}
+                    className={`h-3.5 w-3.5 ${i < conversation.rating! ? "fill-amber-500 text-amber-500" : "text-muted-foreground/30"}`}
+                  />
+                ))}
+                <span className="ml-1 text-amber-500 font-semibold">{conversation.rating}</span>
+              </span>
+            </>
+          )}
         </div>
       </div>
 

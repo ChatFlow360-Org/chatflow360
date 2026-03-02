@@ -19,6 +19,17 @@
 - **Server actions** — `createGlobalRule`, `updateGlobalRule`, `deleteGlobalRule` (super_admin only).
 - **i18n** — 14 new keys (EN + ES) for global rules UI.
 
+### Template Picker — Sheet Drawer (bd768e9)
+- **Replaced Popover with Sheet** — the "Browse templates" control in AI Settings now opens a right-side Sheet panel instead of a Popover. Provides full-height browsing area with content preview for each piece.
+- **Category-filtered view** — Sheet shows pieces from the org's assigned `BusinessCategory`. Pieces grouped by type (Agent Roles, Rules, Personalities).
+- **Apply behavior by type** — for `role` and `personality` pieces: Apply replaces the field and closes the drawer. For `rule` pieces: individual Apply appends the rule and keeps the drawer open; "Added" badge appears on already-applied rules.
+
+### Multi-Select Rules + Clear All (2d954a3, 3396bae)
+- **Checkboxes on rule pieces** — rule templates in the Sheet drawer show a checkbox for multi-selection.
+- **Sticky "Apply N rules" footer** — appears in the drawer when one or more rules are checked. Clicking it appends all selected rules and closes the drawer (3396bae).
+- **"Added" indicator** — rules already present in the current prompt structure show an "Added" badge; checking them is blocked to prevent duplicates.
+- **Clear All custom rules** — destructive button next to "Browse templates", visible only when the org has at least one custom rule. Triggers a `ConfirmDialog` warning that global rules remain but all custom rules will be removed. Clears `promptStructure.rules` (excluding global rules) on confirm.
+
 ---
 
 ## v0.3.11 (2026-03-01)

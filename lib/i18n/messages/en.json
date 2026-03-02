@@ -50,7 +50,10 @@
     "aiPerformance": "AI Performance",
     "handledByAi": "Handled by AI",
     "escalatedToHuman": "Escalated to Human",
-    "satisfactionRate": "Satisfaction Rate"
+    "satisfactionRate": "Satisfaction Rate",
+    "satisfactionRating": "Satisfaction Rating",
+    "noRatingsYet": "No ratings yet",
+    "totalRatings": "{count, plural, one {# rating} other {# ratings}}"
   },
   "conversations": {
     "title": "Conversations",
@@ -93,7 +96,8 @@
       "closeConversation": "Close Conversation",
       "reopenConversation": "Reopen Conversation",
       "assignToAgent": "Assign to Agent",
-      "leadInfo": "Lead Info"
+      "leadInfo": "Lead Info",
+      "rating": "Rating"
     }
   },
   "leads": {

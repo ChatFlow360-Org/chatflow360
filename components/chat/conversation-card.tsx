@@ -3,7 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Bot, User } from "lucide-react";
+import { Bot, User, Star } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { formatRelativeTime } from "@/lib/utils/format";
 import type { Conversation, ConversationStatus, ResponderMode } from "@/types";
@@ -72,6 +72,12 @@ export function ConversationCard({ conversation, isSelected, onClick }: Conversa
           <div className="flex items-center gap-1">
             <HandlerIcon className="h-3 w-3" />
             <span>{handler.label}</span>
+            {conversation.rating != null && (
+              <span className="ml-1.5 inline-flex items-center gap-0.5 text-amber-500">
+                <Star className="h-3 w-3 fill-amber-500" />
+                <span className="font-medium">{conversation.rating}</span>
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <span>{t("msgs", { count: conversation.messageCount })}</span>

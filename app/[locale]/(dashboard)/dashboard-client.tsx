@@ -9,6 +9,7 @@ import { StatsGrid } from "@/components/dashboard/stats-grid";
 import { RecentConversations } from "@/components/dashboard/recent-conversations";
 import { TopPages } from "@/components/dashboard/channels-performance";
 import { AiPerformance } from "@/components/dashboard/ai-performance";
+import { SatisfactionRating } from "@/components/dashboard/satisfaction-rating";
 import { fetchDashboardData, type DashboardData } from "@/lib/dashboard/stats";
 
 const defaultRange: DateRange = {
@@ -67,6 +68,7 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
         <div className="space-y-6">
           <TopPages pages={data.topPages} />
           <AiPerformance performance={data.aiPerformance} />
+          <SatisfactionRating distribution={data.ratingDistribution} />
         </div>
       </div>
     </div>

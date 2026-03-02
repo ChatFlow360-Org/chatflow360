@@ -28,6 +28,11 @@ export interface DashboardData {
     humanEscalated: number;
     totalConversations: number;
   };
+  ratingDistribution: {
+    average: number;
+    total: number;
+    counts: Record<number, number>; // { 1: n, 2: n, 3: n, 4: n, 5: n }
+  };
 }
 
 interface FetchDashboardParams {
@@ -128,6 +133,29 @@ export async function fetchDashboardData(params: FetchDashboardParams = {}): Pro
     `, from, to, ...(orgId ? [orgId] : [])),
   ]);
 
+  // --- Rating Distribution ---
+  const ratingRows = await prisma.$queryRawUnsafe<{ rating: number; count: bigint }[]>(`
+    SELECT rating, COUNT(*)::int as count
+    FROM conversations
+    WHERE rating IS NOT NULL
+      AND created_at >= $1
+      AND created_at <= $2
+      ${orgId ? `AND organization_id = $3::uuid` : ""}
+    GROUP BY rating
+    ORDER BY rating
+  `, from, to, ...(orgId ? [orgId] : []));
+
+  const ratingCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  let ratingSum = 0;
+  let ratingTotal = 0;
+  for (const row of ratingRows) {
+    const r = Number(row.rating);
+    const c = Number(row.count);
+    ratingCounts[r] = c;
+    ratingSum += r * c;
+    ratingTotal += c;
+  }
+
   // --- Top Pages (from conversation metadata.pageUrl) ---
   const pageConversations = await prisma.conversation.findMany({
     where: { ...orgWhere, createdAt: dateFilter },
@@ -182,6 +210,11 @@ export async function fetchDashboardData(params: FetchDashboardParams = {}): Pro
       aiHandled: aiConversations,
       humanEscalated: totalConversations - aiConversations,
       totalConversations,
+    },
+    ratingDistribution: {
+      average: ratingTotal > 0 ? Math.round((ratingSum / ratingTotal) * 10) / 10 : 0,
+      total: ratingTotal,
+      counts: ratingCounts,
     },
   };
 }

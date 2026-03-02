@@ -349,6 +349,8 @@ The first structured category is `business_hours`, backed by a purpose-built Rea
 
 **Global Rules in AI Settings:** Org admins see global rules above their custom rules with Shield icon (amber), no remove button. Hint text explains these are platform-level rules. On save, global rules are prepended to `promptStructure.rules` so `composeSystemPrompt()` includes them.
 
+**Template Picker (Sheet Drawer) in AI Settings:** The "Browse templates" button in AI Settings opens a right-side Sheet panel scoped to the org's `BusinessCategory`. Pieces are listed by type. Apply behavior is type-dependent: `role`/`personality` pieces replace the field and close the drawer; `rule` pieces append individually and keep the drawer open, or can be multi-selected via checkboxes and bulk-applied via a sticky "Apply N rules" footer button (closes drawer). Rules already present in the prompt show an "Added" indicator and cannot be re-selected. A "Clear All" destructive button (visible only when custom rules exist) removes all non-global rules after ConfirmDialog confirmation.
+
 **Sidebar:** "Prompt Templates" item appears in the admin section of the sidebar, positioned before "API Keys".
 
 #### RLS on prompt_templates

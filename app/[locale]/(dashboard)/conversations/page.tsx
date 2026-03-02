@@ -79,6 +79,7 @@ export default async function ConversationsPage() {
       createdAt: conv.createdAt.toISOString(),
       channelName: conv.channel.name,
       pageUrl: (conv.metadata as Record<string, unknown>)?.pageUrl as string | undefined,
+      rating: conv.rating ?? null,
     };
   });
 
