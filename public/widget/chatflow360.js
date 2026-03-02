@@ -1728,6 +1728,7 @@
       ".cf360-send-btn{background:" + sbc + ";}",
       ".cf360-input:focus{border-color:" + sbc + ";box-shadow:0 0 0 3px " + sbcAlpha15 + ";}",
       ".cf360-new-conv{color:" + sbc + ";}",
+      ".cf360-postchat-btn--primary{background:" + sbc + ";}",
       ".cf360-footer a:hover{color:" + sbc + ";}",
       ".cf360-welcome-icon{background:" + bcAlpha15 + ";}",
       ".cf360-welcome-icon svg{fill:" + bc + ";}"
