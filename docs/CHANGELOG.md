@@ -2,6 +2,33 @@
 
 > Historial completo de versiones y cambios del proyecto.
 
+## v0.3.13 (2026-03-02)
+
+### Satisfaction Rating Widget (a4e0e09)
+- **Conversation rating display** — Star icon + numeric rating shown in conversation cards (grid), conversation detail panel (5-star visual + number), and a new dashboard widget.
+- **`SatisfactionRating` dashboard widget** — shows average score with 5 filled/empty stars, total ratings count (ICU plural), and per-star distribution with percentage bars.
+- **Rating distribution query** — raw SQL in `fetchDashboardData()` groups by rating, calculates average. Responds to the dashboard date range filter.
+- **`DashboardData.ratingDistribution`** — new interface field: `{ average, total, counts: Record<number, number> }`.
+- **i18n** — `satisfactionRating`, `noRatingsYet`, `totalRatings` (EN + ES).
+
+### Enhanced Recent Conversations (943c160, b88efbc)
+- **Enriched layout** — each row now shows: visitor name (from contactInfo), status badge, relative time, last message preview, handler icon (AI/Human), message count, and star rating.
+- **Clickable navigation** — clicking a recent conversation navigates to `/conversations?open={id}` and auto-opens the detail panel via `useSearchParams`.
+- **10 items + zebra stripes** — increased from 5 to 10 recent conversations; alternating row background (`bg-muted/40`) for quick visual scanning.
+
+### Take Control Button (943c160)
+- **`takeoverConversation()` server action** — auth check, UUID validation, org membership check, updates `responderMode` from "ai" to "human". Broadcasts `takeover` event to widget.
+- **Conversation detail UI** — AI handling footer changed from centered text to `justify-between` layout with "AI is handling..." text on left and "Take Control" button on right. Button shows UserCheck icon.
+- **i18n** — `takeControl` / `Tomar Control` (EN + ES).
+
+### Realtime Broadcast for Widget (9e6e689)
+- **`broadcastToConversation()` utility** — new `lib/realtime/broadcast.ts`. Sends events to the widget via Supabase Realtime REST API (`POST /realtime/v1/api/broadcast`). Uses the same HMAC-derived channel the widget already subscribes to for typing indicators. Non-blocking, failures logged but don't break actions.
+- **Server actions broadcast** — `takeoverConversation()` emits `takeover`, `sendAgentMessage()` emits `new_message` (with full message payload for instant rendering), `closeConversation()` emits `conversation_closed`.
+- **Widget event handlers** — `chatflow360.js` now handles 3 new broadcast events in `ws.onmessage`: `takeover` (starts polling + shows connecting banner), `new_message` (appends message instantly + badge if widget closed), `conversation_closed` (marks resolved + shows new conversation button).
+- **Bug fix** — previously, Take Control from dashboard left the widget unable to receive agent messages or detect conversation close, because polling only started on keyword-triggered handoff.
+
+---
+
 ## v0.3.12 (2026-03-02)
 
 ### Modular Prompt Templates by Business Category (9bd5f03)

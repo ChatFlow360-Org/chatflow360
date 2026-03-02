@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.3.12 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.3.13 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -14,7 +14,7 @@
 
 ```
 Super Admin → Organizations → Channels (website widget) → Conversations → Messages
-AI responde con RAG (conocimiento) + instrucciones | Human takeover via keyword trigger
+AI responde con RAG (conocimiento) + instrucciones | Human takeover via keyword trigger OR manual Take Control
 ```
 
 ### IA: Instrucciones vs Conocimiento (separados)
@@ -74,4 +74,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.3.12** - Modular Prompt Templates + Global Mandatory Rules. `BusinessCategory` + `PromptPiece` models replace card-grid templates. Prompt Templates page: "By Category" tab (2-panel: category sidebar + pieces by type) + "Global Rules" tab (rules that apply to ALL orgs). `PromptPiece.categoryId` nullable (null = global rule). AI Settings shows global rules as locked (Shield amber, no X). Server actions for category/piece/global-rule CRUD. i18n EN/ES. Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).
+**v0.3.13** - Satisfaction Rating + Take Control + Realtime Broadcast. Rating widget on dashboard (avg + distribution by star). Rating display in conversation cards + detail panel. Take Control button for manual AI→Human takeover. `broadcastToConversation()` pushes takeover/new_message/close events to widget via Supabase Realtime REST API. Enhanced Recent Conversations: 10 items, zebra stripes, clickable (auto-opens conversation panel). Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).
