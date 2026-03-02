@@ -1493,6 +1493,7 @@
 
     var nameInput = ceField("cf360-transcript-input", t("transcriptName"), 100);
     var emailInput = ceField("cf360-transcript-input", t("transcriptEmail"), 254);
+    emailInput.setAttribute("inputmode", "email");
 
     var phoneRow = el("div", "cf360-phone-row");
     var phoneCode = ceField("cf360-phone-code", "+1", 5, function (v) {
@@ -1500,9 +1501,11 @@
       if (v && v.charAt(0) !== "+") v = "+" + v;
       return v;
     });
+    phoneCode.setAttribute("inputmode", "tel");
     var phoneNumber = ceField("cf360-transcript-input", t("transcriptPhoneNumber"), 15, function (v) {
       return v.replace(/[^0-9\-() ]/g, "");
     });
+    phoneNumber.setAttribute("inputmode", "tel");
 
     phoneRow.appendChild(phoneCode);
     phoneRow.appendChild(phoneNumber);
