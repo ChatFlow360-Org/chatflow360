@@ -9,10 +9,12 @@ Organization (1)
     ├── AiSettings (1:1) ─── Config IA por org (technical: super_admin, business: org_admin)
     ├── OrganizationMember (1:N) ─── User (N:1)
     ├── UsageTracking (1:N) ─── Resumen mensual de uso
+    ├── Lead (1:N) ─── Contactos capturados del widget (v0.3.11)
     ├── Conversation (1:N) ─── denormalized FK for RLS (v0.3.3)
     └── Channel (1:N)
             ├── AI overrides (systemPrompt, handoff) ─── Org admin configura
             ├── ChannelKnowledge (1:N) ─── Conocimiento RAG (pgvector)
+            ├── Lead (1:N) ─── Contactos capturados por canal
             └── Conversation (1:N) ─── User? (assignedTo)
                     └── Message (1:N) ─── User? (sender) + tokensUsed
 
@@ -277,6 +279,35 @@ El campo `config` es un objeto JSONB flexible. Actualmente contiene dos seccione
 
 **Nota sobre tokensUsed:** Solo se registra cuando `senderType === 'ai'`. OpenAI devuelve `usage.total_tokens` en cada completion. Este dato es interno (super admin) para control de costos.
 
+### Lead (Contactos capturados — v0.3.11)
+
+> Cada envío del formulario de transcripción del widget crea un Lead. Mismo visitante enviando dos veces = 2 leads (como WordPress gforms).
+
+| Campo | Tipo | Default | Descripcion |
+|-------|------|---------|-------------|
+| id | UUID | auto | PK |
+| organizationId | UUID | - | FK Organization (cascade) |
+| channelId | UUID | - | FK Channel (cascade) |
+| conversationId | UUID? | null | FK Conversation (optional, referencia) |
+| name | String | - | Nombre del visitante (requerido) |
+| email | String | - | Email del visitante (requerido) |
+| phone | String? | null | Teléfono (opcional) |
+| ip | String? | null | IP del visitante (x-forwarded-for) |
+| pageUrl | String? | null | URL donde ocurrió el chat |
+| createdAt | DateTime | now() | Fecha de captura |
+
+**Relaciones:** organization (cascade), channel (cascade)
+**Indice:** `(organizationId, createdAt DESC)` para listado eficiente en dashboard
+**Acceso:** Super admin ve todos los leads de la org seleccionada. Org admin ve los de su org.
+
+**Flujo de captura:**
+```
+Visitante chatea → AI extrae nombre (tag + regex fallback)
+→ Visitante termina chat → Rating → Transcript form (name, email, phone)
+→ Name pre-filled desde AI extraction o localStorage
+→ Submit → POST /api/widget/transcript → Create Lead + Send email
+```
+
 ### UsageTracking (Resumen mensual — SOLO Super Admin)
 
 > Tabla de resumen mensual por organizacion. Se actualiza incrementalmente cada vez que se crea una conversacion o se consumen tokens.
@@ -349,6 +380,7 @@ Prisma usa camelCase en el codigo pero las tablas y columnas en PostgreSQL usan 
 | *(SQL directo)* | channel_knowledge |
 | Conversation | conversations |
 | Message | messages |
+| Lead | leads |
 | UsageTracking | usage_tracking |
 
 > `channel_knowledge` no tiene modelo Prisma porque usa tipo VECTOR(1536) que Prisma no soporta. Se maneja via funciones SQL en Supabase.

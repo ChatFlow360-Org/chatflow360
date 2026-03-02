@@ -15,6 +15,9 @@
 - **Dashboard Leads page** — new `/leads` route with sidebar item (ContactRound icon). Desktop: data table with Name, Email, Phone, Captured, IP Address, Page columns. Mobile: card layout. Delete with ConfirmDialog.
 - **i18n** — 14 new keys each (EN + ES) for leads page, sidebar item, phone field, and extraction-related strings.
 
+### Fixes
+- **Organization cascade delete** — removed `orgHasMembers` guard that silently blocked org deletion. `OrganizationMember` already has `onDelete: Cascade` in schema, so deleting an org correctly cascades to members, channels, conversations, leads, etc. Users remain in the system (only memberships are deleted).
+
 ---
 
 ## v0.3.10 (2026-03-01)
