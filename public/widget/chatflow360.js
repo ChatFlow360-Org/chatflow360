@@ -74,8 +74,8 @@
       transcriptSkip: "No thanks",
       transcriptSuccess: "Transcript sent! Check your inbox.",
       transcriptError: "Could not send transcript. Please try again.",
-      transcriptPhone: "Phone (optional)",
-      transcriptPhoneHint: "Include country code, e.g. +19991234567",
+      transcriptPhoneCode: "+1",
+      transcriptPhoneNumber: "Phone (optional)",
       postChatDone: "Conversation ended"
     },
     es: {
@@ -100,8 +100,8 @@
       transcriptSkip: "No, gracias",
       transcriptSuccess: "\u00a1Transcripci\u00f3n enviada! Revisa tu bandeja.",
       transcriptError: "No se pudo enviar. Int\u00e9ntalo de nuevo.",
-      transcriptPhone: "Tel\u00e9fono (opcional)",
-      transcriptPhoneHint: "Incluir c\u00f3digo de pa\u00eds, ej: +19991234567",
+      transcriptPhoneCode: "+1",
+      transcriptPhoneNumber: "Tel\u00e9fono (opcional)",
       postChatDone: "Conversaci\u00f3n finalizada"
     }
   };
@@ -634,7 +634,13 @@
       "  box-sizing:border-box;",
       "}",
       ".cf360-transcript-input:focus{border-color:" + primaryColor + ";}",
-      ".cf360-transcript-hint{font-size:11px;color:#94a3b8;margin:-6px 0 0 2px;}",
+      ".cf360-phone-row{display:flex;gap:8px;width:100%;}",
+      ".cf360-phone-code{",
+      "  width:56px;flex-shrink:0;padding:10px 6px;border:1.5px solid #e2e8f0;border-radius:8px;",
+      "  font-size:14px;font-family:inherit;outline:none;transition:border-color 0.15s;",
+      "  box-sizing:border-box;text-align:center;",
+      "}",
+      ".cf360-phone-code:focus{border-color:" + primaryColor + ";}",
       ".cf360-postchat-btn{",
       "  padding:10px 20px;border:none;border-radius:8px;cursor:pointer;",
       "  font-size:14px;font-family:inherit;font-weight:500;transition:all 0.15s;",
@@ -1459,24 +1465,39 @@
     emailInput.maxLength = 254;
     emailInput.setAttribute("autocomplete", "email");
 
-    var phoneInput = document.createElement("input");
-    phoneInput.type = "tel";
-    phoneInput.className = "cf360-transcript-input";
-    phoneInput.placeholder = t("transcriptPhone");
-    phoneInput.maxLength = 20;
-    phoneInput.setAttribute("autocomplete", "tel");
-    phoneInput.setAttribute("inputmode", "tel");
-    phoneInput.addEventListener("input", function () {
-      phoneInput.value = phoneInput.value.replace(/[^0-9+\-() ]/g, "");
+    var phoneRow = el("div", "cf360-phone-row");
+
+    var phoneCode = document.createElement("input");
+    phoneCode.type = "tel";
+    phoneCode.className = "cf360-phone-code";
+    phoneCode.value = t("transcriptPhoneCode");
+    phoneCode.maxLength = 5;
+    phoneCode.setAttribute("inputmode", "tel");
+    phoneCode.setAttribute("aria-label", "Country code");
+    phoneCode.addEventListener("input", function () {
+      phoneCode.value = phoneCode.value.replace(/[^0-9+]/g, "");
+      if (phoneCode.value && phoneCode.value.charAt(0) !== "+") {
+        phoneCode.value = "+" + phoneCode.value;
+      }
     });
 
-    var phoneHint = el("div", "cf360-transcript-hint");
-    phoneHint.textContent = t("transcriptPhoneHint");
+    var phoneNumber = document.createElement("input");
+    phoneNumber.type = "tel";
+    phoneNumber.className = "cf360-transcript-input";
+    phoneNumber.placeholder = t("transcriptPhoneNumber");
+    phoneNumber.maxLength = 15;
+    phoneNumber.setAttribute("autocomplete", "tel-national");
+    phoneNumber.setAttribute("inputmode", "tel");
+    phoneNumber.addEventListener("input", function () {
+      phoneNumber.value = phoneNumber.value.replace(/[^0-9\-() ]/g, "");
+    });
+
+    phoneRow.appendChild(phoneCode);
+    phoneRow.appendChild(phoneNumber);
 
     form.appendChild(nameInput);
     form.appendChild(emailInput);
-    form.appendChild(phoneInput);
-    form.appendChild(phoneHint);
+    form.appendChild(phoneRow);
     body.appendChild(form);
 
     // Pre-fill from AI extraction or localStorage
@@ -1490,7 +1511,15 @@
       emailInput.value = storedInfo.email;
     }
     if (storedInfo.phone) {
-      phoneInput.value = storedInfo.phone;
+      // Parse stored phone: split country code from number
+      var stored = storedInfo.phone.replace(/\s+/g, "");
+      var codeMatch = stored.match(/^(\+\d{1,4})/);
+      if (codeMatch) {
+        phoneCode.value = codeMatch[1];
+        phoneNumber.value = stored.slice(codeMatch[1].length).replace(/^[\s-]+/, "");
+      } else {
+        phoneNumber.value = storedInfo.phone;
+      }
     }
 
     var actions = el("div", "cf360-postchat-actions");
@@ -1510,14 +1539,22 @@
     sendTranscriptBtn.addEventListener("click", function () {
       var name = nameInput.value.trim();
       var email = emailInput.value.trim();
-      var phone = phoneInput.value.trim();
+      var code = phoneCode.value.trim();
+      var num = phoneNumber.value.trim();
+      var phone = num ? (code + num) : "";
       if (!name || !email) return;
       // Basic email validation
       if (email.indexOf("@") === -1 || email.indexOf(".") === -1) return;
-      // Phone validation: if provided, must have at least 7 digits
-      if (phone && phone.replace(/\D/g, "").length < 7) {
-        phoneInput.focus();
-        return;
+      // Phone validation: if number provided, code must start with + and number must have 7+ digits
+      if (num) {
+        if (!code || code.charAt(0) !== "+" || code.replace(/\D/g, "").length < 1) {
+          phoneCode.focus();
+          return;
+        }
+        if (num.replace(/\D/g, "").length < 7) {
+          phoneNumber.focus();
+          return;
+        }
       }
 
       sendTranscriptBtn.disabled = true;
@@ -1554,7 +1591,7 @@
     // Smart focus: skip pre-filled fields
     if (nameInput.value) {
       if (emailInput.value) {
-        phoneInput.focus();
+        phoneNumber.focus();
       } else {
         emailInput.focus();
       }
