@@ -1011,13 +1011,13 @@
     welcome.appendChild(iconWrap);
 
     var wText = el("div", "cf360-welcome-text");
-    wText.textContent = t("chatWithUs");
+    wText.textContent = state.welcomeTitle || t("chatWithUs");
     welcome.appendChild(wText);
 
     var wSub = el("div", "cf360-welcome-sub");
-    wSub.textContent = lang === "es"
+    wSub.textContent = state.welcomeSubtitle || (lang === "es"
       ? "Env\u00edanos un mensaje para comenzar."
-      : "Send us a message to get started.";
+      : "Send us a message to get started.");
     welcome.appendChild(wSub);
 
     messagesArea.appendChild(welcome);
@@ -1530,6 +1530,8 @@
       d.addEventListener("input", function () {
         // Strip any HTML (paste protection) — keep plain text only
         var txt = d.textContent || "";
+        // When field is emptied, browsers may leave a <br> — clear it so :empty works
+        if (!txt.trim()) { d.innerHTML = ""; return; }
         if (filterFn) txt = filterFn(txt);
         if (maxLen && txt.length > maxLen) txt = txt.slice(0, maxLen);
         if (txt !== (d.textContent || "")) {
@@ -1734,6 +1736,17 @@
     cfgSubtitle = cfgSubtitle || cfg.headerSubtitle;
     if (cfgTitle && titleEl) titleEl.textContent = cfgTitle;
     if (cfgSubtitle && subtitleEl) subtitleEl.textContent = cfgSubtitle;
+
+    // Store welcome texts for showWelcome() (bilingual: pick by widget language)
+    var wt = lang === "es" ? (cfg.welcomeTitleEs || cfg.welcomeTitleEn) : (cfg.welcomeTitleEn || cfg.welcomeTitleEs);
+    var ws = lang === "es" ? (cfg.welcomeSubtitleEs || cfg.welcomeSubtitleEn) : (cfg.welcomeSubtitleEn || cfg.welcomeSubtitleEs);
+    if (wt) state.welcomeTitle = wt;
+    if (ws) state.welcomeSubtitle = ws;
+    // Update DOM if welcome screen is currently visible
+    var welTitleEl = document.querySelector(".cf360-welcome-text");
+    var welSubEl = document.querySelector(".cf360-welcome-sub");
+    if (wt && welTitleEl) welTitleEl.textContent = wt;
+    if (ws && welSubEl) welSubEl.textContent = ws;
 
     // Build CSS overrides (safeHex prevents CSS injection via malformed color values)
     var hc = safeHex(cfg.headerColor, primaryColor);

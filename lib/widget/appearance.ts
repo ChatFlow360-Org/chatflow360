@@ -7,6 +7,10 @@ export interface WidgetAppearance {
   headerTitleEs?: string;
   headerSubtitleEn?: string;
   headerSubtitleEs?: string;
+  welcomeTitleEn?: string;
+  welcomeTitleEs?: string;
+  welcomeSubtitleEn?: string;
+  welcomeSubtitleEs?: string;
   headerColor?: string;
   headerIconColor?: string;
   bubbleColor?: string;
@@ -30,6 +34,10 @@ export const DEFAULT_WIDGET_APPEARANCE: Required<WidgetAppearance> = {
   headerTitleEs: "",
   headerSubtitleEn: "",        // empty = use widget's built-in i18n default
   headerSubtitleEs: "",
+  welcomeTitleEn: "",          // empty = use widget's built-in i18n default
+  welcomeTitleEs: "",
+  welcomeSubtitleEn: "",       // empty = use widget's built-in i18n default
+  welcomeSubtitleEs: "",
   headerColor: "#1c2e47",
   headerIconColor: "#ffffff",
   bubbleColor: "#2f92ad",
@@ -52,6 +60,10 @@ export const widgetAppearanceSchema = z.object({
   headerTitleEs: z.string().max(40).optional().default(""),
   headerSubtitleEn: z.string().max(60).optional().default(""),
   headerSubtitleEs: z.string().max(60).optional().default(""),
+  welcomeTitleEn: z.string().max(60).optional().default(""),
+  welcomeTitleEs: z.string().max(60).optional().default(""),
+  welcomeSubtitleEn: z.string().max(80).optional().default(""),
+  welcomeSubtitleEs: z.string().max(80).optional().default(""),
   headerColor: hexColor.optional().default(DEFAULT_WIDGET_APPEARANCE.headerColor),
   headerIconColor: hexColor.optional().default(DEFAULT_WIDGET_APPEARANCE.headerIconColor),
   bubbleColor: hexColor.optional().default(DEFAULT_WIDGET_APPEARANCE.bubbleColor),

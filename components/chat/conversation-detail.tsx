@@ -441,7 +441,7 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
             </div>
             <Button
               size="sm"
-              className="text-xs bg-amber-500 hover:bg-amber-600 text-white border-0"
+              className="text-xs bg-amber-500 hover:bg-amber-600 text-black border-0"
               onClick={handleTakeover}
               disabled={takingOver}
             >

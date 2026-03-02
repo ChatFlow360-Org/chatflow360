@@ -223,6 +223,78 @@ export function AppearanceForm({
               {t("headerSubtitleHint")}
             </p>
           </div>
+
+          <Separator />
+
+          {/* Welcome Title — EN / ES */}
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">{t("welcomeTitle")}</Label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="welcomeTitleEn" className="text-xs text-muted-foreground">
+                  {t("english")}
+                </Label>
+                <Input
+                  id="welcomeTitleEn"
+                  value={appearance.welcomeTitleEn}
+                  onChange={(e) => update("welcomeTitleEn", e.target.value)}
+                  placeholder={t("welcomeTitlePlaceholderEn")}
+                  maxLength={60}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="welcomeTitleEs" className="text-xs text-muted-foreground">
+                  {t("spanish")}
+                </Label>
+                <Input
+                  id="welcomeTitleEs"
+                  value={appearance.welcomeTitleEs}
+                  onChange={(e) => update("welcomeTitleEs", e.target.value)}
+                  placeholder={t("welcomeTitlePlaceholderEs")}
+                  maxLength={60}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t("welcomeTitleHint")}
+            </p>
+          </div>
+
+          <Separator />
+
+          {/* Welcome Subtitle — EN / ES */}
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">{t("welcomeSubtitle")}</Label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="welcomeSubtitleEn" className="text-xs text-muted-foreground">
+                  {t("english")}
+                </Label>
+                <Input
+                  id="welcomeSubtitleEn"
+                  value={appearance.welcomeSubtitleEn}
+                  onChange={(e) => update("welcomeSubtitleEn", e.target.value)}
+                  placeholder={t("welcomeSubtitlePlaceholderEn")}
+                  maxLength={80}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="welcomeSubtitleEs" className="text-xs text-muted-foreground">
+                  {t("spanish")}
+                </Label>
+                <Input
+                  id="welcomeSubtitleEs"
+                  value={appearance.welcomeSubtitleEs}
+                  onChange={(e) => update("welcomeSubtitleEs", e.target.value)}
+                  placeholder={t("welcomeSubtitlePlaceholderEs")}
+                  maxLength={80}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t("welcomeSubtitleHint")}
+            </p>
+          </div>
         </CardContent>
       </Card>
 
