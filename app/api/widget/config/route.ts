@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
     const postChat = {
       enableRating: postChatFull.enableRating,
       enableTranscript: postChatFull.enableTranscript,
+      logoUrl: postChatFull.logoUrl || "",
     };
 
     return jsonResponse({ appearance, postChat });
