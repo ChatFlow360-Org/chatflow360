@@ -440,9 +440,8 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
               <p className="text-sm text-muted-foreground">{t("aiHandling")}</p>
             </div>
             <Button
-              variant="outline"
               size="sm"
-              className="text-xs"
+              className="text-xs bg-amber-500 hover:bg-amber-600 text-white border-0"
               onClick={handleTakeover}
               disabled={takingOver}
             >

@@ -524,13 +524,7 @@ export function AiSettingsClient({
             <input type="hidden" name="model" value={model} />
             <input type="hidden" name="temperature" value={temperature} />
             <input type="hidden" name="maxTokens" value={maxTokens} />
-            <input type="hidden" name="promptStructure" value={JSON.stringify({
-              ...promptStructure,
-              rules: [
-                ...globalRules.map(r => r.content),
-                ...promptStructure.rules,
-              ],
-            })} />
+            <input type="hidden" name="promptStructure" value={JSON.stringify(promptStructure)} />
             <input
               type="hidden"
               name="handoffKeywords"

@@ -75,6 +75,21 @@ export async function POST(request: NextRequest) {
     const aiSettings = org.aiSettings;
     const config = resolveChannelConfig(channel, aiSettings);
 
+    // Inject global mandatory rules (prompt_pieces with categoryId=null, type="rule")
+    const globalRules = await prisma.promptPiece.findMany({
+      where: { categoryId: { equals: null } as never, type: "rule" },
+      orderBy: { sortOrder: "asc" },
+      select: { content: true },
+    });
+
+    if (globalRules.length > 0) {
+      const rulesBlock = globalRules.map((r) => `- ${r.content}`).join("\n");
+      const globalSection = `GLOBAL RULES (mandatory):\n${rulesBlock}`;
+      config.systemPrompt = config.systemPrompt
+        ? `${globalSection}\n\n${config.systemPrompt}`
+        : globalSection;
+    }
+
     // 2. Create or recover conversation
     let conversation;
     let isNewConversation = false;

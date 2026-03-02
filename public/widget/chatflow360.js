@@ -330,9 +330,18 @@
           // Conversation closed from dashboard
           if (msg.event === "broadcast" && msg.payload && msg.payload.event === "conversation_closed") {
             connectingEl.classList.remove("cf360-connecting--show", "cf360-connecting--connected");
-            state.resolved = true;
-            newConvBtn.classList.add("cf360-new-conv--show");
             stopPolling();
+
+            // Trigger post-chat flow (rating + transcript) if configured
+            var pcCfg = state.postChatConfig;
+            var pcRating = pcCfg && pcCfg.enableRating;
+            var pcTranscript = pcCfg && pcCfg.enableTranscript;
+            if ((pcRating || pcTranscript) && state.conversationId) {
+              showPostChatFlow(state.conversationId, pcRating, pcTranscript);
+            } else {
+              state.resolved = true;
+              newConvBtn.classList.add("cf360-new-conv--show");
+            }
           }
         } catch (e) { /* ignore malformed */ }
       };
