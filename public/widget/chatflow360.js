@@ -598,7 +598,7 @@
       "  background:linear-gradient(135deg,#1c2e47 0%," + primaryColor + " 100%);",
       "  position:relative;flex-shrink:0;",
       "}",
-      ".cf360-postchat-hero img{max-height:36px;max-width:160px;object-fit:contain;}",
+      ".cf360-postchat-hero img{max-height:64px;max-width:220px;object-fit:contain;}",
       // Wave separator
       ".cf360-postchat-wave{",
       "  width:100%;margin-top:-24px;flex-shrink:0;display:block;",

@@ -88,7 +88,7 @@ export function renderTranscriptEmail({
     .join("");
 
   const logoHtml = settings.logoUrl
-    ? `<img src="${escapeHtml(settings.logoUrl)}" alt="${escapeHtml(orgName)}" style="max-height:40px;max-width:180px;" />`
+    ? `<img src="${escapeHtml(settings.logoUrl)}" alt="${escapeHtml(orgName)}" style="max-height:80px;max-width:260px;" />`
     : `<span style="font-size:18px;font-weight:700;color:#ffffff;">${escapeHtml(orgName)}</span>`;
 
   const html = `<!DOCTYPE html>

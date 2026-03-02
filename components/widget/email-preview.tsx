@@ -122,7 +122,7 @@ export function EmailPreview({ settings, orgName }: EmailPreviewProps) {
             <img
               src={settings.logoUrl}
               alt="Logo"
-              className="mx-auto h-10 object-contain"
+              className="mx-auto max-h-16 max-w-[200px] object-contain"
             />
           ) : (
             <div className="text-lg font-semibold text-white">
