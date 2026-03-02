@@ -8,6 +8,7 @@ import type { PromptStructure } from "@/lib/chat/prompt-builder";
 import type { KnowledgeCategory } from "@/lib/knowledge/business-hours";
 import type { WidgetAppearance, ChannelWidgetConfig } from "@/lib/widget/appearance";
 import type { PostChatSettings, ChannelPostChatConfig } from "@/lib/widget/post-chat";
+import type { PieceType } from "@/lib/prompt-pieces";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -65,11 +66,27 @@ export default async function AiSettingsPage() {
     }
   }
 
-  // Fetch prompt templates (for template selector)
-  const templates = await prisma.promptTemplate.findMany({
-    orderBy: { name: "asc" },
-    select: { id: true, name: true, description: true, structure: true },
-  });
+  // Fetch prompt pieces for org's business category
+  let promptPieces: { id: string; type: PieceType; name: string; content: string }[] = [];
+  if (selectedOrgId) {
+    const org = await prisma.organization.findUnique({
+      where: { id: selectedOrgId },
+      select: { businessCategoryId: true },
+    });
+    if (org?.businessCategoryId) {
+      const pieces = await prisma.promptPiece.findMany({
+        where: { categoryId: org.businessCategoryId },
+        orderBy: { sortOrder: "asc" },
+        select: { id: true, type: true, name: true, content: true },
+      });
+      promptPieces = pieces.map((p) => ({
+        id: p.id,
+        type: p.type as PieceType,
+        name: p.name,
+        content: p.content,
+      }));
+    }
+  }
 
   // Fetch knowledge items for this org
   let knowledgeItems: { id: string; title: string; content: string; category: KnowledgeCategory; structured_data: Record<string, unknown> | null; tokens_used: number; created_at: string }[] = [];
@@ -107,12 +124,7 @@ export default async function AiSettingsPage() {
       aiSettings={aiSettings}
       isSuperAdmin={user.isSuperAdmin}
       knowledgeItems={knowledgeItems}
-      templates={templates.map((t) => ({
-        id: t.id,
-        name: t.name,
-        description: t.description,
-        structure: t.structure as unknown as PromptStructure,
-      }))}
+      promptPieces={promptPieces}
       widgetChannelId={widgetChannelId}
       widgetPublicKey={widgetPublicKey}
       widgetAppearance={widgetAppearance}

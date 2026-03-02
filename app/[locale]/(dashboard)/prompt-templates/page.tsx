@@ -2,32 +2,37 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/user";
 import { prisma } from "@/lib/db/prisma";
 import { PromptTemplatesClient } from "./prompt-templates-client";
-import type { PromptStructure } from "@/lib/chat/prompt-builder";
+import type { PieceType } from "@/lib/prompt-pieces";
 
 export default async function PromptTemplatesPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/en/login");
   if (!user.isSuperAdmin) redirect("/en/");
 
-  const templates = await prisma.promptTemplate.findMany({
-    orderBy: { updatedAt: "desc" },
-    select: {
-      id: true,
-      name: true,
-      description: true,
-      structure: true,
-      updatedAt: true,
+  const categories = await prisma.businessCategory.findMany({
+    orderBy: { sortOrder: "asc" },
+    include: {
+      pieces: { orderBy: { sortOrder: "asc" } },
+      _count: { select: { pieces: true } },
     },
   });
 
   return (
     <PromptTemplatesClient
-      templates={templates.map((t) => ({
-        id: t.id,
-        name: t.name,
-        description: t.description,
-        structure: t.structure as unknown as PromptStructure,
-        updatedAt: t.updatedAt.toISOString(),
+      categories={categories.map((c) => ({
+        id: c.id,
+        name: c.name,
+        slug: c.slug,
+        sortOrder: c.sortOrder,
+        piecesCount: c._count.pieces,
+        pieces: c.pieces.map((p) => ({
+          id: p.id,
+          categoryId: p.categoryId,
+          type: p.type as PieceType,
+          name: p.name,
+          content: p.content,
+          sortOrder: p.sortOrder,
+        })),
       }))}
     />
   );

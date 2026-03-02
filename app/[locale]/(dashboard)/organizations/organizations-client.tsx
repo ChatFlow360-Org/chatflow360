@@ -55,12 +55,20 @@ interface SerializedOrg {
   isActive: boolean;
   membersCount: number;
   maxChannels: number;
+  businessCategoryId: string | null;
+  businessCategoryName: string | null;
   channels: SerializedChannel[];
   createdAt: string;
 }
 
+interface BusinessCategory {
+  id: string;
+  name: string;
+}
+
 interface OrganizationsClientProps {
   organizations: SerializedOrg[];
+  categories: BusinessCategory[];
 }
 
 function slugify(name: string) {
@@ -72,7 +80,7 @@ function slugify(name: string) {
     .replace(/^-|-$/g, "");
 }
 
-export function OrganizationsClient({ organizations }: OrganizationsClientProps) {
+export function OrganizationsClient({ organizations, categories }: OrganizationsClientProps) {
   const t = useTranslations("organizations");
   const tc = useTranslations("common");
   const te = useTranslations("admin");
@@ -85,6 +93,7 @@ export function OrganizationsClient({ organizations }: OrganizationsClientProps)
   const [nameValue, setNameValue] = useState("");
   const [slugValue, setSlugValue] = useState("");
   const [planValue, setPlanValue] = useState("starter");
+  const [categoryValue, setCategoryValue] = useState("none");
 
   // Delete confirmation state
   const [deleteOrgId, setDeleteOrgId] = useState<string | null>(null);
@@ -142,6 +151,7 @@ export function OrganizationsClient({ organizations }: OrganizationsClientProps)
     setNameValue("");
     setSlugValue("");
     setPlanValue("starter");
+    setCategoryValue("none");
     setDialogOpen(true);
   };
 
@@ -150,6 +160,7 @@ export function OrganizationsClient({ organizations }: OrganizationsClientProps)
     setNameValue(org.name);
     setSlugValue(org.slug);
     setPlanValue(org.plan);
+    setCategoryValue(org.businessCategoryId ?? "none");
     setDialogOpen(true);
   };
 
@@ -237,6 +248,7 @@ export function OrganizationsClient({ organizations }: OrganizationsClientProps)
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("name")}</th>
                 <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground sm:table-cell">{t("slug")}</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("plan")}</th>
+                <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground md:table-cell">{t("businessCategory")}</th>
                 <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground md:table-cell">{t("status")}</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">{tch("title")}</th>
                 <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground lg:table-cell">{t("members")}</th>
@@ -331,6 +343,28 @@ export function OrganizationsClient({ organizations }: OrganizationsClientProps)
                   <SelectItem value="starter">{t("plans.starter")}</SelectItem>
                   <SelectItem value="pro">{t("plans.pro")}</SelectItem>
                   <SelectItem value="growth">{t("plans.growth")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t("businessCategory")}</Label>
+              <input
+                type="hidden"
+                name="businessCategoryId"
+                value={categoryValue === "none" ? "" : categoryValue}
+              />
+              <Select value={categoryValue} onValueChange={setCategoryValue}>
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder={t("selectCategory")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{t("selectCategory")}</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -545,6 +579,15 @@ function OrgRow({
           </Badge>
         </td>
         <td className="hidden px-4 py-3 md:table-cell">
+          {org.businessCategoryName ? (
+            <Badge variant="outline" className="text-xs">
+              {org.businessCategoryName}
+            </Badge>
+          ) : (
+            <span className="text-xs text-muted-foreground/60">--</span>
+          )}
+        </td>
+        <td className="hidden px-4 py-3 md:table-cell">
           <Badge
             variant={org.isActive ? "default" : "secondary"}
             className={org.isActive ? "bg-cta/15 text-cta" : ""}
@@ -593,7 +636,7 @@ function OrgRow({
       {/* Expanded: Channels sub-table */}
       {isExpanded && (
         <tr>
-          <td colSpan={9} className="border-t border-border/50 bg-muted/30 px-4 py-4">
+          <td colSpan={10} className="border-t border-border/50 bg-muted/30 px-4 py-4">
             <div className="ml-6 rounded-lg border border-border bg-card p-4">
               {/* Channels header */}
               <div className="mb-3 flex items-center justify-between">

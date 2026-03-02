@@ -56,6 +56,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   upsertAiSettings,
   createKnowledgeItem,
   updateKnowledgeItem,
@@ -111,11 +116,11 @@ interface KnowledgeItemData {
   created_at: string;
 }
 
-interface TemplateData {
+interface PromptPieceData {
   id: string;
+  type: "role" | "rule" | "personality";
   name: string;
-  description: string | null;
-  structure: PromptStructure;
+  content: string;
 }
 
 interface AiSettingsClientProps {
@@ -124,7 +129,7 @@ interface AiSettingsClientProps {
   aiSettings: AiSettingsData | null;
   isSuperAdmin: boolean;
   knowledgeItems: KnowledgeItemData[];
-  templates: TemplateData[];
+  promptPieces: PromptPieceData[];
   widgetChannelId?: string;
   widgetPublicKey?: string;
   widgetAppearance?: WidgetAppearance;
@@ -139,7 +144,7 @@ export function AiSettingsClient({
   aiSettings,
   isSuperAdmin,
   knowledgeItems,
-  templates,
+  promptPieces,
   widgetChannelId,
   widgetPublicKey,
   widgetAppearance,
@@ -319,8 +324,10 @@ export function AiSettingsClient({
     () => !!(aiSettings?.promptStructure?.additionalInstructions) || hasLegacyPrompt
   );
 
-  // Template selector state
-  const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  // Popover open states for per-section Browse
+  const [rolePopoverOpen, setRolePopoverOpen] = useState(false);
+  const [rulesPopoverOpen, setRulesPopoverOpen] = useState(false);
+  const [personalityPopoverOpen, setPersonalityPopoverOpen] = useState(false);
 
   const resolveKeywords = (settings: AiSettingsData | null): string[] => {
     if (!settings) return [...DEFAULT_HANDOFF_KEYWORDS];
@@ -523,22 +530,11 @@ export function AiSettingsClient({
                           {t("systemPrompt.description")}
                         </CardDescription>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {(promptStructure.agentName || promptStructure.role || promptStructure.rules.length > 0 || promptStructure.personality) && (
-                          <Badge className="bg-cta/15 text-cta hover:bg-cta/20 border-0">
-                            {t("systemPrompt.active")}
-                          </Badge>
-                        )}
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setShowTemplateDialog(true)}
-                        >
-                          <LayoutTemplate className="mr-1.5 h-4 w-4" />
-                          {t("agentInstructions.useTemplate")}
-                        </Button>
-                      </div>
+                      {(promptStructure.agentName || promptStructure.role || promptStructure.rules.length > 0 || promptStructure.personality) && (
+                        <Badge className="bg-cta/15 text-cta hover:bg-cta/20 border-0">
+                          {t("systemPrompt.active")}
+                        </Badge>
+                      )}
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-6">
@@ -570,7 +566,37 @@ export function AiSettingsClient({
 
                     {/* Agent Role */}
                     <div className="space-y-2">
-                      <Label>{t("agentInstructions.role")}</Label>
+                      <div className="flex items-center justify-between">
+                        <Label>{t("agentInstructions.role")}</Label>
+                        {promptPieces.filter(p => p.type === "role").length > 0 && (
+                          <Popover open={rolePopoverOpen} onOpenChange={setRolePopoverOpen}>
+                            <PopoverTrigger asChild>
+                              <Button type="button" variant="outline" size="sm">
+                                <LayoutTemplate className="mr-1.5 h-4 w-4" />
+                                {t("agentInstructions.browseTemplates")}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-72 p-2" align="end">
+                              <div className="space-y-1">
+                                {promptPieces.filter(p => p.type === "role").map((piece) => (
+                                  <button
+                                    key={piece.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setPromptStructure(prev => ({ ...prev, role: piece.content }));
+                                      setRolePopoverOpen(false);
+                                    }}
+                                    className="w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent"
+                                  >
+                                    <div className="font-medium">{piece.name}</div>
+                                    <div className="text-xs text-muted-foreground line-clamp-1">{piece.content}</div>
+                                  </button>
+                                ))}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        )}
+                      </div>
                       <Textarea
                         value={promptStructure.role}
                         onChange={(e) => setPromptStructure((prev) => ({ ...prev, role: e.target.value }))}
@@ -588,7 +614,40 @@ export function AiSettingsClient({
 
                     {/* Rules (dynamic list) */}
                     <div className="space-y-3">
-                      <Label>{t("agentInstructions.rules")}</Label>
+                      <div className="flex items-center justify-between">
+                        <Label>{t("agentInstructions.rules")}</Label>
+                        {promptPieces.filter(p => p.type === "rule").length > 0 && (
+                          <Popover open={rulesPopoverOpen} onOpenChange={setRulesPopoverOpen}>
+                            <PopoverTrigger asChild>
+                              <Button type="button" variant="outline" size="sm">
+                                <LayoutTemplate className="mr-1.5 h-4 w-4" />
+                                {t("agentInstructions.browseTemplates")}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-72 p-2" align="end">
+                              <div className="space-y-1">
+                                {promptPieces.filter(p => p.type === "rule").map((piece) => (
+                                  <button
+                                    key={piece.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setPromptStructure(prev => ({
+                                        ...prev,
+                                        rules: prev.rules.includes(piece.content) ? prev.rules : [...prev.rules, piece.content],
+                                      }));
+                                      setRulesPopoverOpen(false);
+                                    }}
+                                    className="w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent"
+                                  >
+                                    <div className="font-medium">{piece.name}</div>
+                                    <div className="text-xs text-muted-foreground line-clamp-1">{piece.content}</div>
+                                  </button>
+                                ))}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        )}
+                      </div>
                       {promptStructure.rules.length > 0 && (
                         <div className="space-y-2">
                           {promptStructure.rules.map((rule, index) => (
@@ -636,7 +695,37 @@ export function AiSettingsClient({
 
                     {/* Personality */}
                     <div className="space-y-2">
-                      <Label>{t("agentInstructions.personality")}</Label>
+                      <div className="flex items-center justify-between">
+                        <Label>{t("agentInstructions.personality")}</Label>
+                        {promptPieces.filter(p => p.type === "personality").length > 0 && (
+                          <Popover open={personalityPopoverOpen} onOpenChange={setPersonalityPopoverOpen}>
+                            <PopoverTrigger asChild>
+                              <Button type="button" variant="outline" size="sm">
+                                <LayoutTemplate className="mr-1.5 h-4 w-4" />
+                                {t("agentInstructions.browseTemplates")}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-72 p-2" align="end">
+                              <div className="space-y-1">
+                                {promptPieces.filter(p => p.type === "personality").map((piece) => (
+                                  <button
+                                    key={piece.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setPromptStructure(prev => ({ ...prev, personality: piece.content }));
+                                      setPersonalityPopoverOpen(false);
+                                    }}
+                                    className="w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent"
+                                  >
+                                    <div className="font-medium">{piece.name}</div>
+                                    <div className="text-xs text-muted-foreground line-clamp-1">{piece.content}</div>
+                                  </button>
+                                ))}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        )}
+                      </div>
                       <Textarea
                         value={promptStructure.personality}
                         onChange={(e) => setPromptStructure((prev) => ({ ...prev, personality: e.target.value }))}
@@ -1397,44 +1486,6 @@ export function AiSettingsClient({
               </Button>
             </DialogFooter>
           </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Template Selection Dialog ── */}
-      <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{t("templates.selectTitle")}</DialogTitle>
-            <DialogDescription>{t("templates.selectDescription")}</DialogDescription>
-          </DialogHeader>
-          <div className="max-h-[400px] space-y-3 overflow-y-auto py-2">
-            {templates.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                {t("templates.noTemplates")}
-              </p>
-            ) : (
-              templates.map((tmpl) => (
-                <button
-                  key={tmpl.id}
-                  type="button"
-                  onClick={() => {
-                    setPromptStructure({ ...tmpl.structure });
-                    setShowTemplateDialog(false);
-                  }}
-                  className="w-full rounded-lg border bg-background p-4 text-left transition-colors hover:border-cta hover:bg-cta/5"
-                >
-                  <h4 className="text-sm font-medium">{tmpl.name}</h4>
-                  {tmpl.description && (
-                    <p className="mt-1 text-xs text-muted-foreground">{tmpl.description}</p>
-                  )}
-                  <p className="mt-1.5 text-[10px] text-muted-foreground/60">
-                    {tmpl.structure.agentName && `${tmpl.structure.agentName} · `}
-                    {t("templates.rulesCount", { count: tmpl.structure.rules.length })}
-                  </p>
-                </button>
-              ))
-            )}
-          </div>
         </DialogContent>
       </Dialog>
 

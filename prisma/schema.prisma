@@ -24,17 +24,19 @@ model Organization {
   maxChannels              Int      @default(1) @map("max_channels")
   maxAgents                Int      @default(2) @map("max_agents")
   maxConversationsPerMonth Int      @default(300) @map("max_conversations_per_month")
+  businessCategoryId       String?  @map("business_category_id") @db.Uuid
   isActive                 Boolean  @default(true) @map("is_active")
   createdAt                DateTime @default(now()) @map("created_at")
   updatedAt                DateTime @updatedAt @map("updated_at")
 
   // Relations
-  members       OrganizationMember[]
-  channels      Channel[]
-  conversations Conversation[]
-  aiSettings    AiSettings?
-  usageTracking UsageTracking[]
-  leads         Lead[]
+  members          OrganizationMember[]
+  channels         Channel[]
+  conversations    Conversation[]
+  aiSettings       AiSettings?
+  usageTracking    UsageTracking[]
+  leads            Lead[]
+  businessCategory BusinessCategory? @relation(fields: [businessCategoryId], references: [id])
 
   @@map("organizations")
 }
@@ -108,19 +110,44 @@ model AiSettings {
 }
 
 // ============================================
-// PromptTemplate (global — SOLO Super Admin)
-// Reusable prompt templates for common business types
+// BusinessCategory (global — SOLO Super Admin)
+// Categorizes organizations by industry/type
 // ============================================
 
-model PromptTemplate {
-  id          String   @id @default(uuid()) @db.Uuid
-  name        String   @unique
-  description String?  @db.Text
-  structure   Json     // { agentName, role, rules[], personality }
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+model BusinessCategory {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  slug      String   @unique
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  @@map("prompt_templates")
+  // Relations
+  organizations Organization[]
+  pieces        PromptPiece[]
+
+  @@map("business_categories")
+}
+
+// ============================================
+// PromptPiece (global — SOLO Super Admin)
+// Individual prompt pieces organized by category and type
+// ============================================
+
+model PromptPiece {
+  id         String   @id @default(uuid()) @db.Uuid
+  categoryId String   @map("category_id") @db.Uuid
+  type       String   // role | rule | personality
+  name       String
+  content    String   @db.Text
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  category BusinessCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId, type])
+  @@map("prompt_pieces")
 }
 
 // ============================================

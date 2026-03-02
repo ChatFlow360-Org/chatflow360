@@ -7,16 +7,23 @@ export default async function OrganizationsPage() {
   const user = await getCurrentUser();
   if (!user?.isSuperAdmin) redirect("/");
 
-  const organizations = await prisma.organization.findMany({
-    include: {
-      _count: { select: { members: true } },
-      channels: {
-        select: { id: true, name: true, type: true, isActive: true, createdAt: true },
-        orderBy: { createdAt: "asc" },
+  const [organizations, categories] = await Promise.all([
+    prisma.organization.findMany({
+      include: {
+        _count: { select: { members: true } },
+        channels: {
+          select: { id: true, name: true, type: true, isActive: true, createdAt: true },
+          orderBy: { createdAt: "asc" },
+        },
+        businessCategory: { select: { id: true, name: true } },
       },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.businessCategory.findMany({
+      orderBy: { sortOrder: "asc" },
+      select: { id: true, name: true },
+    }),
+  ]);
 
   // Serialize dates for client component
   const serialized = organizations.map((org) => ({
@@ -27,6 +34,8 @@ export default async function OrganizationsPage() {
     isActive: org.isActive,
     membersCount: org._count.members,
     maxChannels: org.maxChannels,
+    businessCategoryId: org.businessCategoryId,
+    businessCategoryName: org.businessCategory?.name ?? null,
     channels: org.channels.map((ch) => ({
       id: ch.id,
       name: ch.name,
@@ -37,5 +46,5 @@ export default async function OrganizationsPage() {
     createdAt: org.createdAt.toISOString(),
   }));
 
-  return <OrganizationsClient organizations={serialized} />;
+  return <OrganizationsClient organizations={serialized} categories={categories} />;
 }
