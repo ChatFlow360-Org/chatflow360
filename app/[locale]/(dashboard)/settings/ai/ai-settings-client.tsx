@@ -336,6 +336,7 @@ export function AiSettingsClient({
   const [rolePopoverOpen, setRolePopoverOpen] = useState(false);
   const [rulesPopoverOpen, setRulesPopoverOpen] = useState(false);
   const [personalityPopoverOpen, setPersonalityPopoverOpen] = useState(false);
+  const [globalRulesOpen, setGlobalRulesOpen] = useState(false);
 
   const resolveKeywords = (settings: AiSettingsData | null): string[] => {
     if (!settings) return [...DEFAULT_HANDOFF_KEYWORDS];
@@ -662,30 +663,39 @@ export function AiSettingsClient({
                           </Popover>
                         )}
                       </div>
-                      {/* Global mandatory rules (locked) */}
+                      {/* Global mandatory rules (locked, collapsible) */}
                       {globalRules.length > 0 && (
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <Shield className="h-3.5 w-3.5 text-amber-500" />
-                            <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
-                              {t("agentInstructions.globalRules")}
+                        <div className="rounded-lg border border-amber-500/20 bg-amber-500/5">
+                          <button
+                            type="button"
+                            onClick={() => setGlobalRulesOpen((o) => !o)}
+                            className="flex w-full items-center gap-1.5 px-3 py-2 text-left"
+                          >
+                            <Shield className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+                            <span className="flex-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+                              {t("agentInstructions.globalRules")} ({globalRules.length})
                             </span>
-                          </div>
-                          {globalRules.map((rule) => (
-                            <div
-                              key={rule.id}
-                              className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2"
-                            >
-                              <Shield className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
-                              <div className="min-w-0 flex-1">
-                                <p className="text-xs font-medium text-amber-600 dark:text-amber-400">{rule.name}</p>
-                                <p className="text-sm">{rule.content}</p>
-                              </div>
+                            <ChevronDown className={`h-3.5 w-3.5 text-amber-500 transition-transform ${globalRulesOpen ? "rotate-180" : ""}`} />
+                          </button>
+                          {globalRulesOpen && (
+                            <div className="space-y-2 px-3 pb-2">
+                              {globalRules.map((rule) => (
+                                <div
+                                  key={rule.id}
+                                  className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2"
+                                >
+                                  <Shield className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-xs font-medium text-amber-600 dark:text-amber-400">{rule.name}</p>
+                                    <p className="text-sm">{rule.content}</p>
+                                  </div>
+                                </div>
+                              ))}
+                              <p className="text-[10px] text-muted-foreground/70">
+                                {t("agentInstructions.globalRulesHint")}
+                              </p>
                             </div>
-                          ))}
-                          <p className="text-[10px] text-muted-foreground/70">
-                            {t("agentInstructions.globalRulesHint")}
-                          </p>
+                          )}
                         </div>
                       )}
                       {promptStructure.rules.length > 0 && (
