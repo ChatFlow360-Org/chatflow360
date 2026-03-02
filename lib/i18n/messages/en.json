@@ -205,7 +205,12 @@
       "noTemplatesAvailable": "No template pieces available for your business category.",
       "noCategoryAssigned": "No business category assigned to your organization. Contact your administrator.",
       "globalRules": "Global Rules",
-      "globalRulesHint": "These rules are set by the platform administrator and apply to all organizations"
+      "globalRulesHint": "These rules are set by the platform administrator and apply to all organizations",
+      "clearAllRules": "Clear all",
+      "clearAllRulesTitle": "Clear All Rules",
+      "clearAllRulesDescription": "This will remove all custom rules (global rules will remain). This action cannot be undone.",
+      "clearAllRulesConfirm": "Clear all rules",
+      "applySelectedRules": "Apply {count, plural, one {# rule} other {# rules}}"
     },
     "templates": {
       "selectTitle": "Choose a Template",

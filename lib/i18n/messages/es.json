@@ -205,7 +205,12 @@
       "noTemplatesAvailable": "No hay piezas de plantilla disponibles para tu categoria de negocio.",
       "noCategoryAssigned": "No hay categoria de negocio asignada a tu organizacion. Contacta a tu administrador.",
       "globalRules": "Reglas Globales",
-      "globalRulesHint": "Estas reglas son establecidas por el administrador de la plataforma y aplican a todas las organizaciones"
+      "globalRulesHint": "Estas reglas son establecidas por el administrador de la plataforma y aplican a todas las organizaciones",
+      "clearAllRules": "Limpiar todas",
+      "clearAllRulesTitle": "Limpiar Todas las Reglas",
+      "clearAllRulesDescription": "Esto eliminara todas las reglas personalizadas (las reglas globales se mantendran). Esta accion no se puede deshacer.",
+      "clearAllRulesConfirm": "Limpiar todas las reglas",
+      "applySelectedRules": "Aplicar {count, plural, one {# regla} other {# reglas}}"
     },
     "templates": {
       "selectTitle": "Elegir una Plantilla",

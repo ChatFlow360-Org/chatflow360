@@ -94,6 +94,7 @@ import { AppearanceForm } from "@/components/widget/appearance-form";
 import { PostChatForm } from "@/components/widget/post-chat-form";
 import type { WidgetAppearance } from "@/lib/widget/appearance";
 import type { PostChatSettings } from "@/lib/widget/post-chat";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 // --- Types ---
 
@@ -340,7 +341,9 @@ export function AiSettingsClient({
 
   // Template drawer state (which field is browsing, null = closed)
   const [templateDrawerField, setTemplateDrawerField] = useState<PieceType | null>(null);
+  const [selectedRuleIds, setSelectedRuleIds] = useState<Set<string>>(new Set());
   const [globalRulesOpen, setGlobalRulesOpen] = useState(false);
+  const [showClearRulesConfirm, setShowClearRulesConfirm] = useState(false);
 
   const resolveKeywords = (settings: AiSettingsData | null): string[] => {
     if (!settings) return [...DEFAULT_HANDOFF_KEYWORDS];
@@ -613,12 +616,26 @@ export function AiSettingsClient({
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <Label>{t("agentInstructions.rules")}</Label>
-                        {promptPieces.filter(p => p.type === "rule").length > 0 && (
-                          <Button type="button" variant="outline" size="sm" onClick={() => setTemplateDrawerField("rule")}>
-                            <LayoutTemplate className="mr-1.5 h-4 w-4" />
-                            {t("agentInstructions.browseTemplates")}
-                          </Button>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {promptStructure.rules.length > 0 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => setShowClearRulesConfirm(true)}
+                            >
+                              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                              {t("agentInstructions.clearAllRules")}
+                            </Button>
+                          )}
+                          {promptPieces.filter(p => p.type === "rule").length > 0 && (
+                            <Button type="button" variant="outline" size="sm" onClick={() => { setSelectedRuleIds(new Set()); setTemplateDrawerField("rule"); }}>
+                              <LayoutTemplate className="mr-1.5 h-4 w-4" />
+                              {t("agentInstructions.browseTemplates")}
+                            </Button>
+                          )}
+                        </div>
                       </div>
                       {/* Global mandatory rules (locked, collapsible) */}
                       {globalRules.length > 0 && (
@@ -1769,7 +1786,7 @@ export function AiSettingsClient({
       </Dialog>
 
       {/* ── Template Drawer (Sheet from right) ── */}
-      <Sheet open={templateDrawerField !== null} onOpenChange={(open) => { if (!open) setTemplateDrawerField(null); }}>
+      <Sheet open={templateDrawerField !== null} onOpenChange={(open) => { if (!open) { setTemplateDrawerField(null); setSelectedRuleIds(new Set()); } }}>
         <SheetContent side="right" className="sm:max-w-md flex flex-col">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
@@ -1789,6 +1806,7 @@ export function AiSettingsClient({
                 .map((piece) => {
                   const isRule = templateDrawerField === "rule";
                   const isAdded = isRule && promptStructure.rules.includes(piece.content);
+                  const isSelected = isRule && selectedRuleIds.has(piece.id);
                   const hasContent = templateDrawerField === "role"
                     ? promptStructure.role.trim()
                     : templateDrawerField === "personality"
@@ -1798,9 +1816,37 @@ export function AiSettingsClient({
                   return (
                     <div
                       key={piece.id}
-                      className={`rounded-lg border p-4 ${isAdded ? "border-emerald-500/30 bg-emerald-500/5" : "bg-muted/30"}`}
+                      className={`rounded-lg border p-4 transition-colors ${
+                        isAdded
+                          ? "border-emerald-500/30 bg-emerald-500/5"
+                          : isSelected
+                            ? "border-primary/50 bg-primary/5"
+                            : "bg-muted/30"
+                      }`}
                     >
-                      <div className="mb-1.5 text-sm font-semibold">{piece.name}</div>
+                      {/* Checkbox row for rules */}
+                      {isRule && !isAdded && (
+                        <label className="mb-2 flex cursor-pointer items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {
+                              setSelectedRuleIds(prev => {
+                                const next = new Set(prev);
+                                if (next.has(piece.id)) next.delete(piece.id);
+                                else next.add(piece.id);
+                                return next;
+                              });
+                            }}
+                            className="h-4 w-4 rounded border-muted-foreground/30 accent-primary"
+                          />
+                          <span className="text-sm font-semibold">{piece.name}</span>
+                        </label>
+                      )}
+                      {/* Name for non-checkbox cases */}
+                      {(!isRule || isAdded) && (
+                        <div className="mb-1.5 text-sm font-semibold">{piece.name}</div>
+                      )}
                       <p className="mb-3 text-sm text-muted-foreground whitespace-pre-wrap">{piece.content}</p>
                       {isAdded ? (
                         <div className="flex h-8 items-center justify-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400">
@@ -1820,6 +1866,11 @@ export function AiSettingsClient({
                                 ...prev,
                                 rules: [...prev.rules, piece.content],
                               }));
+                              setSelectedRuleIds(prev => {
+                                const next = new Set(prev);
+                                next.delete(piece.id);
+                                return next;
+                              });
                             } else if (templateDrawerField === "role") {
                               setPromptStructure(prev => ({ ...prev, role: piece.content }));
                               setTemplateDrawerField(null);
@@ -1846,8 +1897,46 @@ export function AiSettingsClient({
               )}
             </div>
           </div>
+          {/* Sticky footer: Apply Selected (only for rules with selections) */}
+          {templateDrawerField === "rule" && selectedRuleIds.size > 0 && (
+            <div className="border-t bg-background px-4 py-3">
+              <Button
+                type="button"
+                className="w-full"
+                disabled={promptStructure.rules.length + selectedRuleIds.size > 50}
+                onClick={() => {
+                  const piecesToAdd = promptPieces
+                    .filter(p => p.type === "rule" && selectedRuleIds.has(p.id) && !promptStructure.rules.includes(p.content));
+                  if (piecesToAdd.length > 0) {
+                    setPromptStructure(prev => ({
+                      ...prev,
+                      rules: [...prev.rules, ...piecesToAdd.map(p => p.content)],
+                    }));
+                  }
+                  setSelectedRuleIds(new Set());
+                }}
+              >
+                {t("agentInstructions.applySelectedRules", { count: selectedRuleIds.size })}
+              </Button>
+            </div>
+          )}
         </SheetContent>
       </Sheet>
+
+      {/* ── Clear All Rules Confirm ── */}
+      <ConfirmDialog
+        open={showClearRulesConfirm}
+        onConfirm={() => {
+          setPromptStructure(prev => ({ ...prev, rules: [] }));
+          setShowClearRulesConfirm(false);
+        }}
+        onCancel={() => setShowClearRulesConfirm(false)}
+        title={t("agentInstructions.clearAllRulesTitle")}
+        description={t("agentInstructions.clearAllRulesDescription")}
+        confirmLabel={t("agentInstructions.clearAllRulesConfirm")}
+        cancelLabel={tCommon("cancel")}
+        variant="destructive"
+      />
     </div>
   );
 }
