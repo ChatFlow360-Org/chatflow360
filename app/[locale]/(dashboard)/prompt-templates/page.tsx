@@ -17,6 +17,12 @@ export default async function PromptTemplatesPage() {
     },
   });
 
+  // Fetch global rules (categoryId is null)
+  const globalRules = await prisma.promptPiece.findMany({
+    where: { categoryId: { equals: null }, type: "rule" },
+    orderBy: { sortOrder: "asc" },
+  });
+
   return (
     <PromptTemplatesClient
       categories={categories.map((c) => ({
@@ -33,6 +39,12 @@ export default async function PromptTemplatesPage() {
           content: p.content,
           sortOrder: p.sortOrder,
         })),
+      }))}
+      globalRules={globalRules.map((r) => ({
+        id: r.id,
+        name: r.name,
+        content: r.content,
+        sortOrder: r.sortOrder,
       }))}
     />
   );

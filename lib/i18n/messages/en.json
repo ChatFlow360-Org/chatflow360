@@ -198,7 +198,9 @@
       "additionalInstructionsHasContent": "has content",
       "browseTemplates": "Browse templates",
       "noTemplatesAvailable": "No template pieces available for your business category.",
-      "noCategoryAssigned": "No business category assigned to your organization. Contact your administrator."
+      "noCategoryAssigned": "No business category assigned to your organization. Contact your administrator.",
+      "globalRules": "Global Rules",
+      "globalRulesHint": "These rules are set by the platform administrator and apply to all organizations"
     },
     "templates": {
       "selectTitle": "Choose a Template",
@@ -670,7 +672,19 @@
     "saved": "Template piece saved",
     "saveError": "Failed to save template piece",
     "categoryCreated": "Category created",
-    "categoryDeleted": "Category deleted"
+    "categoryDeleted": "Category deleted",
+    "tabByCategory": "By Category",
+    "tabGlobalRules": "Global Rules",
+    "globalRulesSubtitle": "Rules that apply to ALL organizations — admins cannot remove these",
+    "addGlobalRule": "Add Global Rule",
+    "editGlobalRule": "Edit Global Rule",
+    "deleteGlobalRule": "Delete Global Rule",
+    "deleteGlobalRuleConfirm": "Are you sure you want to delete this global rule? It will be removed from all organizations.",
+    "noGlobalRules": "No global rules yet. Add rules that will apply to every organization.",
+    "globalRuleCreated": "Global rule created",
+    "globalRuleDeleted": "Global rule deleted",
+    "globalRuleName": "Rule Name",
+    "globalRuleContent": "Rule Content"
   },
   "apiKeys": {
     "title": "API Keys",

@@ -88,6 +88,15 @@ export default async function AiSettingsPage() {
     }
   }
 
+  // Fetch global mandatory rules (not tied to any category)
+  let globalRules: { id: string; name: string; content: string }[] = [];
+  const rawGlobalRules = await prisma.promptPiece.findMany({
+    where: { categoryId: { equals: null } as never, type: "rule" },
+    orderBy: { sortOrder: "asc" },
+    select: { id: true, name: true, content: true },
+  });
+  globalRules = rawGlobalRules;
+
   // Fetch knowledge items for this org
   let knowledgeItems: { id: string; title: string; content: string; category: KnowledgeCategory; structured_data: Record<string, unknown> | null; tokens_used: number; created_at: string }[] = [];
   if (selectedOrgId) {
@@ -125,6 +134,7 @@ export default async function AiSettingsPage() {
       isSuperAdmin={user.isSuperAdmin}
       knowledgeItems={knowledgeItems}
       promptPieces={promptPieces}
+      globalRules={globalRules}
       widgetChannelId={widgetChannelId}
       widgetPublicKey={widgetPublicKey}
       widgetAppearance={widgetAppearance}

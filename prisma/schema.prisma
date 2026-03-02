@@ -135,7 +135,7 @@ model BusinessCategory {
 
 model PromptPiece {
   id         String   @id @default(uuid()) @db.Uuid
-  categoryId String   @map("category_id") @db.Uuid
+  categoryId String?  @map("category_id") @db.Uuid
   type       String   // role | rule | personality
   name       String
   content    String   @db.Text
@@ -144,7 +144,7 @@ model PromptPiece {
   updatedAt  DateTime @updatedAt @map("updated_at")
 
   // Relations
-  category BusinessCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category BusinessCategory? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@index([categoryId, type])
   @@map("prompt_pieces")

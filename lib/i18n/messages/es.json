@@ -198,7 +198,9 @@
       "additionalInstructionsHasContent": "tiene contenido",
       "browseTemplates": "Explorar plantillas",
       "noTemplatesAvailable": "No hay piezas de plantilla disponibles para tu categoria de negocio.",
-      "noCategoryAssigned": "No hay categoria de negocio asignada a tu organizacion. Contacta a tu administrador."
+      "noCategoryAssigned": "No hay categoria de negocio asignada a tu organizacion. Contacta a tu administrador.",
+      "globalRules": "Reglas Globales",
+      "globalRulesHint": "Estas reglas son establecidas por el administrador de la plataforma y aplican a todas las organizaciones"
     },
     "templates": {
       "selectTitle": "Elegir una Plantilla",
@@ -670,7 +672,19 @@
     "saved": "Pieza de plantilla guardada",
     "saveError": "Error al guardar la pieza de plantilla",
     "categoryCreated": "Categoria creada",
-    "categoryDeleted": "Categoria eliminada"
+    "categoryDeleted": "Categoria eliminada",
+    "tabByCategory": "Por Categoria",
+    "tabGlobalRules": "Reglas Globales",
+    "globalRulesSubtitle": "Reglas que aplican a TODAS las organizaciones — los admins no pueden eliminarlas",
+    "addGlobalRule": "Agregar Regla Global",
+    "editGlobalRule": "Editar Regla Global",
+    "deleteGlobalRule": "Eliminar Regla Global",
+    "deleteGlobalRuleConfirm": "Estas seguro de eliminar esta regla global? Se eliminara de todas las organizaciones.",
+    "noGlobalRules": "Aun no hay reglas globales. Agrega reglas que aplicaran a todas las organizaciones.",
+    "globalRuleCreated": "Regla global creada",
+    "globalRuleDeleted": "Regla global eliminada",
+    "globalRuleName": "Nombre de la Regla",
+    "globalRuleContent": "Contenido de la Regla"
   },
   "apiKeys": {
     "title": "Claves API",

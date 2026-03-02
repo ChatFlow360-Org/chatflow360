@@ -11,6 +11,7 @@ import {
   Shield,
   Sparkles,
   FolderOpen,
+  Globe,
 } from "lucide-react";
 import {
   Card,
@@ -24,6 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Dialog,
@@ -38,6 +40,9 @@ import {
   updatePromptPiece,
   deleteBusinessCategory,
   deletePromptPiece,
+  createGlobalRule,
+  updateGlobalRule,
+  deleteGlobalRule,
 } from "@/lib/admin/actions";
 import type { PieceType, PromptPieceData } from "@/lib/prompt-pieces";
 
@@ -54,8 +59,16 @@ interface CategoryWithPieces {
   pieces: PromptPieceData[];
 }
 
+interface GlobalRuleData {
+  id: string;
+  name: string;
+  content: string;
+  sortOrder: number;
+}
+
 interface PromptTemplatesClientProps {
   categories: CategoryWithPieces[];
+  globalRules: GlobalRuleData[];
 }
 
 // ---------------------------------------------------------------------------
@@ -81,7 +94,7 @@ function slugify(text: string): string {
 // Component
 // ---------------------------------------------------------------------------
 
-export function PromptTemplatesClient({ categories }: PromptTemplatesClientProps) {
+export function PromptTemplatesClient({ categories, globalRules }: PromptTemplatesClientProps) {
   const t = useTranslations("promptTemplates");
   const tCommon = useTranslations("common");
 
@@ -105,6 +118,13 @@ export function PromptTemplatesClient({ categories }: PromptTemplatesClientProps
   const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
   const [deletePieceId, setDeletePieceId] = useState<string | null>(null);
 
+  // --- Global rule state ---
+  const [showGlobalRuleDialog, setShowGlobalRuleDialog] = useState(false);
+  const [editingGlobalRule, setEditingGlobalRule] = useState<GlobalRuleData | null>(null);
+  const [globalRuleName, setGlobalRuleName] = useState("");
+  const [globalRuleContent, setGlobalRuleContent] = useState("");
+  const [deleteGlobalRuleId, setDeleteGlobalRuleId] = useState<string | null>(null);
+
   // --- Server action states ---
   const [createCategoryState, createCategoryAction, isCreatingCategory] =
     useActionState(createBusinessCategory, null);
@@ -114,6 +134,13 @@ export function PromptTemplatesClient({ categories }: PromptTemplatesClientProps
     useActionState(updatePromptPiece, null);
   const [isDeletingCategory, startDeleteCategoryTransition] = useTransition();
   const [isDeletingPiece, startDeletePieceTransition] = useTransition();
+
+  // Server actions for global rules
+  const [createGlobalRuleState, createGlobalRuleAction, isCreatingGlobalRule] =
+    useActionState(createGlobalRule, null);
+  const [updateGlobalRuleState, updateGlobalRuleAction, isUpdatingGlobalRule] =
+    useActionState(updateGlobalRule, null);
+  const [isDeletingGlobalRule, startDeleteGlobalRuleTransition] = useTransition();
 
   // --- Feedback banner ---
   const [banner, setBanner] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -159,6 +186,29 @@ export function PromptTemplatesClient({ categories }: PromptTemplatesClientProps
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updatePieceState]);
+
+  // Close global rule dialog on success
+  useEffect(() => {
+    if (createGlobalRuleState?.success) {
+      setShowGlobalRuleDialog(false);
+      resetGlobalRuleForm();
+      setBanner({ type: "success", message: t("globalRuleCreated") });
+    } else if (createGlobalRuleState?.error) {
+      setBanner({ type: "error", message: createGlobalRuleState.error });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [createGlobalRuleState]);
+
+  useEffect(() => {
+    if (updateGlobalRuleState?.success) {
+      setShowGlobalRuleDialog(false);
+      resetGlobalRuleForm();
+      setBanner({ type: "success", message: t("saved") });
+    } else if (updateGlobalRuleState?.error) {
+      setBanner({ type: "error", message: updateGlobalRuleState.error });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [updateGlobalRuleState]);
 
   // Sync selectedCategoryId with categories (if deleted, select first)
   useEffect(() => {
@@ -235,6 +285,35 @@ export function PromptTemplatesClient({ categories }: PromptTemplatesClientProps
     });
   };
 
+  // --- Global rule helpers ---
+
+  const resetGlobalRuleForm = () => {
+    setEditingGlobalRule(null);
+    setGlobalRuleName("");
+    setGlobalRuleContent("");
+  };
+
+  const openNewGlobalRule = () => {
+    resetGlobalRuleForm();
+    setShowGlobalRuleDialog(true);
+  };
+
+  const openEditGlobalRule = (rule: GlobalRuleData) => {
+    setEditingGlobalRule(rule);
+    setGlobalRuleName(rule.name);
+    setGlobalRuleContent(rule.content);
+    setShowGlobalRuleDialog(true);
+  };
+
+  const confirmDeleteGlobalRule = () => {
+    if (!deleteGlobalRuleId) return;
+    startDeleteGlobalRuleTransition(async () => {
+      await deleteGlobalRule(deleteGlobalRuleId);
+      setDeleteGlobalRuleId(null);
+      setBanner({ type: "success", message: t("globalRuleDeleted") });
+    });
+  };
+
   const sectionLabel = (type: PieceType): string => {
     const map: Record<PieceType, string> = {
       role: t("sectionRoles"),
@@ -262,15 +341,9 @@ export function PromptTemplatesClient({ categories }: PromptTemplatesClientProps
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
-        </div>
-        <Button onClick={openNewCategory}>
-          <Plus className="mr-1.5 h-4 w-4" />
-          {t("newCategory")}
-        </Button>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       {/* Feedback banner */}
@@ -286,151 +359,240 @@ export function PromptTemplatesClient({ categories }: PromptTemplatesClientProps
         </div>
       )}
 
-      {/* Main layout */}
-      {categories.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <FolderOpen className="mb-4 h-12 w-12 text-cta/40" />
-            <h3 className="text-sm font-medium">{t("noCategories")}</h3>
-            <Button className="mt-4" size="sm" onClick={openNewCategory}>
+      {/* Tabs */}
+      <Tabs defaultValue="by-category">
+        <TabsList>
+          <TabsTrigger value="by-category">{t("tabByCategory")}</TabsTrigger>
+          <TabsTrigger value="global-rules">{t("tabGlobalRules")}</TabsTrigger>
+        </TabsList>
+
+        {/* Tab: By Category */}
+        <TabsContent value="by-category" className="mt-4">
+          {/* New Category button */}
+          <div className="mb-4 flex justify-end">
+            <Button onClick={openNewCategory}>
               <Plus className="mr-1.5 h-4 w-4" />
               {t("newCategory")}
             </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="flex gap-4">
-          {/* Left sidebar - Categories */}
-          <div className="min-w-[200px] space-y-1">
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => setSelectedCategoryId(cat.id)}
-                className={`group flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors ${
-                  cat.id === selectedCategoryId
-                    ? "border-cta/30 bg-cta/10 font-medium text-cta"
-                    : "border-transparent bg-muted/40 text-foreground hover:bg-muted/70"
-                }`}
-              >
-                <span className="truncate">{cat.name}</span>
-                <div className="flex shrink-0 items-center gap-1.5">
-                  <Badge
-                    variant="secondary"
-                    className="h-5 px-1.5 text-[10px]"
-                  >
-                    {cat.piecesCount}
-                  </Badge>
+          </div>
+
+          {/* Main layout */}
+          {categories.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <FolderOpen className="mb-4 h-12 w-12 text-cta/40" />
+                <h3 className="text-sm font-medium">{t("noCategories")}</h3>
+                <Button className="mt-4" size="sm" onClick={openNewCategory}>
+                  <Plus className="mr-1.5 h-4 w-4" />
+                  {t("newCategory")}
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="flex gap-4">
+              {/* Left sidebar - Categories */}
+              <div className="min-w-[200px] space-y-1">
+                {categories.map((cat) => (
                   <button
+                    key={cat.id}
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDeleteCategoryId(cat.id);
-                    }}
-                    className="rounded p-0.5 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
-                    disabled={isDeletingCategory}
+                    onClick={() => setSelectedCategoryId(cat.id)}
+                    className={`group flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors ${
+                      cat.id === selectedCategoryId
+                        ? "border-cta/30 bg-cta/10 font-medium text-cta"
+                        : "border-transparent bg-muted/40 text-foreground hover:bg-muted/70"
+                    }`}
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <span className="truncate">{cat.name}</span>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <Badge
+                        variant="secondary"
+                        className="h-5 px-1.5 text-[10px]"
+                      >
+                        {cat.piecesCount}
+                      </Badge>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteCategoryId(cat.id);
+                        }}
+                        className="rounded p-0.5 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                        disabled={isDeletingCategory}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </button>
-                </div>
-              </button>
-            ))}
-          </div>
+                ))}
+              </div>
 
-          {/* Right panel - Pieces */}
-          <div className="flex-1 min-w-0">
-            {selectedCategory ? (
-              <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg">{selectedCategory.name}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {PIECE_SECTIONS.map(({ type, icon: Icon, colorClass }) => {
-                    const pieces = selectedCategory.pieces.filter((p) => p.type === type);
-                    return (
-                      <div key={type}>
-                        {/* Section header */}
-                        <div className="mb-3 flex items-center gap-2">
-                          <div className={`flex h-6 w-6 items-center justify-center rounded border ${colorClass}`}>
-                            <Icon className="h-3.5 w-3.5" />
-                          </div>
-                          <h3 className="text-sm font-semibold">{sectionLabel(type)}</h3>
-                          <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
-                            {pieces.length}
-                          </Badge>
-                        </div>
-
-                        {/* Pieces */}
-                        {pieces.length > 0 ? (
-                          <div className="space-y-2">
-                            {pieces.map((piece) => (
-                              <div
-                                key={piece.id}
-                                className="group/piece flex items-start gap-3 rounded-lg border bg-background px-3 py-2.5 transition-colors hover:border-cta/20"
-                              >
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-medium">{piece.name}</p>
-                                  <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-                                    {piece.content}
-                                  </p>
-                                </div>
-                                <div className="flex shrink-0 gap-1">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7 text-muted-foreground hover:text-cta"
-                                    onClick={() => openEditPiece(piece)}
-                                  >
-                                    <Pencil className="h-3.5 w-3.5" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                    onClick={() => setDeletePieceId(piece.id)}
-                                    disabled={isDeletingPiece}
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                  </Button>
-                                </div>
+              {/* Right panel - Pieces */}
+              <div className="flex-1 min-w-0">
+                {selectedCategory ? (
+                  <Card>
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-lg">{selectedCategory.name}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      {PIECE_SECTIONS.map(({ type, icon: Icon, colorClass }) => {
+                        const pieces = selectedCategory.pieces.filter((p) => p.type === type);
+                        return (
+                          <div key={type}>
+                            {/* Section header */}
+                            <div className="mb-3 flex items-center gap-2">
+                              <div className={`flex h-6 w-6 items-center justify-center rounded border ${colorClass}`}>
+                                <Icon className="h-3.5 w-3.5" />
                               </div>
-                            ))}
+                              <h3 className="text-sm font-semibold">{sectionLabel(type)}</h3>
+                              <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                                {pieces.length}
+                              </Badge>
+                            </div>
+
+                            {/* Pieces */}
+                            {pieces.length > 0 ? (
+                              <div className="space-y-2">
+                                {pieces.map((piece) => (
+                                  <div
+                                    key={piece.id}
+                                    className="group/piece flex items-start gap-3 rounded-lg border bg-background px-3 py-2.5 transition-colors hover:border-cta/20"
+                                  >
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-sm font-medium">{piece.name}</p>
+                                      <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+                                        {piece.content}
+                                      </p>
+                                    </div>
+                                    <div className="flex shrink-0 gap-1">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7 text-muted-foreground hover:text-cta"
+                                        onClick={() => openEditPiece(piece)}
+                                      >
+                                        <Pencil className="h-3.5 w-3.5" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                        onClick={() => setDeletePieceId(piece.id)}
+                                        disabled={isDeletingPiece}
+                                      >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="mb-2 text-xs text-muted-foreground/60">
+                                {t("noPieces")}
+                              </p>
+                            )}
+
+                            {/* Add button */}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="mt-2"
+                              onClick={() => openNewPiece(type)}
+                            >
+                              <Plus className="mr-1 h-3.5 w-3.5" />
+                              {addLabel(type)}
+                            </Button>
+
+                            {/* Separator between sections (not after last) */}
+                            {type !== "personality" && <Separator className="mt-5" />}
                           </div>
-                        ) : (
-                          <p className="mb-2 text-xs text-muted-foreground/60">
-                            {t("noPieces")}
-                          </p>
-                        )}
+                        );
+                      })}
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardContent className="flex flex-col items-center justify-center py-16">
+                      <FolderOpen className="mb-4 h-12 w-12 text-muted-foreground/30" />
+                      <p className="text-sm text-muted-foreground">{t("noCategories")}</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
+          )}
+        </TabsContent>
 
-                        {/* Add button */}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="mt-2"
-                          onClick={() => openNewPiece(type)}
-                        >
-                          <Plus className="mr-1 h-3.5 w-3.5" />
-                          {addLabel(type)}
-                        </Button>
-
-                        {/* Separator between sections (not after last) */}
-                        {type !== "personality" && <Separator className="mt-5" />}
-                      </div>
-                    );
-                  })}
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-16">
-                  <FolderOpen className="mb-4 h-12 w-12 text-muted-foreground/30" />
-                  <p className="text-sm text-muted-foreground">{t("noCategories")}</p>
-                </CardContent>
-              </Card>
-            )}
+        {/* Tab: Global Rules */}
+        <TabsContent value="global-rules" className="mt-4">
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">{t("globalRulesSubtitle")}</p>
+            <Button onClick={openNewGlobalRule}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              {t("addGlobalRule")}
+            </Button>
           </div>
-        </div>
-      )}
+
+          {globalRules.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <Globe className="mb-4 h-12 w-12 text-cta/40" />
+                <h3 className="text-sm font-medium">{t("noGlobalRules")}</h3>
+                <Button className="mt-4" size="sm" onClick={openNewGlobalRule}>
+                  <Plus className="mr-1.5 h-4 w-4" />
+                  {t("addGlobalRule")}
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-6 w-6 items-center justify-center rounded border text-emerald-500 bg-emerald-500/10 border-emerald-500/20">
+                    <Shield className="h-3.5 w-3.5" />
+                  </div>
+                  <CardTitle className="text-lg">{t("tabGlobalRules")}</CardTitle>
+                  <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                    {globalRules.length}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {globalRules.map((rule) => (
+                  <div
+                    key={rule.id}
+                    className="group/piece flex items-start gap-3 rounded-lg border bg-background px-3 py-2.5 transition-colors hover:border-cta/20"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium">{rule.name}</p>
+                      <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{rule.content}</p>
+                    </div>
+                    <div className="flex shrink-0 gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-cta"
+                        onClick={() => openEditGlobalRule(rule)}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        onClick={() => setDeleteGlobalRuleId(rule.id)}
+                        disabled={isDeletingGlobalRule}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* ── New Category Dialog ── */}
       <Dialog
@@ -611,6 +773,96 @@ export function PromptTemplatesClient({ categories }: PromptTemplatesClientProps
         cancelLabel={tCommon("cancel")}
         variant="destructive"
         loading={isDeletingPiece}
+      />
+
+      {/* ── Create/Edit Global Rule Dialog ── */}
+      <Dialog
+        open={showGlobalRuleDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowGlobalRuleDialog(false);
+            resetGlobalRuleForm();
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {editingGlobalRule ? t("editGlobalRule") : t("addGlobalRule")}
+            </DialogTitle>
+          </DialogHeader>
+          <form action={editingGlobalRule ? updateGlobalRuleAction : createGlobalRuleAction}>
+            {editingGlobalRule && <input type="hidden" name="id" value={editingGlobalRule.id} />}
+            <input type="hidden" name="sortOrder" value="0" />
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label>{t("globalRuleName")}</Label>
+                <Input
+                  name="name"
+                  value={globalRuleName}
+                  onChange={(e) => setGlobalRuleName(e.target.value)}
+                  maxLength={100}
+                  required
+                  autoComplete="off"
+                  className="bg-background dark:border-muted-foreground/20 dark:bg-muted/30"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("globalRuleContent")}</Label>
+                <Textarea
+                  name="content"
+                  value={globalRuleContent}
+                  onChange={(e) => setGlobalRuleContent(e.target.value)}
+                  rows={4}
+                  maxLength={2000}
+                  required
+                  className="resize-none bg-background dark:border-muted-foreground/20 dark:bg-muted/30"
+                />
+              </div>
+              {(createGlobalRuleState?.error || updateGlobalRuleState?.error) && (
+                <p className="text-sm text-destructive">
+                  {createGlobalRuleState?.error || updateGlobalRuleState?.error}
+                </p>
+              )}
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowGlobalRuleDialog(false);
+                  resetGlobalRuleForm();
+                }}
+              >
+                {tCommon("cancel")}
+              </Button>
+              <Button
+                type="submit"
+                disabled={
+                  isCreatingGlobalRule || isUpdatingGlobalRule || !globalRuleName.trim() || !globalRuleContent.trim()
+                }
+              >
+                {(isCreatingGlobalRule || isUpdatingGlobalRule) && (
+                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                )}
+                {tCommon("save")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Delete Global Rule Confirmation ── */}
+      <ConfirmDialog
+        open={!!deleteGlobalRuleId}
+        onConfirm={confirmDeleteGlobalRule}
+        onCancel={() => setDeleteGlobalRuleId(null)}
+        title={t("deleteGlobalRule")}
+        description={t("deleteGlobalRuleConfirm")}
+        confirmLabel={tCommon("delete")}
+        cancelLabel={tCommon("cancel")}
+        variant="destructive"
+        loading={isDeletingGlobalRule}
       />
     </div>
   );

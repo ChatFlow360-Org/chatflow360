@@ -20,7 +20,7 @@ import {
   postChatSchema,
   type PostChatSettings,
 } from "@/lib/widget/post-chat";
-import { businessCategorySchema, promptPieceSchema, PIECE_TYPES } from "@/lib/prompt-pieces";
+import { businessCategorySchema, promptPieceSchema, globalRuleSchema, PIECE_TYPES } from "@/lib/prompt-pieces";
 
 // ============================================
 // Types
@@ -1413,4 +1413,69 @@ export async function deletePromptPiece(
   } catch (e) {
     return { error: (e as Error).message };
   }
+}
+
+// ============================================
+// Global Mandatory Rules (Super Admin only)
+// ============================================
+
+export async function createGlobalRule(
+  _prev: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  await requireSuperAdmin();
+  const raw = {
+    name: formData.get("name"),
+    content: formData.get("content"),
+    sortOrder: formData.get("sortOrder"),
+  };
+  const parsed = globalRuleSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message || "Invalid input" };
+  }
+  await prisma.promptPiece.create({
+    data: {
+      type: "rule",
+      name: parsed.data.name,
+      content: parsed.data.content,
+      sortOrder: parsed.data.sortOrder,
+      // categoryId is null → global rule
+    },
+  });
+  revalidatePath("/", "layout");
+  return { success: "Global rule created" };
+}
+
+export async function updateGlobalRule(
+  _prev: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  await requireSuperAdmin();
+  const id = formData.get("id") as string;
+  if (!id) return { error: "Missing rule ID" };
+  const raw = {
+    name: formData.get("name"),
+    content: formData.get("content"),
+    sortOrder: formData.get("sortOrder"),
+  };
+  const parsed = globalRuleSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message || "Invalid input" };
+  }
+  await prisma.promptPiece.update({
+    where: { id },
+    data: {
+      name: parsed.data.name,
+      content: parsed.data.content,
+      sortOrder: parsed.data.sortOrder,
+    },
+  });
+  revalidatePath("/", "layout");
+  return { success: "Global rule updated" };
+}
+
+export async function deleteGlobalRule(id: string): Promise<void> {
+  await requireSuperAdmin();
+  await prisma.promptPiece.delete({ where: { id } });
+  revalidatePath("/", "layout");
 }

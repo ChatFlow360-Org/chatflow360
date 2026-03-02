@@ -123,6 +123,12 @@ interface PromptPieceData {
   content: string;
 }
 
+interface GlobalRuleData {
+  id: string;
+  name: string;
+  content: string;
+}
+
 interface AiSettingsClientProps {
   selectedOrgId: string;
   organizationName: string;
@@ -130,6 +136,7 @@ interface AiSettingsClientProps {
   isSuperAdmin: boolean;
   knowledgeItems: KnowledgeItemData[];
   promptPieces: PromptPieceData[];
+  globalRules: GlobalRuleData[];
   widgetChannelId?: string;
   widgetPublicKey?: string;
   widgetAppearance?: WidgetAppearance;
@@ -145,6 +152,7 @@ export function AiSettingsClient({
   isSuperAdmin,
   knowledgeItems,
   promptPieces,
+  globalRules,
   widgetChannelId,
   widgetPublicKey,
   widgetAppearance,
@@ -508,7 +516,13 @@ export function AiSettingsClient({
             <input type="hidden" name="model" value={model} />
             <input type="hidden" name="temperature" value={temperature} />
             <input type="hidden" name="maxTokens" value={maxTokens} />
-            <input type="hidden" name="promptStructure" value={JSON.stringify(promptStructure)} />
+            <input type="hidden" name="promptStructure" value={JSON.stringify({
+              ...promptStructure,
+              rules: [
+                ...globalRules.map(r => r.content),
+                ...promptStructure.rules,
+              ],
+            })} />
             <input
               type="hidden"
               name="handoffKeywords"
@@ -648,6 +662,32 @@ export function AiSettingsClient({
                           </Popover>
                         )}
                       </div>
+                      {/* Global mandatory rules (locked) */}
+                      {globalRules.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Shield className="h-3.5 w-3.5 text-amber-500" />
+                            <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                              {t("agentInstructions.globalRules")}
+                            </span>
+                          </div>
+                          {globalRules.map((rule) => (
+                            <div
+                              key={rule.id}
+                              className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2"
+                            >
+                              <Shield className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-medium text-amber-600 dark:text-amber-400">{rule.name}</p>
+                                <p className="text-sm">{rule.content}</p>
+                              </div>
+                            </div>
+                          ))}
+                          <p className="text-[10px] text-muted-foreground/70">
+                            {t("agentInstructions.globalRulesHint")}
+                          </p>
+                        </div>
+                      )}
                       {promptStructure.rules.length > 0 && (
                         <div className="space-y-2">
                           {promptStructure.rules.map((rule, index) => (

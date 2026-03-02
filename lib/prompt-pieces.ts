@@ -9,7 +9,7 @@ export type PieceType = (typeof PIECE_TYPES)[number];
 
 export interface PromptPieceData {
   id: string;
-  categoryId: string;
+  categoryId: string | null;
   type: PieceType;
   name: string;
   content: string;
@@ -39,6 +39,12 @@ export const businessCategorySchema = z.object({
 export const promptPieceSchema = z.object({
   categoryId: z.string().uuid(),
   type: z.enum(PIECE_TYPES),
+  name: z.string().min(1).max(100),
+  content: z.string().min(1).max(2000),
+  sortOrder: z.coerce.number().int().min(0).default(0),
+});
+
+export const globalRuleSchema = z.object({
   name: z.string().min(1).max(100),
   content: z.string().min(1).max(2000),
   sortOrder: z.coerce.number().int().min(0).default(0),
