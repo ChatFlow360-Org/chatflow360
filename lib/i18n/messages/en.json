@@ -483,7 +483,7 @@
       "sectionLogo": "Email Logo",
       "sectionLogoHint": "Upload your logo to personalize the email template (PNG, JPEG or WebP, max 2MB)",
       "logoDropzone": "Click to upload your logo",
-      "logoDimensions": "PNG, JPEG or WebP — max 2MB",
+      "logoDimensions": "PNG, JPEG or WebP — max 2MB — Recommended: 400×300px",
       "removeLogo": "Remove logo",
       "changeLogo": "Change logo",
       "logoTooLarge": "Image must be under 2MB. Please use a smaller file.",

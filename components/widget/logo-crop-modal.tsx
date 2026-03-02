@@ -26,8 +26,8 @@ interface LogoCropModalProps {
 
 // Output dimensions (2x for retina)
 const OUTPUT_WIDTH = 400;
-const OUTPUT_HEIGHT = 120;
-const ASPECT = OUTPUT_WIDTH / OUTPUT_HEIGHT; // ~3.33
+const OUTPUT_HEIGHT = 300;
+const ASPECT = OUTPUT_WIDTH / OUTPUT_HEIGHT; // ~1.33 (4:3)
 
 // ─── Helpers ──────────────────────────────────────────────────────
 
