@@ -48,13 +48,16 @@ export function renderTranscriptEmail({
   const headerColor = settings.emailHeaderColor || "#1c2e47";
 
   // Build messages HTML
+  const visitorColor = "#2f92ad";
   const messagesHtml = messages
     .map((m) => {
       const isVisitor = m.senderType === "visitor";
-      const aiLabel = aiAgentName ? `${aiAgentName} (${isEs ? "IA" : "AI"})` : "AI";
-      const label = isVisitor ? visitorName : (m.senderType === "agent" ? (isEs ? "Agente" : "Agent") : aiLabel);
+      const isAgent = m.senderType === "agent";
+      const aiLabel = aiAgentName ? `${aiAgentName} (${isEs ? "IA" : "AI"})` : (isEs ? "IA" : "AI");
+      const label = isVisitor ? visitorName : (isAgent ? (isEs ? "Agente" : "Agent") : aiLabel);
       const bgColor = isVisitor ? "#f0f4f8" : "#ffffff";
-      const labelColor = isVisitor ? headerColor : "#6b7280";
+      const avatarBg = isVisitor ? visitorColor : headerColor;
+      const avatarText = isVisitor ? visitorName.charAt(0).toUpperCase() : (isEs ? "IA" : "AI");
       const time = new Date(m.createdAt).toLocaleTimeString(isEs ? "es" : "en", {
         hour: "2-digit",
         minute: "2-digit",
@@ -62,12 +65,20 @@ export function renderTranscriptEmail({
 
       return `
         <tr>
-          <td style="padding:8px 0;">
+          <td style="padding:6px 0;">
             <table width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr>
                 <td style="background:${bgColor};border-radius:8px;padding:12px 16px;">
-                  <p style="margin:0 0 4px;font-size:12px;color:${labelColor};font-weight:600;">${escapeHtml(label)} <span style="font-weight:400;color:#9ca3af;">${time}</span></p>
-                  <p style="margin:0;font-size:14px;color:#1f2937;line-height:1.5;">${escapeHtml(m.content)}</p>
+                  <table cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td style="width:28px;height:28px;border-radius:50%;background:${avatarBg};color:#ffffff;font-size:11px;font-weight:700;text-align:center;vertical-align:middle;line-height:28px;" width="28" height="28">${escapeHtml(avatarText)}</td>
+                      <td style="padding-left:10px;vertical-align:middle;">
+                        <span style="font-size:12px;font-weight:600;color:#374151;">${escapeHtml(label)}</span>
+                        <span style="font-size:11px;font-weight:400;color:#9ca3af;padding-left:6px;">${time}</span>
+                      </td>
+                    </tr>
+                  </table>
+                  <p style="margin:6px 0 0 38px;font-size:14px;color:#1f2937;line-height:1.5;">${escapeHtml(m.content)}</p>
                 </td>
               </tr>
             </table>

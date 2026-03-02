@@ -15,16 +15,16 @@ interface EmailPreviewProps {
 
 const SAMPLE_MESSAGES = {
   en: [
-    { role: "ai" as const, text: "Hi! How can I help you today?" },
-    { role: "visitor" as const, text: "What are your business hours?" },
-    { role: "ai" as const, text: "We're open Mon-Fri, 9 AM to 6 PM EST. Feel free to ask anything else!" },
-    { role: "visitor" as const, text: "Thanks, that's all I needed!" },
+    { role: "ai" as const, text: "Hi! How can I help you today?", time: "10:30 AM" },
+    { role: "visitor" as const, text: "What are your business hours?", time: "10:31 AM" },
+    { role: "ai" as const, text: "We're open Mon-Fri, 9 AM to 6 PM EST. Feel free to ask anything else!", time: "10:31 AM" },
+    { role: "visitor" as const, text: "Thanks, that's all I needed!", time: "10:32 AM" },
   ],
   es: [
-    { role: "ai" as const, text: "¡Hola! ¿En qué puedo ayudarte hoy?" },
-    { role: "visitor" as const, text: "¿Cuál es su horario de atención?" },
-    { role: "ai" as const, text: "Estamos abiertos de lunes a viernes, 9 AM a 6 PM EST." },
-    { role: "visitor" as const, text: "Gracias, eso es todo." },
+    { role: "ai" as const, text: "¡Hola! ¿En qué puedo ayudarte hoy?", time: "10:30 AM" },
+    { role: "visitor" as const, text: "¿Cuál es su horario de atención?", time: "10:31 AM" },
+    { role: "ai" as const, text: "Estamos abiertos de lunes a viernes, 9 AM a 6 PM EST.", time: "10:31 AM" },
+    { role: "visitor" as const, text: "Gracias, eso es todo.", time: "10:32 AM" },
   ],
 };
 
@@ -148,20 +148,25 @@ export function EmailPreview({ settings, orgName }: EmailPreviewProps) {
             {messages.map((msg, i) => (
               <div key={i} className="flex gap-3">
                 <div
-                  className="shrink-0 mt-0.5 h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                  className="shrink-0 mt-0.5 h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
                   style={{
                     backgroundColor:
                       msg.role === "ai" ? settings.emailHeaderColor : "#2f92ad",
                   }}
                 >
-                  {msg.role === "ai" ? "AI" : vars.visitor_name.charAt(0)}
+                  {msg.role === "ai"
+                    ? (lang === "es" ? "IA" : "AI")
+                    : vars.visitor_name.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className="text-xs font-medium text-gray-500">
-                    {msg.role === "ai"
-                      ? (orgName || "AI Assistant")
-                      : vars.visitor_name}
-                  </span>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-xs font-semibold text-gray-700">
+                      {msg.role === "ai"
+                        ? (orgName || "AI Assistant")
+                        : vars.visitor_name}
+                    </span>
+                    <span className="text-[11px] text-gray-400">{msg.time}</span>
+                  </div>
                   <p className="text-sm text-gray-700 mt-0.5">{msg.text}</p>
                 </div>
               </div>
