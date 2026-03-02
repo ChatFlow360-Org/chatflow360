@@ -10,6 +10,7 @@ interface AiResponse {
   content: string;
   tokensUsed: number;
   handoffRequested: boolean;
+  extractedName?: string;
 }
 
 export interface RagContext {
@@ -45,6 +46,9 @@ function buildMessages(
   if (config.handoffEnabled) {
     systemContent += `\n\n---\nHANDOFF RULE:\nWhen the visitor clearly wants to speak with a human agent (e.g., they confirm "yes" after you offered, or explicitly request a person), append the exact tag [HANDOFF] at the very end of your message. Write a brief transfer message to the visitor BEFORE the tag. Do NOT include [HANDOFF] unless the visitor has clearly expressed intent to be connected with a human.\n---`;
   }
+
+  // Contact info extraction — AI tags visitor name for automatic capture
+  systemContent += `\n\n---\nCONTACT INFO EXTRACTION:\nWhen you identify the visitor's name from the conversation (e.g., they say "I'm Carlos", "me llamo María", "my name is John", or simply reply with their name after you ask), append this hidden tag at the very end of your message: <!--cf360:name=VISITOR_NAME-->\nRules:\n- Only include the tag when you are confident about the visitor's name.\n- Use the name exactly as the visitor provided it (preserve capitalization).\n- Only include the tag ONCE — the first time you identify the name.\n- The tag must be the very last thing in your message, after any other content.\n---`;
 
   if (systemContent) {
     messages.push({ role: "system", content: systemContent });
@@ -92,5 +96,10 @@ export async function generateAiResponse(
   const handoffRequested = rawContent.includes("[HANDOFF]");
   const content = rawContent.replace(/\s*\[HANDOFF\]\s*/g, "").trim();
 
-  return { content, tokensUsed, handoffRequested };
+  // Extract visitor name tag
+  const nameMatch = content.match(/<!--cf360:name=(.+?)-->/);
+  const extractedName = nameMatch ? nameMatch[1].trim() : undefined;
+  const finalContent = content.replace(/\s*<!--cf360:name=.+?-->\s*/g, "").trim();
+
+  return { content: finalContent, tokensUsed, handoffRequested, extractedName };
 }

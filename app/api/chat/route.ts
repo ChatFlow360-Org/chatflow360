@@ -210,7 +210,20 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // 7b. AI-driven handoff — if AI included [HANDOFF] tag, switch to human mode
+    // 7b. Save extracted visitor name to contactInfo
+    if (aiResult.extractedName) {
+      const currentContact = (conversation.contactInfo || {}) as Record<string, string>;
+      if (!currentContact.name) {
+        await prisma.conversation.update({
+          where: { id: conversation.id },
+          data: {
+            contactInfo: { ...currentContact, name: aiResult.extractedName },
+          },
+        });
+      }
+    }
+
+    // 7c. AI-driven handoff — if AI included [HANDOFF] tag, switch to human mode
     if (aiResult.handoffRequested) {
       await prisma.conversation.update({
         where: { id: conversation.id },
@@ -227,6 +240,7 @@ export async function POST(request: NextRequest) {
         },
         handoffTriggered: true,
         realtimeConfig: buildRealtimeConfig(conversation.id),
+        contactName: aiResult.extractedName || null,
       });
     }
 
@@ -263,6 +277,7 @@ export async function POST(request: NextRequest) {
       },
       handoffTriggered: false,
       realtimeConfig: buildRealtimeConfig(conversation.id),
+      contactName: aiResult.extractedName || null,
     });
   } catch (error) {
     console.error(

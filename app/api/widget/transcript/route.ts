@@ -37,7 +37,12 @@ export async function POST(request: Request) {
       return errorResponse("Invalid request", 400);
     }
 
-    const { conversationId, visitorId, email, name, lang } = parsed.data;
+    const { conversationId, visitorId, email, name, phone, lang } = parsed.data;
+
+    // Capture visitor IP for lead record
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      || request.headers.get("x-real-ip")
+      || null;
 
     // Fetch conversation with messages + channel config + org name
     const conversation = await prisma.conversation.findFirst({
@@ -45,6 +50,8 @@ export async function POST(request: Request) {
       select: {
         id: true,
         metadata: true,
+        contactInfo: true,
+        channelId: true,
         messages: {
           orderBy: { createdAt: "asc" },
           select: {
@@ -55,9 +62,10 @@ export async function POST(request: Request) {
         },
         channel: {
           select: {
+            id: true,
             config: true,
             organization: {
-              select: { name: true },
+              select: { id: true, name: true },
             },
           },
         },
@@ -67,6 +75,8 @@ export async function POST(request: Request) {
     if (!conversation) {
       return errorResponse("Conversation not found", 404);
     }
+
+    const pageUrl = (conversation.metadata as Record<string, unknown>)?.pageUrl as string || null;
 
     if (conversation.messages.length === 0) {
       return errorResponse("No messages to send", 400);
@@ -124,6 +134,34 @@ export async function POST(request: Request) {
     await prisma.conversation.update({
       where: { id: conversationId },
       data: { metadata: { ...(conversation.metadata as any), transcriptSent: true } },
+    });
+
+    // Create Lead record
+    await prisma.lead.create({
+      data: {
+        organizationId: conversation.channel.organization.id,
+        channelId: conversation.channelId,
+        conversationId,
+        name,
+        email,
+        phone: phone || null,
+        ip,
+        pageUrl,
+      },
+    });
+
+    // Update conversation contactInfo with lead details
+    const existingContact = (conversation.contactInfo || {}) as Record<string, unknown>;
+    await prisma.conversation.update({
+      where: { id: conversationId },
+      data: {
+        contactInfo: {
+          ...existingContact,
+          name,
+          email,
+          ...(phone ? { phone } : {}),
+        },
+      },
     });
 
     return jsonResponse({ success: true });

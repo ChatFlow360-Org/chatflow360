@@ -12,6 +12,7 @@
     "sidebar": {
       "dashboard": "Dashboard",
       "conversations": "Conversations",
+      "leads": "Leads",
       "channels": "Channels",
       "settings": "Settings",
       "reports": "Reports",
@@ -94,6 +95,22 @@
       "assignToAgent": "Assign to Agent",
       "leadInfo": "Lead Info"
     }
+  },
+  "leads": {
+    "title": "Leads",
+    "subtitle": "Contact information captured from chat conversations",
+    "selectOrgFirst": "Select an organization first",
+    "noLeads": "No leads yet",
+    "noLeadsHint": "Leads are captured when visitors submit the transcript form after a conversation",
+    "count": "{count} leads",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "captureDate": "Captured",
+    "ip": "IP Address",
+    "referralPage": "Page",
+    "deleteConfirmTitle": "Delete this lead?",
+    "deleteConfirmDescription": "This action is irreversible. The lead record will be permanently deleted."
   },
   "channels": {
     "title": "Channels",

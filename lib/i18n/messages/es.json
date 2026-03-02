@@ -12,6 +12,7 @@
     "sidebar": {
       "dashboard": "Panel",
       "conversations": "Conversaciones",
+      "leads": "Leads",
       "channels": "Canales",
       "settings": "Configuracion",
       "reports": "Reportes",
@@ -94,6 +95,22 @@
       "assignToAgent": "Asignar a Agente",
       "leadInfo": "Info del Lead"
     }
+  },
+  "leads": {
+    "title": "Leads",
+    "subtitle": "Información de contacto capturada de las conversaciones",
+    "selectOrgFirst": "Selecciona una organización primero",
+    "noLeads": "No hay leads aún",
+    "noLeadsHint": "Los leads se capturan cuando los visitantes envían el formulario de transcripción",
+    "count": "{count} leads",
+    "name": "Nombre",
+    "email": "Correo electrónico",
+    "phone": "Teléfono",
+    "captureDate": "Capturado",
+    "ip": "Dirección IP",
+    "referralPage": "Página",
+    "deleteConfirmTitle": "¿Eliminar este lead?",
+    "deleteConfirmDescription": "Esta acción es irreversible. El registro del lead será eliminado permanentemente."
   },
   "channels": {
     "title": "Canales",

@@ -27,6 +27,7 @@ export const transcriptSchema = z.object({
   visitorId: z.string().uuid("Invalid visitor ID"),
   email: z.string().email().max(254),
   name: z.string().min(1).max(100),
+  phone: z.string().max(20).optional(),
   lang: z.enum(["en", "es"]).optional().default("en"),
 });
 

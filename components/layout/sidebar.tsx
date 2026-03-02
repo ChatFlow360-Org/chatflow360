@@ -6,6 +6,7 @@ import Image from "next/image";
 import {
   LayoutDashboard,
   MessageSquare,
+  ContactRound,
   // Radio,
   Settings,
   // BarChart3,
@@ -33,6 +34,7 @@ import type { AdminContext } from "@/components/layout/dashboard-shell";
 const navItems = [
   { labelKey: "dashboard" as const, href: "/" as const, icon: LayoutDashboard },
   { labelKey: "conversations" as const, href: "/conversations" as const, icon: MessageSquare },
+  { labelKey: "leads" as const, href: "/leads" as const, icon: ContactRound },
   // { labelKey: "channels" as const, href: "/channels" as const, icon: Radio },
   { labelKey: "settings" as const, href: "/settings/ai" as const, icon: Settings },
   // { labelKey: "reports" as const, href: "/reports" as const, icon: BarChart3 },

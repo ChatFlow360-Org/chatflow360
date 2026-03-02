@@ -74,6 +74,7 @@
       transcriptSkip: "No thanks",
       transcriptSuccess: "Transcript sent! Check your inbox.",
       transcriptError: "Could not send transcript. Please try again.",
+      transcriptPhone: "Phone (optional)",
       postChatDone: "Conversation ended"
     },
     es: {
@@ -98,6 +99,7 @@
       transcriptSkip: "No, gracias",
       transcriptSuccess: "\u00a1Transcripci\u00f3n enviada! Revisa tu bandeja.",
       transcriptError: "No se pudo enviar. Int\u00e9ntalo de nuevo.",
+      transcriptPhone: "Tel\u00e9fono (opcional)",
       postChatDone: "Conversaci\u00f3n finalizada"
     }
   };
@@ -154,7 +156,21 @@
   // ─── Conversation persistence ─────────────────────────────────────
   var CONV_KEY = "cf360_conv_" + publicKey;
   var CONV_TS_KEY = "cf360_conv_ts_" + publicKey;
+  var VISITOR_INFO_KEY = "cf360_visitor_info";
   var SESSION_TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 hours
+
+  function getStoredVisitorInfo() {
+    try {
+      var raw = localStorage.getItem(VISITOR_INFO_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  }
+
+  function saveVisitorInfo(info) {
+    try {
+      localStorage.setItem(VISITOR_INFO_KEY, JSON.stringify(info));
+    } catch (e) { /* noop */ }
+  }
 
   function getConversationId() {
     try { return localStorage.getItem(CONV_KEY) || null; } catch (e) { return null; }
@@ -205,7 +221,8 @@
     lastMessageId: null,
     resolved: false,
     realtimeConfig: null,
-    postChatConfig: null // fetched from /api/widget/config
+    postChatConfig: null, // fetched from /api/widget/config
+    contactName: null
   };
 
   // ─── Realtime Typing via Supabase Broadcast (Phoenix Channels) ──
@@ -1057,6 +1074,9 @@
           setConversationId(data.conversationId);
           endConvEl.classList.add("cf360-end-conv--show");
         }
+        if (data.contactName) {
+          state.contactName = data.contactName;
+        }
 
         // Connect realtime if config provided
         if (data.realtimeConfig && !realtime.ws) {
@@ -1436,9 +1456,31 @@
     emailInput.maxLength = 254;
     emailInput.setAttribute("autocomplete", "email");
 
+    var phoneInput = document.createElement("input");
+    phoneInput.type = "tel";
+    phoneInput.className = "cf360-transcript-input";
+    phoneInput.placeholder = t("transcriptPhone");
+    phoneInput.maxLength = 20;
+    phoneInput.setAttribute("autocomplete", "tel");
+
     form.appendChild(nameInput);
     form.appendChild(emailInput);
+    form.appendChild(phoneInput);
     body.appendChild(form);
+
+    // Pre-fill from AI extraction or localStorage
+    var storedInfo = getStoredVisitorInfo();
+    if (state.contactName) {
+      nameInput.value = state.contactName;
+    } else if (storedInfo.name) {
+      nameInput.value = storedInfo.name;
+    }
+    if (storedInfo.email) {
+      emailInput.value = storedInfo.email;
+    }
+    if (storedInfo.phone) {
+      phoneInput.value = storedInfo.phone;
+    }
 
     var actions = el("div", "cf360-postchat-actions");
 
@@ -1457,12 +1499,16 @@
     sendTranscriptBtn.addEventListener("click", function () {
       var name = nameInput.value.trim();
       var email = emailInput.value.trim();
+      var phone = phoneInput.value.trim();
       if (!name || !email) return;
       // Basic email validation
       if (email.indexOf("@") === -1 || email.indexOf(".") === -1) return;
 
       sendTranscriptBtn.disabled = true;
       sendTranscriptBtn.textContent = "...";
+
+      // Save visitor info to localStorage for future pre-fill
+      saveVisitorInfo({ name: name, email: email, phone: phone });
 
       fetch(apiUrl("/api/widget/transcript"), {
         method: "POST",
@@ -1472,6 +1518,7 @@
           visitorId: visitorId,
           email: email,
           name: name,
+          phone: phone || undefined,
           lang: lang
         })
       })
@@ -1488,7 +1535,16 @@
       showPostChatDone();
     });
 
-    nameInput.focus();
+    // Smart focus: skip pre-filled fields
+    if (nameInput.value) {
+      if (emailInput.value) {
+        phoneInput.focus();
+      } else {
+        emailInput.focus();
+      }
+    } else {
+      nameInput.focus();
+    }
   }
 
   function showTranscriptSuccess() {

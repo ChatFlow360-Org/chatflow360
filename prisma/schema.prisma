@@ -34,6 +34,7 @@ model Organization {
   conversations Conversation[]
   aiSettings    AiSettings?
   usageTracking UsageTracking[]
+  leads         Lead[]
 
   @@map("organizations")
 }
@@ -144,6 +145,7 @@ model Channel {
   // Relations
   organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   conversations Conversation[]
+  leads         Lead[]
   // Note: ChannelKnowledge is managed via SQL (pgvector), not Prisma
 
   @@map("channels")
@@ -223,6 +225,31 @@ model UsageTracking {
   @@unique([organizationId, month])
   @@map("usage_tracking")
 }
+
+// ============================================
+// Lead (captured from post-chat transcript form)
+// ============================================
+
+model Lead {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  channelId      String   @map("channel_id") @db.Uuid
+  conversationId String?  @map("conversation_id") @db.Uuid
+  name           String
+  email          String
+  phone          String?
+  ip             String?
+  pageUrl        String?  @map("page_url")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  channel      Channel      @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@map("leads")
+}
+
 
 // ============================================
 // PlatformSettings (global config — SOLO Super Admin)
