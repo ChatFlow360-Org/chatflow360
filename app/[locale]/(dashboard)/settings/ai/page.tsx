@@ -68,11 +68,15 @@ export default async function AiSettingsPage() {
 
   // Fetch prompt pieces for org's business category
   let promptPieces: { id: string; type: PieceType; name: string; content: string }[] = [];
+  let businessCategoryName = "";
   if (selectedOrgId) {
     const org = await prisma.organization.findUnique({
       where: { id: selectedOrgId },
-      select: { businessCategoryId: true },
+      select: { businessCategoryId: true, businessCategory: { select: { name: true } } },
     });
+    if (org?.businessCategory) {
+      businessCategoryName = org.businessCategory.name;
+    }
     if (org?.businessCategoryId) {
       const pieces = await prisma.promptPiece.findMany({
         where: { categoryId: org.businessCategoryId },
@@ -134,6 +138,7 @@ export default async function AiSettingsPage() {
       isSuperAdmin={user.isSuperAdmin}
       knowledgeItems={knowledgeItems}
       promptPieces={promptPieces}
+      businessCategoryName={businessCategoryName}
       globalRules={globalRules}
       widgetChannelId={widgetChannelId}
       widgetPublicKey={widgetPublicKey}

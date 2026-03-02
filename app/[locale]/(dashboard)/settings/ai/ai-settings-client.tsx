@@ -24,6 +24,7 @@ import {
   DollarSign,
   MapPin,
   Shield,
+  Check,
 } from "lucide-react";
 import {
   Card,
@@ -136,6 +137,7 @@ interface AiSettingsClientProps {
   isSuperAdmin: boolean;
   knowledgeItems: KnowledgeItemData[];
   promptPieces: PromptPieceData[];
+  businessCategoryName: string;
   globalRules: GlobalRuleData[];
   widgetChannelId?: string;
   widgetPublicKey?: string;
@@ -152,6 +154,7 @@ export function AiSettingsClient({
   isSuperAdmin,
   knowledgeItems,
   promptPieces,
+  businessCategoryName,
   globalRules,
   widgetChannelId,
   widgetPublicKey,
@@ -591,21 +594,35 @@ export function AiSettingsClient({
                                 {t("agentInstructions.browseTemplates")}
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-72 p-2" align="end">
-                              <div className="space-y-1">
+                            <PopoverContent className="w-80 p-3" align="end">
+                              {businessCategoryName && (
+                                <p className="mb-2 text-xs font-medium text-muted-foreground">
+                                  {t("agentInstructions.templateCategoryHeader", { category: businessCategoryName })}
+                                </p>
+                              )}
+                              <div className="max-h-64 space-y-2 overflow-y-auto">
                                 {promptPieces.filter(p => p.type === "role").map((piece) => (
-                                  <button
+                                  <div
                                     key={piece.id}
-                                    type="button"
-                                    onClick={() => {
-                                      setPromptStructure(prev => ({ ...prev, role: piece.content }));
-                                      setRolePopoverOpen(false);
-                                    }}
-                                    className="w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent"
+                                    className="rounded-lg border bg-muted/30 p-3"
                                   >
-                                    <div className="font-medium">{piece.name}</div>
-                                    <div className="text-xs text-muted-foreground line-clamp-1">{piece.content}</div>
-                                  </button>
+                                    <div className="mb-1 text-sm font-medium">{piece.name}</div>
+                                    <p className="mb-2 text-xs text-muted-foreground line-clamp-3">{piece.content}</p>
+                                    <Button
+                                      type="button"
+                                      variant="secondary"
+                                      size="sm"
+                                      className="h-7 w-full text-xs"
+                                      onClick={() => {
+                                        setPromptStructure(prev => ({ ...prev, role: piece.content }));
+                                        setRolePopoverOpen(false);
+                                      }}
+                                    >
+                                      {promptStructure.role.trim()
+                                        ? t("agentInstructions.replaceTemplate")
+                                        : t("agentInstructions.applyTemplate")}
+                                    </Button>
+                                  </div>
                                 ))}
                               </div>
                             </PopoverContent>
@@ -639,25 +656,47 @@ export function AiSettingsClient({
                                 {t("agentInstructions.browseTemplates")}
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-72 p-2" align="end">
-                              <div className="space-y-1">
-                                {promptPieces.filter(p => p.type === "rule").map((piece) => (
-                                  <button
-                                    key={piece.id}
-                                    type="button"
-                                    onClick={() => {
-                                      setPromptStructure(prev => ({
-                                        ...prev,
-                                        rules: prev.rules.includes(piece.content) ? prev.rules : [...prev.rules, piece.content],
-                                      }));
-                                      setRulesPopoverOpen(false);
-                                    }}
-                                    className="w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent"
-                                  >
-                                    <div className="font-medium">{piece.name}</div>
-                                    <div className="text-xs text-muted-foreground line-clamp-1">{piece.content}</div>
-                                  </button>
-                                ))}
+                            <PopoverContent className="w-80 p-3" align="end">
+                              {businessCategoryName && (
+                                <p className="mb-2 text-xs font-medium text-muted-foreground">
+                                  {t("agentInstructions.templateCategoryHeader", { category: businessCategoryName })}
+                                </p>
+                              )}
+                              <div className="max-h-64 space-y-2 overflow-y-auto">
+                                {promptPieces.filter(p => p.type === "rule").map((piece) => {
+                                  const isAdded = promptStructure.rules.includes(piece.content);
+                                  return (
+                                    <div
+                                      key={piece.id}
+                                      className={`rounded-lg border p-3 ${isAdded ? "border-emerald-500/30 bg-emerald-500/5" : "bg-muted/30"}`}
+                                    >
+                                      <div className="mb-1 text-sm font-medium">{piece.name}</div>
+                                      <p className="mb-2 text-xs text-muted-foreground line-clamp-3">{piece.content}</p>
+                                      {isAdded ? (
+                                        <div className="flex h-7 items-center justify-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                                          <Check className="h-3.5 w-3.5" />
+                                          {t("agentInstructions.alreadyAdded")}
+                                        </div>
+                                      ) : (
+                                        <Button
+                                          type="button"
+                                          variant="secondary"
+                                          size="sm"
+                                          className="h-7 w-full text-xs"
+                                          disabled={promptStructure.rules.length >= 50}
+                                          onClick={() => {
+                                            setPromptStructure(prev => ({
+                                              ...prev,
+                                              rules: [...prev.rules, piece.content],
+                                            }));
+                                          }}
+                                        >
+                                          {t("agentInstructions.applyTemplate")}
+                                        </Button>
+                                      )}
+                                    </div>
+                                  );
+                                })}
                               </div>
                             </PopoverContent>
                           </Popover>
@@ -755,21 +794,35 @@ export function AiSettingsClient({
                                 {t("agentInstructions.browseTemplates")}
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-72 p-2" align="end">
-                              <div className="space-y-1">
+                            <PopoverContent className="w-80 p-3" align="end">
+                              {businessCategoryName && (
+                                <p className="mb-2 text-xs font-medium text-muted-foreground">
+                                  {t("agentInstructions.templateCategoryHeader", { category: businessCategoryName })}
+                                </p>
+                              )}
+                              <div className="max-h-64 space-y-2 overflow-y-auto">
                                 {promptPieces.filter(p => p.type === "personality").map((piece) => (
-                                  <button
+                                  <div
                                     key={piece.id}
-                                    type="button"
-                                    onClick={() => {
-                                      setPromptStructure(prev => ({ ...prev, personality: piece.content }));
-                                      setPersonalityPopoverOpen(false);
-                                    }}
-                                    className="w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent"
+                                    className="rounded-lg border bg-muted/30 p-3"
                                   >
-                                    <div className="font-medium">{piece.name}</div>
-                                    <div className="text-xs text-muted-foreground line-clamp-1">{piece.content}</div>
-                                  </button>
+                                    <div className="mb-1 text-sm font-medium">{piece.name}</div>
+                                    <p className="mb-2 text-xs text-muted-foreground line-clamp-3">{piece.content}</p>
+                                    <Button
+                                      type="button"
+                                      variant="secondary"
+                                      size="sm"
+                                      className="h-7 w-full text-xs"
+                                      onClick={() => {
+                                        setPromptStructure(prev => ({ ...prev, personality: piece.content }));
+                                        setPersonalityPopoverOpen(false);
+                                      }}
+                                    >
+                                      {promptStructure.personality.trim()
+                                        ? t("agentInstructions.replaceTemplate")
+                                        : t("agentInstructions.applyTemplate")}
+                                    </Button>
+                                  </div>
                                 ))}
                               </div>
                             </PopoverContent>
