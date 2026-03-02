@@ -556,7 +556,7 @@
       ".cf360-send-btn:hover{opacity:0.9;box-shadow:0 4px 12px rgba(0,0,0,0.18);}",
       ".cf360-send-btn:active{transform:scale(0.92);}",
       ".cf360-send-btn:disabled{opacity:0.35;cursor:not-allowed;transform:none;box-shadow:none;}",
-      ".cf360-send-btn svg{width:18px;height:18px;fill:currentColor;}",
+      ".cf360-send-btn svg{width:18px;height:18px;}",
 
       // End conversation
       ".cf360-end-conv{",
@@ -704,7 +704,7 @@
   // ─── SVG Icons ────────────────────────────────────────────────────
   var ICON_CHAT = '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 5.92 2 10.5c0 2.55 1.33 4.84 3.42 6.4L4 22l4.35-2.18C9.5 20.27 10.72 20.5 12 20.5c5.52 0 10-3.42 10-7.5S17.52 2 12 2z"/><circle cx="8" cy="10.5" r="1.5" fill="' + primaryColor + '"/><circle cx="12" cy="10.5" r="1.5" fill="' + primaryColor + '"/><circle cx="16" cy="10.5" r="1.5" fill="' + primaryColor + '"/></svg>';
   var ICON_CLOSE = '<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
-  var ICON_SEND = '<svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>';
+  var ICON_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg>';
   var ICON_MSG = '<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>';
   var ICON_EXPAND = '<svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>';
   var ICON_COLLAPSE = '<svg viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>';
