@@ -13,6 +13,7 @@ export interface DashboardData {
     avgResponseTimeSec: number;
     aiHandledPercent: number;
     newVisitors: number;
+    totalLeads: number;
   };
   recentConversations: {
     id: string;
@@ -76,6 +77,7 @@ export async function fetchDashboardData(params: FetchDashboardParams = {}): Pro
     uniqueVisitors,
     recentConvs,
     avgResponseTime,
+    totalLeads,
   ] = await Promise.all([
     // Total conversations in date range
     prisma.conversation.count({
@@ -138,6 +140,11 @@ export async function fetchDashboardData(params: FetchDashboardParams = {}): Pro
       ) sub
       WHERE response_seconds > 0 AND response_seconds < 3600
     `, from, to, ...(orgId ? [orgId] : [])),
+
+    // Total leads (transcript requests) in date range
+    prisma.lead.count({
+      where: { ...orgWhere, createdAt: dateFilter },
+    }),
   ]);
 
   // --- Rating Distribution ---
@@ -203,6 +210,7 @@ export async function fetchDashboardData(params: FetchDashboardParams = {}): Pro
       avgResponseTimeSec: Math.round(avgSec),
       aiHandledPercent,
       newVisitors: uniqueVisitors.length,
+      totalLeads,
     },
     recentConversations: recentConvs.map((c) => {
       const contactInfo = (c.contactInfo || {}) as Record<string, string>;

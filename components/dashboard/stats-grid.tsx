@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { MessageSquare, Users, Clock, Bot, UserPlus } from "lucide-react";
+import { MessageSquare, Users, Clock, Bot, UserPlus, ContactRound } from "lucide-react";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { formatNumber } from "@/lib/utils/format";
 
@@ -12,6 +12,7 @@ interface StatsGridProps {
     avgResponseTimeSec: number;
     aiHandledPercent: number;
     newVisitors: number;
+    totalLeads: number;
   };
 }
 
@@ -26,7 +27,7 @@ export function StatsGrid({ stats }: StatsGridProps) {
   const t = useTranslations("dashboard");
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
       <StatCard
         title={t("activeNow")}
         value={stats.activeNow.toString()}
@@ -52,6 +53,12 @@ export function StatsGrid({ stats }: StatsGridProps) {
         title={t("newVisitors")}
         value={formatNumber(stats.newVisitors)}
         icon={UserPlus}
+      />
+      <StatCard
+        title={t("totalLeads")}
+        value={formatNumber(stats.totalLeads)}
+        icon={ContactRound}
+        accent="emerald"
       />
     </div>
   );
