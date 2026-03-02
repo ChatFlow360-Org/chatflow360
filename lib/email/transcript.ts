@@ -11,6 +11,7 @@ interface TranscriptEmailParams {
   messages: Message[];
   visitorName: string;
   orgName: string;
+  aiAgentName: string | null;
   lang: "en" | "es";
 }
 
@@ -23,6 +24,7 @@ export function renderTranscriptEmail({
   messages,
   visitorName,
   orgName,
+  aiAgentName,
   lang,
 }: TranscriptEmailParams): { subject: string; html: string } {
   const isEs = lang === "es";
@@ -49,7 +51,8 @@ export function renderTranscriptEmail({
   const messagesHtml = messages
     .map((m) => {
       const isVisitor = m.senderType === "visitor";
-      const label = isVisitor ? visitorName : (m.senderType === "agent" ? (isEs ? "Agente" : "Agent") : "AI");
+      const aiLabel = aiAgentName ? `${aiAgentName} (${isEs ? "IA" : "AI"})` : "AI";
+      const label = isVisitor ? visitorName : (m.senderType === "agent" ? (isEs ? "Agente" : "Agent") : aiLabel);
       const bgColor = isVisitor ? "#f0f4f8" : "#ffffff";
       const labelColor = isVisitor ? headerColor : "#6b7280";
       const time = new Date(m.createdAt).toLocaleTimeString(isEs ? "es" : "en", {

@@ -65,7 +65,11 @@ export async function POST(request: Request) {
             id: true,
             config: true,
             organization: {
-              select: { id: true, name: true },
+              select: {
+                id: true,
+                name: true,
+                aiSettings: { select: { promptStructure: true } },
+              },
             },
           },
         },
@@ -88,6 +92,8 @@ export async function POST(request: Request) {
     }
 
     const orgName = conversation.channel.organization.name;
+    const promptStructure = conversation.channel.organization.aiSettings?.promptStructure as Record<string, unknown> | null;
+    const aiAgentName = (promptStructure?.agentName as string) || null;
     const settings = resolvePostChat(
       conversation.channel.config as Record<string, unknown> | null,
     );
@@ -106,6 +112,7 @@ export async function POST(request: Request) {
       })),
       visitorName: name,
       orgName,
+      aiAgentName,
       lang,
     });
 
