@@ -1664,7 +1664,19 @@
   function showPostChatDone() {
     postChatEl.innerHTML = "";
     postChatEl.classList.remove("cf360-postchat--show");
-    startNewConversation();
+    // Reset state for next conversation, then close widget
+    stopPolling();
+    rtCleanup();
+    state.realtimeConfig = null;
+    clearConversationId();
+    state.conversationId = null;
+    state.lastMessageId = null;
+    state.resolved = false;
+    state.contactName = null;
+    endConvEl.classList.remove("cf360-end-conv--show");
+    confirmEl.classList.remove("cf360-confirm--show");
+    messagesArea.innerHTML = "";
+    closeWidget();
   }
 
   // ─── Apply Appearance Config ─────────────────────────────────────
