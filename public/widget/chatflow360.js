@@ -1451,8 +1451,10 @@
 
     var form = el("div", "cf360-transcript-form");
 
-    // Anti-autofill helper: readonly + random autocomplete prevent browser autofill,
-    // onfocus removes readonly so user can type normally.
+    // Anti-autofill: readonly prevents browser autofill on DOM insertion.
+    // Random autocomplete value prevents heuristic matching.
+    // On focus: remove readonly so user can type.
+    // setTimeout after DOM insertion: force our values over any browser autofill.
     function noAutofill(input) {
       input.setAttribute("readonly", "readonly");
       input.setAttribute("autocomplete", "cf360-" + Math.random().toString(36).slice(2, 8));
@@ -1509,29 +1511,35 @@
     form.appendChild(phoneRow);
     body.appendChild(form);
 
-    // Pre-fill from AI extraction or localStorage (our values always win over browser)
+    // Compute our desired values BEFORE any browser autofill runs
     var storedInfo = getStoredVisitorInfo();
-    // Name: AI extraction first, then localStorage, otherwise empty for visitor to fill
-    if (state.contactName) {
-      nameInput.value = state.contactName;
-    } else if (storedInfo.name) {
-      nameInput.value = storedInfo.name;
-    }
-    if (storedInfo.email) {
-      emailInput.value = storedInfo.email;
-    }
-    // Phone: default country code +1, parse stored phone if available
-    phoneCode.value = t("transcriptPhoneCode");
+    var wantName = state.contactName || storedInfo.name || "";
+    var wantEmail = storedInfo.email || "";
+    var wantCode = t("transcriptPhoneCode");
+    var wantNum = "";
     if (storedInfo.phone) {
       var stored = storedInfo.phone.replace(/\s+/g, "");
       var codeMatch = stored.match(/^(\+\d{1,4})/);
       if (codeMatch) {
-        phoneCode.value = codeMatch[1];
-        phoneNumber.value = stored.slice(codeMatch[1].length).replace(/^[\s-]+/, "");
+        wantCode = codeMatch[1];
+        wantNum = stored.slice(codeMatch[1].length).replace(/^[\s-]+/, "");
       } else {
-        phoneNumber.value = storedInfo.phone;
+        wantNum = storedInfo.phone;
       }
     }
+
+    // Apply values now (pre-autofill)
+    function applyOurValues() {
+      nameInput.value = wantName;
+      emailInput.value = wantEmail;
+      phoneCode.value = wantCode;
+      phoneNumber.value = wantNum;
+    }
+    applyOurValues();
+
+    // Force our values AGAIN after browser autofill cycle (~150ms after DOM insert)
+    setTimeout(applyOurValues, 150);
+    setTimeout(applyOurValues, 300);
 
     var actions = el("div", "cf360-postchat-actions");
 
@@ -1599,16 +1607,18 @@
       showPostChatDone();
     });
 
-    // Smart focus: skip pre-filled fields
-    if (nameInput.value) {
-      if (emailInput.value) {
-        phoneNumber.focus();
+    // Smart focus: skip pre-filled fields (delayed to run after autofill override)
+    setTimeout(function () {
+      if (wantName) {
+        if (wantEmail) {
+          phoneNumber.focus();
+        } else {
+          emailInput.focus();
+        }
       } else {
-        emailInput.focus();
+        nameInput.focus();
       }
-    } else {
-      nameInput.focus();
-    }
+    }, 350);
   }
 
   function showTranscriptSuccess() {
