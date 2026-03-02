@@ -440,7 +440,7 @@
 
       // Expanded panel mode (desktop only)
       ".cf360-window--expanded{",
-      "  position:fixed;top:0;right:0;bottom:0;width:420px;height:100vh;",
+      "  position:fixed;top:0;right:0;bottom:0;width:420px;height:100vh;height:100dvh;",
       "  border-radius:0;box-shadow:-4px 0 24px rgba(0,0,0,0.12);",
       "}",
       ".cf360-window--expanded .cf360-header{border-radius:0;}",
@@ -683,11 +683,11 @@
       ".cf360-welcome-text{font-size:16px;font-weight:600;color:#1e293b;letter-spacing:-0.01em;}",
       ".cf360-welcome-sub{font-size:13px;color:#94a3b8;line-height:1.5;}",
 
-      // Mobile fullscreen
+      // Mobile fullscreen — use dvh for real viewport height on mobile browsers
       "@media (max-width:480px){",
       "  .cf360-container{bottom:0 !important;right:0 !important;left:0 !important;}",
       "  .cf360-window{",
-      "    position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;",
+      "    position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;height:100dvh;",
       "    border-radius:0;max-height:none;",
       "  }",
       "  .cf360-header{border-radius:0;}",
@@ -868,6 +868,22 @@
         closeWidget();
       }
     });
+
+    // Mobile viewport fix — attach listeners
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", updateMobileHeight);
+    }
+    window.addEventListener("resize", updateMobileHeight);
+    updateMobileHeight();
+  }
+
+  // ─── Mobile viewport fix ─────────────────────────────────────────
+  // Keeps widget fitting the real visible area on mobile browsers.
+  // Handles browser chrome (address bar, bottom nav) + virtual keyboard resize.
+  function updateMobileHeight() {
+    if (window.innerWidth > 480 || !chatWindow) return;
+    var vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    chatWindow.style.height = vh + "px";
   }
 
   // ─── DOM helpers ──────────────────────────────────────────────────
@@ -900,6 +916,9 @@
     badge.classList.remove("cf360-badge--show");
     badge.textContent = "0";
 
+    // Recalculate height for mobile viewport on open
+    updateMobileHeight();
+
     if (state.conversationId) {
       fetchHistory(state.conversationId);
     } else {
@@ -913,6 +932,8 @@
     state.open = false;
     bubble.classList.remove("cf360-bubble--open");
     chatWindow.classList.remove("cf360-window--open");
+    // Clear inline mobile height so CSS takes over on next open
+    chatWindow.style.height = "";
     // Collapse back on close so next open is compact
     if (isExpanded) {
       isExpanded = false;
