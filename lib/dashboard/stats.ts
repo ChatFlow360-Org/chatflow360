@@ -98,11 +98,11 @@ export async function fetchDashboardData(params: FetchDashboardParams = {}): Pro
       where: { ...orgWhere, createdAt: dateFilter, visitorId: { not: null } },
     }),
 
-    // Recent 5 conversations with last message
+    // Recent 10 conversations with last message
     prisma.conversation.findMany({
       where: orgWhere,
       orderBy: { lastMessageAt: "desc" },
-      take: 5,
+      take: 10,
       select: {
         id: true,
         visitorId: true,

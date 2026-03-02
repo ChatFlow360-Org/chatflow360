@@ -47,11 +47,11 @@ export function RecentConversations({ conversations }: RecentConversationsProps)
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold">{t("recentConversations")}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-1.5 px-3 pb-3">
+      <CardContent className="px-3 pb-3">
         {conversations.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">{t("noConversationsYet")}</p>
         ) : (
-          conversations.map((conv) => {
+          conversations.map((conv, idx) => {
             const status = statusConfig[conv.status as ConversationStatus] ?? statusConfig.open;
             const handler = handlerConfig[conv.responderMode as ResponderMode] ?? handlerConfig.ai;
             const HandlerIcon = handler.icon;
@@ -64,7 +64,9 @@ export function RecentConversations({ conversations }: RecentConversationsProps)
               <div
                 key={conv.id}
                 onClick={() => router.push(`/conversations?open=${conv.id}`)}
-                className="flex items-start gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-accent cursor-pointer"
+                className={`flex items-start gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-accent cursor-pointer ${
+                  idx % 2 === 1 ? "bg-muted/40" : ""
+                }`}
               >
                 {/* Avatar */}
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-brand-light/10">
