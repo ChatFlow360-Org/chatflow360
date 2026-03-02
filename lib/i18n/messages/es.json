@@ -64,6 +64,7 @@
     "typeMessage": "Escribe un mensaje...",
     "conversationClosed": "Esta conversacion esta cerrada",
     "aiHandling": "La IA esta manejando esta conversacion",
+    "takeControl": "Tomar Control",
     "sendFailed": "Error al enviar mensaje",
     "msgs": "{count} msgs",
     "filters": {

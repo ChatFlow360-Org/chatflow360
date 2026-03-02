@@ -734,6 +734,49 @@ export async function closeConversation(
 }
 
 // ============================================
+// Manual Takeover (AI → Human)
+// ============================================
+
+export async function takeoverConversation(
+  conversationId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    z.string().uuid().parse(conversationId);
+
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: { id: true, status: true, responderMode: true, channel: { select: { organizationId: true } } },
+    });
+
+    if (!conversation) return { success: false, error: "Conversation not found" };
+
+    if (!user.isSuperAdmin) {
+      const isMember = user.memberships.some(
+        (m) => m.organizationId === conversation.channel.organizationId
+      );
+      if (!isMember) return { success: false, error: "Unauthorized" };
+    }
+
+    if (conversation.status === "closed") return { success: false, error: "Conversation is closed" };
+    if (conversation.responderMode === "human") return { success: true }; // Already human
+
+    await prisma.conversation.update({
+      where: { id: conversationId },
+      data: { responderMode: "human" },
+    });
+
+    revalidatePath("/conversations");
+    return { success: true };
+  } catch (error) {
+    console.error("[takeoverConversation]", error instanceof Error ? error.message : error);
+    return { success: false, error: "Failed to take over conversation" };
+  }
+}
+
+// ============================================
 // Agent Messaging (Human Takeover)
 // ============================================
 

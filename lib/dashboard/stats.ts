@@ -16,11 +16,14 @@ export interface DashboardData {
   };
   recentConversations: {
     id: string;
-    visitorId: string | null;
+    visitorName: string;
     status: string;
+    responderMode: string;
     lastMessageAt: Date;
     lastMessage: string | null;
     channelName: string;
+    messageCount: number;
+    rating: number | null;
   }[];
   topPages: { page: string; count: number }[];
   aiPerformance: {
@@ -103,9 +106,13 @@ export async function fetchDashboardData(params: FetchDashboardParams = {}): Pro
       select: {
         id: true,
         visitorId: true,
+        contactInfo: true,
         status: true,
+        responderMode: true,
         lastMessageAt: true,
+        rating: true,
         channel: { select: { name: true } },
+        _count: { select: { messages: true } },
         messages: {
           orderBy: { createdAt: "desc" },
           take: 1,
@@ -197,14 +204,23 @@ export async function fetchDashboardData(params: FetchDashboardParams = {}): Pro
       aiHandledPercent,
       newVisitors: uniqueVisitors.length,
     },
-    recentConversations: recentConvs.map((c) => ({
-      id: c.id,
-      visitorId: c.visitorId,
-      status: c.status,
-      lastMessageAt: c.lastMessageAt,
-      lastMessage: c.messages[0]?.content ?? null,
-      channelName: c.channel.name,
-    })),
+    recentConversations: recentConvs.map((c) => {
+      const contactInfo = (c.contactInfo || {}) as Record<string, string>;
+      const visitorName =
+        contactInfo.name ||
+        (c.visitorId ? `Visitor ${c.visitorId.slice(-4)}` : "Visitor");
+      return {
+        id: c.id,
+        visitorName,
+        status: c.status,
+        responderMode: c.responderMode,
+        lastMessageAt: c.lastMessageAt,
+        lastMessage: c.messages[0]?.content ?? null,
+        channelName: c.channel.name,
+        messageCount: c._count.messages,
+        rating: c.rating ?? null,
+      };
+    }),
     topPages,
     aiPerformance: {
       aiHandled: aiConversations,

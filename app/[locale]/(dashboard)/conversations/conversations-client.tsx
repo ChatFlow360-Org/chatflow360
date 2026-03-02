@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useCallback, useEffect, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/lib/i18n/navigation";
 import { createPortal } from "react-dom";
@@ -35,7 +36,8 @@ export function ConversationsClient({ conversations, channelId }: ConversationsC
 
   // Subscribe to Supabase Realtime — auto-refreshes when new conversations arrive
   useRealtimeConversations({ channelId });
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const [selectedId, setSelectedId] = useState<string | null>(() => searchParams.get("open"));
   const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(defaultRange);

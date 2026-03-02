@@ -64,6 +64,7 @@
     "typeMessage": "Type a message...",
     "conversationClosed": "This conversation is closed",
     "aiHandling": "AI is handling this conversation",
+    "takeControl": "Take Control",
     "sendFailed": "Failed to send message",
     "msgs": "{count} msgs",
     "filters": {

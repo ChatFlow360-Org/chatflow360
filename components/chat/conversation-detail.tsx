@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Info, X, Send, Bot, User, MessageSquare, Clock, Globe, Calendar, RefreshCw, ExternalLink, Star } from "lucide-react";
+import { Info, X, Send, Bot, User, UserCheck, MessageSquare, Clock, Globe, Calendar, RefreshCw, ExternalLink, Star } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,7 @@ import {
 import { ChatMessage } from "@/components/chat/chat-message";
 import { useRealtimeMessages } from "@/hooks/use-realtime-messages";
 import { useTypingIndicator } from "@/hooks/use-typing-indicator";
-import { getConversationMessages, sendAgentMessage, getTypingChannel, closeConversation } from "@/lib/admin/actions";
+import { getConversationMessages, sendAgentMessage, getTypingChannel, closeConversation, takeoverConversation } from "@/lib/admin/actions";
 import { formatRelativeTime, normalizeAmPm } from "@/lib/utils/format";
 import type { Conversation, ConversationStatus, ResponderMode, Message } from "@/types";
 
@@ -37,6 +37,7 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
   const [agentMessage, setAgentMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [takingOver, setTakingOver] = useState(false);
   const [typingChannelName, setTypingChannelName] = useState<string | null>(null);
   const [liveStatus, setLiveStatus] = useState(conversation.status);
   const [liveResponderMode, setLiveResponderMode] = useState(conversation.responderMode);
@@ -159,6 +160,22 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
       setClosing(false);
     }
   }, [closing, conversation.id, onClose]);
+
+  // Take over from AI
+  const handleTakeover = useCallback(async () => {
+    if (takingOver) return;
+    setTakingOver(true);
+    try {
+      const result = await takeoverConversation(conversation.id);
+      if (result.success) {
+        setLiveResponderMode("human");
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setTakingOver(false);
+    }
+  }, [takingOver, conversation.id]);
 
   const statusConfig: Record<ConversationStatus, { label: string; className: string }> = {
     open: { label: t("status.open"), className: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
@@ -417,9 +434,21 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
             </Button>
           </div>
         ) : (
-          <div className="flex items-center justify-center gap-2 p-3">
-            <Bot className="h-4 w-4 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">{t("aiHandling")}</p>
+          <div className="flex items-center justify-between p-3">
+            <div className="flex items-center gap-2">
+              <Bot className="h-4 w-4 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">{t("aiHandling")}</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs"
+              onClick={handleTakeover}
+              disabled={takingOver}
+            >
+              <UserCheck className="mr-1.5 h-3.5 w-3.5" />
+              {takingOver ? "..." : t("takeControl")}
+            </Button>
           </div>
         )}
       </div>
