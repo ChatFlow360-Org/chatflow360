@@ -1451,12 +1451,20 @@
 
     var form = el("div", "cf360-transcript-form");
 
+    // Anti-autofill helper: readonly + random autocomplete prevent browser autofill,
+    // onfocus removes readonly so user can type normally.
+    function noAutofill(input) {
+      input.setAttribute("readonly", "readonly");
+      input.setAttribute("autocomplete", "cf360-" + Math.random().toString(36).slice(2, 8));
+      input.addEventListener("focus", function () { input.removeAttribute("readonly"); });
+    }
+
     var nameInput = document.createElement("input");
     nameInput.type = "text";
     nameInput.className = "cf360-transcript-input";
     nameInput.placeholder = t("transcriptName");
     nameInput.maxLength = 100;
-    nameInput.setAttribute("autocomplete", "off");
+    noAutofill(nameInput);
 
     var emailInput = document.createElement("input");
     emailInput.type = "text";
@@ -1464,18 +1472,17 @@
     emailInput.placeholder = t("transcriptEmail");
     emailInput.maxLength = 254;
     emailInput.setAttribute("inputmode", "email");
-    emailInput.setAttribute("autocomplete", "off");
+    noAutofill(emailInput);
 
     var phoneRow = el("div", "cf360-phone-row");
 
     var phoneCode = document.createElement("input");
     phoneCode.type = "text";
     phoneCode.className = "cf360-phone-code";
-    phoneCode.value = t("transcriptPhoneCode");
     phoneCode.maxLength = 5;
     phoneCode.setAttribute("inputmode", "tel");
-    phoneCode.setAttribute("autocomplete", "off");
     phoneCode.setAttribute("aria-label", "Country code");
+    noAutofill(phoneCode);
     phoneCode.addEventListener("input", function () {
       phoneCode.value = phoneCode.value.replace(/[^0-9+]/g, "");
       if (phoneCode.value && phoneCode.value.charAt(0) !== "+") {
@@ -1488,8 +1495,8 @@
     phoneNumber.className = "cf360-transcript-input";
     phoneNumber.placeholder = t("transcriptPhoneNumber");
     phoneNumber.maxLength = 15;
-    phoneNumber.setAttribute("autocomplete", "off");
     phoneNumber.setAttribute("inputmode", "tel");
+    noAutofill(phoneNumber);
     phoneNumber.addEventListener("input", function () {
       phoneNumber.value = phoneNumber.value.replace(/[^0-9\-() ]/g, "");
     });
@@ -1502,8 +1509,9 @@
     form.appendChild(phoneRow);
     body.appendChild(form);
 
-    // Pre-fill from AI extraction or localStorage
+    // Pre-fill from AI extraction or localStorage (our values always win over browser)
     var storedInfo = getStoredVisitorInfo();
+    // Name: AI extraction first, then localStorage, otherwise empty for visitor to fill
     if (state.contactName) {
       nameInput.value = state.contactName;
     } else if (storedInfo.name) {
@@ -1512,8 +1520,9 @@
     if (storedInfo.email) {
       emailInput.value = storedInfo.email;
     }
+    // Phone: default country code +1, parse stored phone if available
+    phoneCode.value = t("transcriptPhoneCode");
     if (storedInfo.phone) {
-      // Parse stored phone: split country code from number
       var stored = storedInfo.phone.replace(/\s+/g, "");
       var codeMatch = stored.match(/^(\+\d{1,4})/);
       if (codeMatch) {
