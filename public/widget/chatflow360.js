@@ -869,21 +869,27 @@
       }
     });
 
-    // Mobile viewport fix — attach listeners
+    // Mobile viewport fix — listen for virtual keyboard show/hide
     if (window.visualViewport) {
       window.visualViewport.addEventListener("resize", updateMobileHeight);
     }
-    window.addEventListener("resize", updateMobileHeight);
-    updateMobileHeight();
   }
 
   // ─── Mobile viewport fix ─────────────────────────────────────────
-  // Keeps widget fitting the real visible area on mobile browsers.
-  // Handles browser chrome (address bar, bottom nav) + virtual keyboard resize.
+  // Widget always covers full screen (no gap). When virtual keyboard opens,
+  // padding-bottom pushes content above it. Flex layout auto-shrinks messages.
   function updateMobileHeight() {
     if (window.innerWidth > 480 || !chatWindow) return;
-    var vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    chatWindow.style.height = vh + "px";
+    if (!window.visualViewport) return;
+    var vv = window.visualViewport;
+    var keyboardHeight = window.innerHeight - vv.height - vv.offsetTop;
+    if (keyboardHeight > 150) {
+      // Keyboard open — push content above keyboard, keep widget full screen
+      chatWindow.style.paddingBottom = keyboardHeight + "px";
+      scrollToBottom();
+    } else {
+      chatWindow.style.paddingBottom = "";
+    }
   }
 
   // ─── DOM helpers ──────────────────────────────────────────────────
@@ -916,9 +922,6 @@
     badge.classList.remove("cf360-badge--show");
     badge.textContent = "0";
 
-    // Recalculate height for mobile viewport on open
-    updateMobileHeight();
-
     if (state.conversationId) {
       fetchHistory(state.conversationId);
     } else {
@@ -932,8 +935,8 @@
     state.open = false;
     bubble.classList.remove("cf360-bubble--open");
     chatWindow.classList.remove("cf360-window--open");
-    // Clear inline mobile height so CSS takes over on next open
-    chatWindow.style.height = "";
+    // Clear mobile keyboard padding
+    chatWindow.style.paddingBottom = "";
     // Collapse back on close so next open is compact
     if (isExpanded) {
       isExpanded = false;
