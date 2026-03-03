@@ -557,7 +557,7 @@ function TimeSelect({ value, onChange, className, ...props }: TimeSelectProps) {
       >
         <SelectValue>{current?.label ?? value}</SelectValue>
       </SelectTrigger>
-      <SelectContent className="max-h-56">
+      <SelectContent position="popper" className="max-h-52">
         {TIME_OPTIONS.map((opt) => (
           <SelectItem key={opt.value} value={opt.value} className="text-xs">
             {opt.label}
