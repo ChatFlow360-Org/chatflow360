@@ -132,6 +132,20 @@ Ghost:     hover:bg-secondary-light text-secondary-dark
 Outline:   border-border text-secondary-dark hover:bg-secondary-light
 ```
 
+### Action Buttons (Amber Pattern)
+
+Botones de accion especial que necesitan alta visibilidad en ambos modos (light/dark):
+
+```
+Full button:   bg-amber-500 hover:bg-amber-600 text-black border-0
+Icon only:     text-amber-500 hover:text-amber-600 hover:bg-amber-500/10 (ghost variant)
+```
+
+**Uso actual:**
+- "Take Control" — boton para tomar control de conversacion IA → full button
+- "Translate empty fields" — traduccion bulk por card → full button
+- Translate icons por field — icono Languages individual → icon only
+
 ### Chat Bubbles (Widget)
 
 ```

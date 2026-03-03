@@ -65,6 +65,21 @@ const DAYS_1_TO_31 = Array.from({ length: 31 }, (_, i) =>
   String(i + 1).padStart(2, "0"),
 );
 
+/** 12-hour time options every 15 minutes (value=24h "HH:mm", label=12h "H:MM AM/PM"). */
+const TIME_OPTIONS: { value: string; label: string }[] = (() => {
+  const opts: { value: string; label: string }[] = [];
+  for (let h = 0; h < 24; h++) {
+    for (const m of [0, 15, 30, 45]) {
+      const value = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+      const period = h >= 12 ? "PM" : "AM";
+      const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+      const label = `${h12}:${String(m).padStart(2, "0")} ${period}`;
+      opts.push({ value, label });
+    }
+  }
+  return opts;
+})();
+
 // ─── Props ───────────────────────────────────────────────────────
 
 interface BusinessHoursFormProps {
@@ -376,24 +391,22 @@ function DayRow({
         </span>
       </div>
 
-      {/* Time inputs or Closed label */}
+      {/* Time selects or Closed label */}
       <div className="flex items-center gap-1.5 ml-auto">
         {schedule.open ? (
           <>
-            <Input
-              type="time"
+            <TimeSelect
               value={schedule.openTime}
-              onChange={(e) => onOpenTimeChange(e.target.value)}
-              className="h-8 w-[5.5rem] text-xs px-2 dark:border-muted-foreground/20 dark:bg-muted/30"
+              onChange={onOpenTimeChange}
               aria-label={`${label} open time`}
+              className="h-8 w-26"
             />
             <span className="text-muted-foreground text-xs select-none">-</span>
-            <Input
-              type="time"
+            <TimeSelect
               value={schedule.closeTime}
-              onChange={(e) => onCloseTimeChange(e.target.value)}
-              className="h-8 w-[5.5rem] text-xs px-2 dark:border-muted-foreground/20 dark:bg-muted/30"
+              onChange={onCloseTimeChange}
               aria-label={`${label} close time`}
+              className="h-8 w-26"
             />
           </>
         ) : (
@@ -428,7 +441,7 @@ function HolidayRow({ holiday, t, onUpdate, onRemove }: HolidayRowProps) {
 
   return (
     <div className="rounded-md border border-border p-3 space-y-2 dark:border-muted-foreground/20">
-      {/* Top row: name + remove */}
+      {/* Top row: name + remove  */}
       <div className="flex items-center gap-2">
         <Input
           placeholder={t("holidayName")}
@@ -503,24 +516,54 @@ function HolidayRow({ holiday, t, onUpdate, onRemove }: HolidayRowProps) {
 
         {!holiday.closed && (
           <div className="flex items-center gap-1.5 ml-auto">
-            <Input
-              type="time"
+            <TimeSelect
               value={holiday.openTime ?? "09:00"}
-              onChange={(e) => onUpdate({ openTime: e.target.value })}
-              className="h-7 w-[5rem] text-xs px-1.5 dark:border-muted-foreground/20 dark:bg-muted/30"
+              onChange={(v) => onUpdate({ openTime: v })}
               aria-label={t("holidayOpenTime")}
+              className="h-7 w-26"
             />
             <span className="text-muted-foreground text-xs select-none">-</span>
-            <Input
-              type="time"
+            <TimeSelect
               value={holiday.closeTime ?? "17:00"}
-              onChange={(e) => onUpdate({ closeTime: e.target.value })}
-              className="h-7 w-[5rem] text-xs px-1.5 dark:border-muted-foreground/20 dark:bg-muted/30"
+              onChange={(v) => onUpdate({ closeTime: v })}
               aria-label={t("holidayCloseTime")}
+              className="h-7 w-26"
             />
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+// ─── TimeSelect (12h AM/PM dropdown) ──────────────────────────────
+
+interface TimeSelectProps {
+  value: string;
+  onChange: (value: string) => void;
+  "aria-label"?: string;
+  className?: string;
+}
+
+/** Compact time select that displays 12h AM/PM labels but stores 24h HH:mm values. */
+function TimeSelect({ value, onChange, className, ...props }: TimeSelectProps) {
+  const current = TIME_OPTIONS.find((o) => o.value === value);
+
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger
+        className={`text-xs px-2 dark:border-muted-foreground/20 dark:bg-muted/30 ${className ?? ""}`}
+        aria-label={props["aria-label"]}
+      >
+        <SelectValue>{current?.label ?? value}</SelectValue>
+      </SelectTrigger>
+      <SelectContent className="max-h-56">
+        {TIME_OPTIONS.map((opt) => (
+          <SelectItem key={opt.value} value={opt.value} className="text-xs">
+            {opt.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }

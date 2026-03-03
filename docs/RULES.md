@@ -188,3 +188,67 @@ Todo componente nuevo **DEBE** verificarse en las 4 combinaciones antes de consi
 - Usar CSS variables semanticas (Regla 12) para que ambos modos funcionen automaticamente
 - No asumir que un color se ve bien en ambos modos — siempre verificar visualmente
 - Usar Playwright MCP para screenshots de verificacion cuando sea posible
+
+## Regla 16: Patron de Traduccion Bilingue (Translate Buttons)
+
+Cuando un formulario tiene campos bilingues (EN/ES), se deben ofrecer botones de traduccion con IA siguiendo este patron:
+
+### Botones por field (iconos individuales)
+
+- Componente: `<TranslateButton>` de `@/components/ui/translate-button`
+- Estilo: `variant="ghost"` con **icono amber** (`text-amber-500 hover:text-amber-600 hover:bg-amber-500/10`)
+- Sin fondo solido — solo el icono `Languages` en color amber
+- Se coloca al lado del label de cada campo (English / Spanish)
+- Traduce el campo opuesto: si esta en el label "English", traduce del Spanish al English
+
+```tsx
+<TranslateButton
+  sourceText={spanishValue}
+  direction="es-to-en"
+  onTranslated={(text) => update("fieldEn", text)}
+/>
+```
+
+### Boton bulk "Translate empty fields" (por card)
+
+- Estilo: `bg-amber-500 hover:bg-amber-600 text-black border-0` (igual que Take Control)
+- Se coloca en el header de la card, alineado a la derecha
+- Solo traduce campos vacios usando el campo opuesto como fuente
+- Usa el hook `useBulkTranslate()` de `@/lib/hooks/use-bulk-translate`
+
+### API
+
+- Endpoint: `POST /api/translate` — autenticado, usa `resolvePlatformApiKey()` (NO per-org key)
+- Model: `gpt-4o-mini`, temperature 0.3 — batch de hasta 20 textos
+- Preserva template variables (`{{visitor_name}}`, `{{org_name}}`)
+
+---
+
+## Regla 17: RLS Obligatorio en Tablas Nuevas
+
+Toda tabla nueva en Supabase **DEBE crearse con RLS habilitado desde el inicio**. No avanzar con tablas UNRESTRICTED.
+
+### Politicas minimas requeridas
+
+1. **`service_role_full_access`** — siempre. Permite operaciones administrativas de Supabase.
+2. **Policies segun acceso** — definir al crear la tabla, no despues:
+   - Super admin only → `super_admin_select` (EXISTS check en `users.is_super_admin`)
+   - Org-scoped → `tenant_select_*` via `get_user_org_ids()`
+   - Public read → policy especifica con condiciones
+
+### Proceso (trabajo en conjunto — Prisma no soporta RLS)
+
+1. **Adan:** Crear la tabla en Prisma schema + `prisma migrate dev`
+2. **Adan:** Crear archivo SQL en `supabase/migrations/` con `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` + policies
+3. **Adan:** Entregar SQL listo para copiar-pegar (sin comentarios, un solo bloque)
+4. **Leo:** Ejecutar SQL en Supabase SQL Editor
+5. **Leo:** Confirmar ejecucion exitosa
+6. **Adan:** Continuar desarrollo + documentar policies en `docs/SECURITY.md`
+
+### Excepcion
+
+Solo se permite crear tablas sin RLS si hay una razon tecnica documentada (ej: tabla temporal de prueba). En ese caso, dejar un TODO con fecha limite para activar RLS.
+
+### Contexto
+
+Prisma bypassa RLS (conecta como postgres superuser), asi que las policies son **defense-in-depth** contra acceso directo via PostgREST/Supabase client. Pero DEBEN existir desde el dia 1 para evitar acumular deuda de seguridad.

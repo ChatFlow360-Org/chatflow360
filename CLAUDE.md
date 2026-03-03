@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.3.18 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.3.20 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -53,6 +53,7 @@ AI responde con RAG (conocimiento) + instrucciones | Human takeover via keyword 
 9. **Verificacion 4-way** - Todo componente nuevo debe verse bien en Light EN, Light ES, Dark EN, Dark ES. Ver Regla 15
 10. **AM/PM uppercase** - Siempre normalizar con `normalizeAmPm()` de `@/lib/utils/format`. Ver Regla 14
 11. **Translate buttons amber** - Per-field: ghost icon amber. Bulk: full amber button. Ver Regla 16
+12. **RLS obligatorio** - Toda tabla nueva DEBE tener RLS + policies desde el dia 1. Ver Regla 17
 
 ## Enfoque Hibrido Prisma + Supabase
 
@@ -76,4 +77,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.3.18** - AI-Powered Translate Buttons: Per-field translate icons (amber ghost `Languages` icon) and bulk "Translate empty fields" buttons (amber full button like Take Control) across all bilingual forms (Widget Welcome, Texts, Post-Chat). New `POST /api/translate` endpoint using `gpt-4o-mini` via platform API key. `TranslateButton` component + `useBulkTranslate` hook. Client View now hides Technical Settings and Custom API Key cards. Amber styling pattern documented as Regla 16 in RULES.md and BRANDBOOK.md. Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).
+**v0.3.20** - RLS Policies for 3 tables: `business_categories` (super_admin SELECT), `leads` (org-scoped SELECT/DELETE via `get_user_org_ids()`), `prompt_pieces` (super_admin + org member category pieces + global rules). Post-chat flow reorder: transcript first, then rating. All tables accessed exclusively via Prisma (bypasses RLS) — policies are defense-in-depth for PostgREST. Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).

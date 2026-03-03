@@ -47,9 +47,30 @@ $$ LANGUAGE sql SECURITY DEFINER STABLE;
 
 - **Policy:** `service_role_full_access` — full CRUD for service_role
 - **Policy:** `super_admin_select` — SELECT only for authenticated super_admins
-- **Expression:** `EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role = 'super_admin')`
+- **Expression:** `EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.is_super_admin = true)`
 - All mutations go through Prisma server actions with `requireSuperAdmin()` guard
 - Prisma uses `postgres` superuser (bypasses RLS) — policies protect PostgREST access only
+
+**`business_categories` table:** (v0.3.20)
+
+- **Policy:** `service_role_full_access` — full CRUD for service_role
+- **Policy:** `super_admin_select` — SELECT only for authenticated super_admins
+- Same pattern as `prompt_templates` — super admin only, all mutations via Prisma
+
+**`leads` table:** (v0.3.20)
+
+- **Policy:** `service_role_full_access` — full CRUD for service_role
+- **Policy:** `tenant_select_leads` — org-scoped SELECT via `get_user_org_ids()`
+- **Policy:** `tenant_delete_leads` — org-scoped DELETE via `get_user_org_ids()`
+- No INSERT policy (lead creation via Prisma in `/api/widget/transcript`)
+- No UPDATE policy (leads are immutable after creation)
+
+**`prompt_pieces` table:** (v0.3.20)
+
+- **Policy:** `service_role_full_access` — full CRUD for service_role
+- **Policy:** `super_admin_select` — SELECT for authenticated super_admins (full access)
+- **Policy:** `org_member_select_category_pieces` — org members can read global rules (`category_id IS NULL AND type = 'rule'`) and pieces belonging to their org's assigned business category
+- All mutations via Prisma server actions with `requireSuperAdmin()` guard
 
 **`organization_knowledge` table:**
 
@@ -224,6 +245,8 @@ Without `setAuth`, all Realtime subscriptions on RLS-enabled tables silently rec
 - [x] Policies por `organization_id` (multi-tenant isolation via `get_user_org_ids()`)
 - [x] Verificar que un usuario de org-A NUNCA pueda ver datos de org-B (Realtime events filtered by RLS)
 - [ ] Test: intentar acceder a datos de otra organizacion (debe fallar) — manual verification pending
+- [x] RLS en `prompt_templates` (v0.3.6) — super_admin SELECT only
+- [x] RLS en `business_categories`, `leads`, `prompt_pieces` (v0.3.20) — defense-in-depth
 - [ ] Habilitar RLS en tablas restantes (channels, organizations, ai_settings, etc.)
 
 ### API Routes / Server Actions

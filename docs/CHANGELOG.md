@@ -2,6 +2,26 @@
 
 > Versiones recientes. Para historial completo ver los archivos en [`changelog/`](./changelog/).
 
+## v0.3.20 (2026-03-03)
+
+### RLS Policies for 3 Tables + Post-Chat Flow Reorder (ce111ba)
+- **RLS: `business_categories`** — enabled Row Level Security. `service_role` full access + `super_admin` SELECT only. All mutations via Prisma (`requireSuperAdmin()`). Migration: `supabase/migrations/20260303_rls_business_categories.sql`.
+- **RLS: `leads`** — enabled Row Level Security. `service_role` full access + org-scoped SELECT/DELETE via `get_user_org_ids()`. No INSERT policy (lead creation via Prisma in `/api/widget/transcript`). No UPDATE (leads immutable). Migration: `supabase/migrations/20260303_rls_leads.sql`.
+- **RLS: `prompt_pieces`** — enabled Row Level Security. `service_role` full access + `super_admin` SELECT + org members can read global rules (`category_id IS NULL, type='rule'`) and their org's assigned category pieces. All mutations via Prisma (`requireSuperAdmin()`). Migration: `supabase/migrations/20260303_rls_prompt_pieces.sql`.
+- **Post-chat flow reorder** — widget now shows transcript form FIRST, then rating. Previously was rating → transcript. Skip button in transcript step goes to rating (if enabled) instead of done. Functions modified: `showPostChatFlow()`, `showRatingStep()`, `submitRating()`, `showTranscriptStep()`, `showTranscriptSuccess()`.
+- **Verification** — code audit confirmed ZERO direct Supabase client access on all 3 tables (all via Prisma). Build passes. All dashboard pages + widget APIs respond correctly after RLS enablement.
+
+---
+
+## v0.3.19 (2026-03-03)
+
+### Bidirectional Bulk Translate Fix + Starter Questions Scope (a24462f, 9bf3adf)
+- **Fix: bidirectional translate** — `POST /api/translate` now groups texts by translation direction (`from-to` key) and makes parallel OpenAI calls per group. Previously used the first item's `from`/`to` for ALL items in the batch, causing wrong translations when mixing EN→ES and ES→EN in one request. Root cause: `fromLang`/`toLang` were derived from `texts[0]` only; now each group resolves its own language pair.
+- **Starter questions in bulk translate** — Welcome Screen "Translate empty fields" button now includes starter questions when `useStarterQuestions` is ON. Each starter question's `textEn`/`textEs` pair is added to the translation batch alongside welcome title/subtitle. When toggle is OFF, starter questions are excluded.
+- **Docs restructure** — All documentation fragmented to stay under 25 KB per file. CHANGELOG split into archives (`docs/changelog/v0.3-early.md`, `v0.2.md`, `v0.1.md`). ARCHITECTURE business logic section (506 lines) extracted to `docs/ARCHITECTURE-BUSINESS-LOGIC.md`. Security audit v0.2.2 archived to `docs/archive/`. INDEX.md and CLAUDE.md updated with new structure. New permanent rule: no `.md` > 25 KB.
+
+---
+
 ## v0.3.18 (2026-03-03)
 
 ### AI-Powered Translate Buttons (60394c1, 757be47)
@@ -47,42 +67,6 @@
 
 ---
 
-## v0.3.15 (2026-03-03)
-
-### Rules UX Overhaul (378cd8d)
-- **Edit/Duplicate/Delete buttons** — inline action buttons on each rule. Edit opens auto-resize textarea with confirm (✓) and Cancel. Duplicate inserts copy below and auto-enters edit mode. Delete removes the rule.
-- **Responsive layout** — Desktop: icon-only buttons with Radix UI tooltips. Mobile: icons with text labels ("Edit"/"Duplicate"/"Delete") below the rule text.
-- **Global Rules + Specific Rules split** — Rules section separated into two subsections. Global Rules shows badge with count (visible when expanded) and collapsible list. Specific Rules has Clear all, Browse templates, and rule CRUD.
-- **Clear all rules** — button text updated from "Clear all" to "Clear all rules". Responsive positioning: inline in header on desktop, separate row above rules on mobile.
-- **Edit confirm tooltip** — changed from "Save" to "Done"/"Listo" since auto-save handles persistence.
-- **i18n** — 8 new keys (EN + ES): editRule, duplicateRule, deleteRule, saveRule, cancelEdit, specificRules, globalRulesCount, clearAllRules updated.
-
----
-
-## v0.3.14 (2026-03-02)
-
-### Dynamic Global Rules Injection (ab26f6d)
-- **Removed client-side prepend** — global rules no longer appended to `promptStructure.rules` on save in `ai-settings-client.tsx`. Fixes duplication bug where global rules appeared both in the locked golden section AND as removable custom rules after re-save.
-- **Server-side injection** — `POST /api/chat` now fetches global rules directly from `prompt_pieces` (categoryId=null, type="rule") and prepends them as a `GLOBAL RULES (mandatory):` block to the system prompt before sending to OpenAI. Rules always reach the AI regardless of when AI Settings were last saved.
-
-### Take Control Button Styling (ab26f6d)
-- **Amber distinctive color** — Take Control button changed from `variant="outline"` to `bg-amber-500 hover:bg-amber-600 text-black` for high visibility in both light and dark mode.
-
-### Post-Chat Flow on Agent Close (ab26f6d)
-- **Widget `conversation_closed` broadcast handler** — now triggers `showPostChatFlow()` (rating + transcript steps) when `postChatConfig` has features enabled, instead of immediately marking as resolved. Falls back to resolved + new conversation button if no post-chat configured.
-
-### Customizable Welcome Texts (7b75b55)
-- **Welcome Title + Subtitle** — new bilingual fields (EN/ES) in Settings > Widget > Texts. Controls the "Chat with us" and "Send us a message to get started" texts on the widget welcome screen.
-- **Schema** — `WidgetAppearance` interface + Zod schema + defaults expanded with `welcomeTitleEn/Es`, `welcomeSubtitleEn/Es`.
-- **Widget** — `applyAppearance()` stores welcome texts in state and updates DOM if visible. `showWelcome()` uses config values with fallback to built-in i18n defaults.
-- **i18n** — 8 new keys (EN + ES) for welcome text form fields.
-
-### Widget Fixes (ab26f6d, 7b75b55)
-- **Connecting banner z-index** — added `position:relative;z-index:2` to `.cf360-connecting` so it's not clipped behind messages area overlay.
-- **Contenteditable placeholder** — `ceField()` now clears residual `<br>` tags when field is emptied, ensuring CSS `:empty::before` placeholder renders correctly.
-
----
-
 ## Indice de Todas las Versiones
 
 > Cada version con titulo resumido de 1 linea. Detalle completo en los archivos enlazados.
@@ -91,6 +75,8 @@
 
 | Version | Fecha | Resumen |
 |---------|-------|---------|
+| v0.3.15 | 2026-03-03 | Rules UX Overhaul (Edit/Duplicate/Delete + Global/Specific split) |
+| v0.3.14 | 2026-03-02 | Dynamic Global Rules Injection + Take Control Amber + Post-Chat on Close + Welcome Texts |
 | v0.3.13 | 2026-03-02 | Satisfaction Rating Widget + Enhanced Recent Conversations + Take Control Button |
 | v0.3.12 | 2026-03-02 | Prompt Templates Page (Modular Pieces + Global Rules + Template Picker) |
 | v0.3.11 | 2026-03-01 | API Keys Management Page + Platform Settings |
