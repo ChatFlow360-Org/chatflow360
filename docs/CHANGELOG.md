@@ -2,6 +2,18 @@
 
 > Historial completo de versiones y cambios del proyecto.
 
+## v0.3.15 (2026-03-03)
+
+### Rules UX Overhaul (378cd8d)
+- **Edit/Duplicate/Delete buttons** — inline action buttons on each rule. Edit opens auto-resize textarea with confirm (✓) and Cancel. Duplicate inserts copy below and auto-enters edit mode. Delete removes the rule.
+- **Responsive layout** — Desktop: icon-only buttons with Radix UI tooltips. Mobile: icons with text labels ("Edit"/"Duplicate"/"Delete") below the rule text.
+- **Global Rules + Specific Rules split** — Rules section separated into two subsections. Global Rules shows badge with count (visible when expanded) and collapsible list. Specific Rules has Clear all, Browse templates, and rule CRUD.
+- **Clear all rules** — button text updated from "Clear all" to "Clear all rules". Responsive positioning: inline in header on desktop, separate row above rules on mobile.
+- **Edit confirm tooltip** — changed from "Save" to "Done"/"Listo" since auto-save handles persistence.
+- **i18n** — 8 new keys (EN + ES): editRule, duplicateRule, deleteRule, saveRule, cancelEdit, specificRules, globalRulesCount, clearAllRules updated.
+
+---
+
 ## v0.3.14 (2026-03-02)
 
 ### Dynamic Global Rules Injection (ab26f6d)

@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.3.14 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.3.15 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -74,4 +74,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.3.14** - Dynamic Global Rules + Widget Welcome Texts + Post-Chat on Close. Global rules now injected dynamically in chat endpoint (no longer saved in promptStructure, fixing duplication). Take Control button amber for visibility. Agent close triggers post-chat flow (rating+transcript) in widget. Customizable Welcome Title/Subtitle (EN/ES) in Settings > Widget > Texts. Connecting banner z-index fix. Contenteditable placeholder fix. Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).
+**v0.3.15** - Rules UX overhaul: Edit/Duplicate/Delete inline buttons with responsive layout (icons+tooltips on desktop, icons+labels on mobile). Global Rules and Specific Rules split into separate sections. Auto-save integration (edits confirm locally, auto-save persists). Clear all rules text updated, responsive positioning. Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).
