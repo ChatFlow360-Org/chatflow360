@@ -31,10 +31,10 @@ import {
 // ─── Constants ───────────────────────────────────────────────────
 
 const TIMEZONES = [
-  { value: "Eastern Time (ET)", label: "Eastern (ET)" },
-  { value: "Central Time (CT)", label: "Central (CT)" },
-  { value: "Mountain Time (MT)", label: "Mountain (MT)" },
-  { value: "Pacific Time (PT)", label: "Pacific (PT)" },
+  { value: "Eastern Standard Time (EST)", label: "Eastern (EST)" },
+  { value: "Central Standard Time (CST)", label: "Central (CST)" },
+  { value: "Mountain Standard Time (MST)", label: "Mountain (MST)" },
+  { value: "Pacific Standard Time (PST)", label: "Pacific (PST)" },
 ] as const;
 
 /** Tuesday through Friday -- used by "Copy Monday" action. */
@@ -235,7 +235,7 @@ export function BusinessHoursForm({
           {t("timezone")}
         </Label>
         <Select
-          value={data.timezone ?? "Eastern Time (ET)"}
+          value={data.timezone ?? "Eastern Standard Time (EST)"}
           onValueChange={(value) => onChange({ ...data, timezone: value })}
         >
           <SelectTrigger

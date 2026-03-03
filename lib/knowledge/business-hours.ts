@@ -45,7 +45,7 @@ export interface HolidayEntry {
 export interface BusinessHoursData {
   schedule: Record<DayOfWeek, DaySchedule>;
   holidays: HolidayEntry[];
-  timezone?: string; // e.g. "Eastern Time (ET)"
+  timezone?: string; // e.g. "Eastern Standard Time (EST)"
   notes?: string; // free-form note (max 500 chars)
 }
 
@@ -81,7 +81,7 @@ export const DEFAULT_BUSINESS_HOURS: BusinessHoursData = {
     sunday: { open: false, openTime: "09:00", closeTime: "17:00" },
   },
   holidays: [],
-  timezone: "Eastern Time (ET)",
+  timezone: "Eastern Standard Time (EST)",
   notes: "",
 };
 
