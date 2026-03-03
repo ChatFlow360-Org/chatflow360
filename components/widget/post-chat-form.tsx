@@ -336,7 +336,7 @@ export function PostChatForm({
                 }
                 if (pairs.length > 0) translateTemplate(pairs);
               }}
-              className="text-xs text-muted-foreground shrink-0"
+              className="text-xs bg-amber-500 hover:bg-amber-600 text-black border-0 shrink-0"
             >
               {bulkTemplate ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Languages className="mr-1 h-3 w-3" />}
               {tCommon("translateEmpty")}

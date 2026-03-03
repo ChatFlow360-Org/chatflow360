@@ -190,7 +190,7 @@ export function AppearanceForm({
                   pairs.push({ sourceText: appearance.welcomeSubtitleEs, direction: "es-to-en", onTranslated: (v) => update("welcomeSubtitleEn", v) });
                 if (pairs.length > 0) translateWelcome(pairs);
               }}
-              className="text-xs text-muted-foreground shrink-0"
+              className="text-xs bg-amber-500 hover:bg-amber-600 text-black border-0 shrink-0"
             >
               {bulkWelcome ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Languages className="mr-1 h-3 w-3" />}
               {tCommon("translateEmpty")}
@@ -339,7 +339,7 @@ export function AppearanceForm({
                   pairs.push({ sourceText: appearance.headerSubtitleEs, direction: "es-to-en", onTranslated: (v) => update("headerSubtitleEn", v) });
                 if (pairs.length > 0) translateTexts(pairs);
               }}
-              className="text-xs text-muted-foreground shrink-0"
+              className="text-xs bg-amber-500 hover:bg-amber-600 text-black border-0 shrink-0"
             >
               {bulkTexts ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Languages className="mr-1 h-3 w-3" />}
               {tCommon("translateEmpty")}
