@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useActionState, useEffect, useTransition } from "react";
+import { useState, useActionState, useEffect, useTransition, useCallback, useMemo } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import {
   Eye,
@@ -95,6 +95,8 @@ import { PostChatForm } from "@/components/widget/post-chat-form";
 import type { WidgetAppearance } from "@/lib/widget/appearance";
 import type { PostChatSettings } from "@/lib/widget/post-chat";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { toast } from "sonner";
+import { useAutoSave } from "@/lib/hooks/use-auto-save";
 
 // --- Types ---
 
@@ -167,13 +169,7 @@ export function AiSettingsClient({
 }: AiSettingsClientProps) {
   const t = useTranslations("settings");
   const tCommon = useTranslations("common");
-  const tAdmin = useTranslations("admin.errors");
   const locale = useLocale();
-
-  const [state, formAction, isPending] = useActionState(
-    upsertAiSettings,
-    null
-  );
 
   // Knowledge state
   const [createState, createAction, isCreating] = useActionState(
@@ -242,11 +238,6 @@ export function AiSettingsClient({
   // Filter free-text items for the list
   const freeTextItems = knowledgeItems.filter((i) => !STRUCTURED_CATEGORIES.includes(i.category));
 
-  // Smooth scroll to top so user sees feedback banners
-  // Dashboard layout uses <main> with overflow-y-auto, not window scroll
-  const scrollToTop = () =>
-    document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
-
   // Close dialog on successful create
   useEffect(() => {
     if (createState?.success) {
@@ -254,7 +245,9 @@ export function AiSettingsClient({
       setAddCategory(null);
       setKnowledgeTitle("");
       setKnowledgeContent("");
-      scrollToTop();
+      toast.success(t("knowledge.created"));
+    } else if (createState?.error) {
+      toast.error(t("knowledge.createError"));
     }
   }, [createState]);
 
@@ -264,62 +257,30 @@ export function AiSettingsClient({
       setEditingItem(null);
       setEditTitle("");
       setEditContent("");
-      scrollToTop();
+      toast.success(t("knowledge.updated"));
+    } else if (updateState?.error) {
+      toast.error(t("knowledge.updateError"));
     }
   }, [updateState]);
 
   // Close BH dialog on successful save
   useEffect(() => {
-    if (bhState?.success) {
-      setShowBHDialog(false);
-      scrollToTop();
-    }
+    if (bhState?.success) { setShowBHDialog(false); toast.success(t("saved")); }
   }, [bhState]);
 
   // Close structured knowledge dialogs on successful save
   useEffect(() => {
-    if (faqsState?.success) { setShowFaqsDialog(false); scrollToTop(); }
+    if (faqsState?.success) { setShowFaqsDialog(false); toast.success(t("saved")); }
   }, [faqsState]);
   useEffect(() => {
-    if (pricingState?.success) { setShowPricingDialog(false); scrollToTop(); }
+    if (pricingState?.success) { setShowPricingDialog(false); toast.success(t("saved")); }
   }, [pricingState]);
   useEffect(() => {
-    if (locationState?.success) { setShowLocationDialog(false); scrollToTop(); }
+    if (locationState?.success) { setShowLocationDialog(false); toast.success(t("saved")); }
   }, [locationState]);
   useEffect(() => {
-    if (policiesState?.success) { setShowPoliciesDialog(false); scrollToTop(); }
+    if (policiesState?.success) { setShowPoliciesDialog(false); toast.success(t("saved")); }
   }, [policiesState]);
-
-  // Auto-dismiss feedback banners after 4s
-  const [dismissedState, setDismissedState] = useState<unknown>(null);
-  const [dismissedCreate, setDismissedCreate] = useState<unknown>(null);
-  const [dismissedUpdate, setDismissedUpdate] = useState<unknown>(null);
-
-  // Scroll to top on main save success/error + auto-dismiss
-  useEffect(() => {
-    if (state?.success || state?.error) {
-      scrollToTop();
-      setDismissedState(null);
-      const timer = setTimeout(() => setDismissedState(state), 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [state]);
-
-  useEffect(() => {
-    if (createState?.success || createState?.error) {
-      setDismissedCreate(null);
-      const timer = setTimeout(() => setDismissedCreate(createState), 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [createState]);
-
-  useEffect(() => {
-    if (updateState?.success || updateState?.error) {
-      setDismissedUpdate(null);
-      const timer = setTimeout(() => setDismissedUpdate(updateState), 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [updateState]);
 
   // Form state — technical params (editable by super_admin)
   const [model, setModel] = useState(aiSettings?.model || "gpt-4o-mini");
@@ -352,6 +313,35 @@ export function AiSettingsClient({
 
   const [keywords, setKeywords] = useState<string[]>(resolveKeywords(aiSettings));
   const [keywordInput, setKeywordInput] = useState("");
+
+  // Auto-save for AI Instructions
+  const aiSettingsData = useMemo(() => ({
+    model,
+    temperature,
+    maxTokens,
+    promptStructure,
+    keywords,
+  }), [model, temperature, maxTokens, promptStructure, keywords]);
+
+  const handleAiAutoSave = useCallback(
+    async (data: typeof aiSettingsData) => {
+      const formData = new FormData();
+      formData.set("organizationId", selectedOrgId);
+      formData.set("model", data.model);
+      formData.set("temperature", String(data.temperature));
+      formData.set("maxTokens", String(data.maxTokens));
+      formData.set("promptStructure", JSON.stringify(data.promptStructure));
+      formData.set("handoffKeywords", data.keywords.join(","));
+      return upsertAiSettings(null, formData);
+    },
+    [selectedOrgId]
+  );
+
+  const { saveStatus, hasChanges, saveNow } = useAutoSave({
+    data: aiSettingsData,
+    onSave: handleAiAutoSave,
+    onSaved: () => toast.success(t("saved")),
+  });
 
   // Reset form when org changes
   useEffect(() => {
@@ -449,6 +439,7 @@ export function AiSettingsClient({
     startDeleteTransition(async () => {
       await deleteKnowledgeItem(selectedOrgId, knowledgeId);
       setDeletingId(null);
+      toast.success(t("knowledge.deleted"));
     });
   };
 
@@ -460,40 +451,6 @@ export function AiSettingsClient({
         <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
-
-      {/* Success/Error feedback (auto-dismiss after 4s) */}
-      {state?.success && dismissedState !== state && (
-        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400">
-          {t("saved")}
-        </div>
-      )}
-      {state?.error && dismissedState !== state && (
-        <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {tAdmin(state.error)}
-        </div>
-      )}
-
-      {/* Knowledge feedback */}
-      {createState?.success && dismissedCreate !== createState && (
-        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400">
-          {t("knowledge.created")}
-        </div>
-      )}
-      {createState?.error && dismissedCreate !== createState && (
-        <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {t("knowledge.createError")}
-        </div>
-      )}
-      {updateState?.success && dismissedUpdate !== updateState && (
-        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400">
-          {t("knowledge.updated")}
-        </div>
-      )}
-      {updateState?.error && dismissedUpdate !== updateState && (
-        <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {t("knowledge.updateError")}
-        </div>
-      )}
 
       {/* Tabs */}
       <Tabs defaultValue="instructions">
@@ -518,19 +475,7 @@ export function AiSettingsClient({
 
         {/* ── Instructions Tab ── */}
         <TabsContent value="instructions" className="mt-6">
-          <form action={formAction}>
-            {/* Hidden fields */}
-            <input type="hidden" name="organizationId" value={selectedOrgId} />
-            <input type="hidden" name="model" value={model} />
-            <input type="hidden" name="temperature" value={temperature} />
-            <input type="hidden" name="maxTokens" value={maxTokens} />
-            <input type="hidden" name="promptStructure" value={JSON.stringify(promptStructure)} />
-            <input
-              type="hidden"
-              name="handoffKeywords"
-              value={keywords.join(",")}
-            />
-
+          <div>
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
               {/* ── Left Column: Main content ── */}
               <div className="space-y-6">
@@ -869,12 +814,26 @@ export function AiSettingsClient({
                 )}
 
                 {/* Action buttons */}
-                <div className="flex justify-end gap-3">
-                  <Button type="button" variant="outline">
-                    {tCommon("cancel")}
-                  </Button>
-                  <Button type="submit" disabled={isPending}>
-                    {isPending ? t("saving") : t("saveChanges")}
+                <div className="flex items-center justify-end gap-3">
+                  {saveStatus === "saving" && (
+                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground animate-in fade-in">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      {t("saving")}
+                    </span>
+                  )}
+                  {saveStatus === "saved" && (
+                    <span className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 animate-in fade-in">
+                      <Check className="h-3 w-3" />
+                      {tCommon("saved")}
+                    </span>
+                  )}
+                  {saveStatus === "error" && (
+                    <span className="text-xs text-destructive animate-in fade-in">
+                      {t("saving")}
+                    </span>
+                  )}
+                  <Button type="button" onClick={saveNow} disabled={saveStatus === "saving" || !hasChanges}>
+                    {tCommon("save")}
                   </Button>
                 </div>
               </div>
@@ -1002,7 +961,7 @@ export function AiSettingsClient({
                 )}
               </div>
             </div>
-          </form>
+          </div>
         </TabsContent>
 
         {/* ── Knowledge Base Tab ── */}
