@@ -220,7 +220,7 @@
       "editRule": "Edit",
       "duplicateRule": "Duplicate",
       "deleteRule": "Delete",
-      "saveRule": "Save",
+      "saveRule": "Done",
       "cancelEdit": "Cancel",
       "clearAllRulesTitle": "Clear All Rules",
       "clearAllRulesDescription": "This will remove all custom rules (global rules will remain). This action cannot be undone.",

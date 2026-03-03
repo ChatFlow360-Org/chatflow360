@@ -220,7 +220,7 @@
       "editRule": "Editar",
       "duplicateRule": "Duplicar",
       "deleteRule": "Eliminar",
-      "saveRule": "Guardar",
+      "saveRule": "Listo",
       "cancelEdit": "Cancelar",
       "clearAllRulesTitle": "Limpiar Todas las Reglas",
       "clearAllRulesDescription": "Esto eliminara todas las reglas personalizadas (las reglas globales se mantendran). Esta accion no se puede deshacer.",
