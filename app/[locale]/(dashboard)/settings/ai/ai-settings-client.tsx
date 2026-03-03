@@ -640,15 +640,16 @@ export function AiSettingsClient({
 
                     {/* Specific Rules */}
                     <div className="space-y-3">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
                         <Label>{t("agentInstructions.specificRules")}</Label>
                         <div className="flex items-center gap-2">
+                          {/* Clear all — desktop only (hidden on mobile) */}
                           {promptStructure.rules.length > 0 && (
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
-                              className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              className="hidden h-8 text-destructive hover:text-destructive hover:bg-destructive/10 sm:inline-flex"
                               onClick={() => setShowClearRulesConfirm(true)}
                             >
                               <Trash2 className="mr-1.5 h-3.5 w-3.5" />
@@ -665,6 +666,19 @@ export function AiSettingsClient({
                       </div>
                       {promptStructure.rules.length > 0 && (
                         <div className="space-y-2">
+                          {/* Clear all — mobile only (hidden on desktop) */}
+                          <div className="flex justify-end sm:hidden">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => setShowClearRulesConfirm(true)}
+                            >
+                              <Trash2 className="mr-1 h-3 w-3" />
+                              {t("agentInstructions.clearAllRules")}
+                            </Button>
+                          </div>
                           {promptStructure.rules.map((rule, index) => (
                             <div
                               key={index}
