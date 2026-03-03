@@ -28,7 +28,8 @@
       "selectChannel": "Select channel",
       "allOrganizations": "All organizations",
       "allChannels": "All channels",
-      "noChannels": "No channels yet"
+      "noChannels": "No channels yet",
+      "clientView": "Client View"
     },
     "header": {
       "myProfile": "My Profile",

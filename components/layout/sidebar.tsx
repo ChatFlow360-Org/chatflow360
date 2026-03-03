@@ -29,6 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import type { AdminContext } from "@/components/layout/dashboard-shell";
 
 const navItems = [
@@ -64,6 +66,17 @@ export function Sidebar({ isOpen, onClose, isSuperAdmin, userName, userEmail, ad
   const [selectedOrg, setSelectedOrg] = useState(adminContext?.selectedOrgId || "");
   const [selectedChannel, setSelectedChannel] = useState(adminContext?.selectedChannelId || "");
 
+  // SECURITY: clientViewEnabled is a UI-only preference cookie.
+  // NEVER use this value for authorization decisions.
+  // All access control is via getCurrentUser().isSuperAdmin from the database.
+  const [clientView, setClientView] = useState(() => {
+    if (typeof document === "undefined") return false;
+    const hasCookie = document.cookie.split("; ").some((c) => c === "clientViewEnabled=true");
+    return hasCookie && !!(adminContext?.selectedOrgId) && !!(adminContext?.selectedChannelId);
+  });
+
+  const showClientViewToggle = isSuperAdmin && !!selectedOrg && !!selectedChannel;
+
   const organizations = adminContext?.organizations || [];
   const currentOrg = organizations.find((o) => o.id === selectedOrg);
   const channels = currentOrg?.channels || [];
@@ -77,6 +90,10 @@ export function Sidebar({ isOpen, onClose, isSuperAdmin, userName, userEmail, ad
     const newOrgId = orgId === "none" ? "" : orgId;
     setSelectedOrg(newOrgId);
     setSelectedChannel("");
+    if (!newOrgId) {
+      setClientView(false);
+      document.cookie = `clientViewEnabled=false;path=/;max-age=${60 * 60 * 24 * 90};SameSite=Lax;Secure`;
+    }
     document.cookie = `selectedOrgId=${newOrgId};path=/;max-age=${60 * 60 * 24 * 90};SameSite=Lax;Secure`;
     document.cookie = "selectedChannelId=;path=/;max-age=0;SameSite=Lax;Secure";
     router.refresh();
@@ -85,8 +102,17 @@ export function Sidebar({ isOpen, onClose, isSuperAdmin, userName, userEmail, ad
   const handleChannelChange = (channelId: string) => {
     const newChannelId = channelId === "none" ? "" : channelId;
     setSelectedChannel(newChannelId);
+    if (!newChannelId) {
+      setClientView(false);
+      document.cookie = `clientViewEnabled=false;path=/;max-age=${60 * 60 * 24 * 90};SameSite=Lax;Secure`;
+    }
     document.cookie = `selectedChannelId=${newChannelId};path=/;max-age=${60 * 60 * 24 * 90};SameSite=Lax;Secure`;
     router.refresh();
+  };
+
+  const handleClientViewChange = (checked: boolean) => {
+    setClientView(checked);
+    document.cookie = `clientViewEnabled=${checked};path=/;max-age=${60 * 60 * 24 * 90};SameSite=Lax;Secure`;
   };
 
   const initials = userName
@@ -182,6 +208,24 @@ export function Sidebar({ isOpen, onClose, isSuperAdmin, userName, userEmail, ad
               </SelectContent>
             </Select>
           )}
+
+          {/* Client View Toggle — only when both org AND channel are selected */}
+          {showClientViewToggle && (
+            <div className="flex items-center justify-between px-1 pt-1">
+              <Label
+                htmlFor="clientView"
+                className="cursor-pointer text-[11px] font-medium text-sidebar-foreground/70"
+              >
+                {t("clientView")}
+              </Label>
+              <Switch
+                id="clientView"
+                size="sm"
+                checked={clientView}
+                onCheckedChange={handleClientViewChange}
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -211,8 +255,8 @@ export function Sidebar({ isOpen, onClose, isSuperAdmin, userName, userEmail, ad
           })}
         </ul>
 
-        {/* Admin Section */}
-        {isSuperAdmin && (
+        {/* Admin Section — hidden when Client View is active */}
+        {isSuperAdmin && !clientView && (
           <div className="mt-4">
             <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
               {t("admin")}

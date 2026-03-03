@@ -28,7 +28,8 @@
       "selectChannel": "Seleccionar canal",
       "allOrganizations": "Todas las organizaciones",
       "allChannels": "Todos los canales",
-      "noChannels": "Aun no hay canales"
+      "noChannels": "Aun no hay canales",
+      "clientView": "Vista Cliente"
     },
     "header": {
       "myProfile": "Mi Perfil",
