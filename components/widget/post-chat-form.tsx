@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
 import {
   RotateCcw,
@@ -11,6 +11,7 @@ import {
   Star,
   Mail,
   ImageIcon,
+  Check,
 } from "lucide-react";
 import { LogoCropModal } from "@/components/widget/logo-crop-modal";
 import {
@@ -39,6 +40,7 @@ import {
   type PostChatSettings,
 } from "@/lib/widget/post-chat";
 import { EmailPreview } from "@/components/widget/email-preview";
+import { useAutoSave } from "@/lib/hooks/use-auto-save";
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -57,11 +59,10 @@ export function PostChatForm({
 }: PostChatFormProps) {
   const t = useTranslations("settings.postChat");
   const tCommon = useTranslations("common");
-  const [isPending, startTransition] = useTransition();
   const [resetId, setResetId] = useState<string | null>(null);
   const [mobilePreview, setMobilePreview] = useState(false);
   const [feedback, setFeedback] = useState<{
-    type: "success" | "error";
+    type: "error";
     msg: string;
   } | null>(null);
 
@@ -82,18 +83,16 @@ export function PostChatForm({
     setSettings((prev) => ({ ...prev, [key]: value }));
   }
 
-  function handleSave() {
-    startTransition(async () => {
-      const result = await upsertPostChatSettings(channelId, settings);
-      if (result?.success) {
-        setFeedback({ type: "success", msg: t("saved") });
-      } else {
-        setFeedback({ type: "error", msg: t("saveError") });
-      }
-      document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
-      setTimeout(() => setFeedback(null), 3000);
-    });
-  }
+  // Auto-save (paused during logo upload)
+  const handleAutoSave = useCallback(
+    (data: Required<PostChatSettings>) => upsertPostChatSettings(channelId, data),
+    [channelId]
+  );
+  const { saveStatus, hasChanges, saveNow } = useAutoSave({
+    data: settings,
+    onSave: handleAutoSave,
+    enabled: !uploading && !cropSrc,
+  });
 
   function handleReset() {
     setSettings({ ...DEFAULT_POST_CHAT });
@@ -104,15 +103,9 @@ export function PostChatForm({
 
   const formContent = (
     <div className="space-y-6">
-      {/* Feedback */}
+      {/* Error Feedback (logo upload errors) */}
       {feedback && (
-        <div
-          className={`rounded-lg border px-4 py-3 text-sm ${
-            feedback.type === "success"
-              ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-              : "border-destructive/20 bg-destructive/10 text-destructive"
-          }`}
-        >
+        <div className="rounded-lg border px-4 py-3 text-sm border-destructive/20 bg-destructive/10 text-destructive">
           {feedback.msg}
         </div>
       )}
@@ -499,16 +492,34 @@ export function PostChatForm({
           <RotateCcw className="mr-1.5 h-4 w-4" />
           {t("resetDefaults")}
         </Button>
-        <Button
-          type="button"
-          onClick={handleSave}
-          disabled={isPending}
-          size="sm"
-          className="bg-cta hover:bg-cta/90 text-white"
-        >
-          {isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-          {tCommon("save")}
-        </Button>
+        <div className="flex items-center gap-3">
+          {saveStatus === "saving" && (
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground animate-in fade-in">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              {tCommon("saving")}
+            </span>
+          )}
+          {saveStatus === "saved" && (
+            <span className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 animate-in fade-in">
+              <Check className="h-3 w-3" />
+              {tCommon("saved")}
+            </span>
+          )}
+          {saveStatus === "error" && (
+            <span className="text-xs text-destructive animate-in fade-in">
+              {t("saveError")}
+            </span>
+          )}
+          <Button
+            type="button"
+            onClick={saveNow}
+            disabled={saveStatus === "saving" || !hasChanges}
+            size="sm"
+            className="bg-cta hover:bg-cta/90 text-white"
+          >
+            {tCommon("save")}
+          </Button>
+        </div>
       </div>
 
       {/* Reset Confirm Dialog */}

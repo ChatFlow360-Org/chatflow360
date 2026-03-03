@@ -6,7 +6,9 @@
     "add": "Agregar",
     "edit": "Editar",
     "active": "Activo",
-    "comingSoon": "Proximamente"
+    "comingSoon": "Proximamente",
+    "saving": "Guardando...",
+    "saved": "Guardado"
   },
   "layout": {
     "sidebar": {

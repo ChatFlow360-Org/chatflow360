@@ -6,7 +6,9 @@
     "add": "Add",
     "edit": "Edit",
     "active": "Active",
-    "comingSoon": "Coming soon"
+    "comingSoon": "Coming soon",
+    "saving": "Saving...",
+    "saved": "Saved"
   },
   "layout": {
     "sidebar": {
