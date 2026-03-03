@@ -21,6 +21,7 @@ import type { FAQsData } from "@/lib/knowledge/faqs";
 
 const QUESTION_MAX = 300;
 const ANSWER_MAX = 1000;
+const ITEMS_MAX = 20;
 
 // ─── Props ───────────────────────────────────────────────────────
 
@@ -120,7 +121,7 @@ export function FAQsForm({ data, onChange, t }: FAQsFormProps) {
     <div className="space-y-4">
       {/* Item count */}
       <p className="text-xs text-muted-foreground">
-        {t("itemCount", { count: data.items.length })}
+        {data.items.length}/{ITEMS_MAX}
       </p>
 
       {/* Accordion list */}
@@ -218,16 +219,18 @@ export function FAQsForm({ data, onChange, t }: FAQsFormProps) {
       </Accordion>
 
       {/* Add FAQ button */}
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className="border-cta/30 text-cta hover:bg-cta/10 hover:text-cta"
-        onClick={addItem}
-      >
-        <Plus className="size-4" />
-        {t("addFaq")}
-      </Button>
+      {data.items.length < ITEMS_MAX && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="border-cta/30 text-cta hover:bg-cta/10 hover:text-cta"
+          onClick={addItem}
+        >
+          <Plus className="size-4" />
+          {t("addFaq")}
+        </Button>
+      )}
 
       {/* Delete confirmation dialog */}
       <ConfirmDialog

@@ -31,7 +31,7 @@ const faqItemSchema = z.object({
 });
 
 export const faqsSchema = z.object({
-  items: z.array(faqItemSchema).min(1).max(50),
+  items: z.array(faqItemSchema).min(1).max(20),
 });
 
 // ─── Composer: Structured → Text ─────────────────────────────────
