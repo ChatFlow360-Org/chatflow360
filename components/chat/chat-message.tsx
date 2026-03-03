@@ -23,7 +23,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
           {message.senderName}
         </p>
         <p className="text-sm leading-relaxed">{message.content}</p>
-        <p className="mt-1 text-[10px] text-muted-foreground">
+        <p className="mt-1 text-xs text-muted-foreground">
           {formatTime(message.createdAt)}
         </p>
       </div>

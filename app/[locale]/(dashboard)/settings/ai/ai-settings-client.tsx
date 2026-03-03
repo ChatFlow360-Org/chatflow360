@@ -557,7 +557,7 @@ export function AiSettingsClient({
                         autoComplete="off"
                         className="bg-background"
                       />
-                      <p className="text-[10px] text-muted-foreground/70">
+                      <p className="text-xs text-muted-foreground/70">
                         {t("agentInstructions.agentNameHint")}
                       </p>
                     </div>
@@ -583,7 +583,7 @@ export function AiSettingsClient({
                         maxLength={1000}
                         className="resize-none bg-background"
                       />
-                      <p className="text-[10px] text-muted-foreground/70">
+                      <p className="text-xs text-muted-foreground/70">
                         {t("agentInstructions.roleHint")}
                       </p>
                     </div>
@@ -602,7 +602,7 @@ export function AiSettingsClient({
                               </Badge>
                             )}
                           </div>
-                          <p className="mt-1 text-[10px] text-muted-foreground/70">
+                          <p className="mt-1 text-xs text-muted-foreground/70">
                             {t("agentInstructions.globalRulesHint")}
                           </p>
                         </div>
@@ -810,7 +810,7 @@ export function AiSettingsClient({
                           {t("agentInstructions.addRule")}
                         </Button>
                       </div>
-                      <p className="text-[10px] text-muted-foreground/70">
+                      <p className="text-xs text-muted-foreground/70">
                         {t("agentInstructions.rulesHint", { count: promptStructure.rules.length })}
                       </p>
                     </div>
@@ -836,7 +836,7 @@ export function AiSettingsClient({
                         maxLength={1000}
                         className="resize-none bg-background"
                       />
-                      <p className="text-[10px] text-muted-foreground/70">
+                      <p className="text-xs text-muted-foreground/70">
                         {t("agentInstructions.personalityHint")}
                       </p>
                     </div>
@@ -1088,7 +1088,7 @@ export function AiSettingsClient({
                           step={0.1}
                           className="**:data-[slot=slider-range]:bg-cta **:data-[slot=slider-thumb]:border-cta"
                         />
-                        <p className="text-[10px] text-muted-foreground/70">
+                        <p className="text-xs text-muted-foreground/70">
                           {t("quickSettings.temperatureHint")}
                         </p>
                       </div>
@@ -1112,7 +1112,7 @@ export function AiSettingsClient({
                           step={50}
                           className="bg-background text-xs"
                         />
-                        <p className="text-[10px] text-muted-foreground/70">
+                        <p className="text-xs text-muted-foreground/70">
                           {t("quickSettings.maxTokensHint")}
                         </p>
                       </div>
@@ -1452,7 +1452,7 @@ export function AiSettingsClient({
                         <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                           {item.content}
                         </p>
-                        <span className="mt-2 block text-[10px] text-muted-foreground/60">
+                        <span className="mt-2 block text-xs text-muted-foreground/60">
                           {formatRelativeTime(item.created_at, locale)}
                         </span>
                       </div>
@@ -1574,7 +1574,7 @@ export function AiSettingsClient({
                   required
                   className="resize-none bg-background"
                 />
-                <p className="text-right text-[10px] text-muted-foreground/60">
+                <p className="text-right text-xs text-muted-foreground/60">
                   {t("knowledge.charCount", { count: knowledgeContent.length })}
                 </p>
               </div>
@@ -1868,7 +1868,7 @@ export function AiSettingsClient({
                   required
                   className="resize-none bg-background"
                 />
-                <p className="text-right text-[10px] text-muted-foreground/60">
+                <p className="text-right text-xs text-muted-foreground/60">
                   {t("knowledge.charCount", { count: editContent.length })}
                 </p>
               </div>

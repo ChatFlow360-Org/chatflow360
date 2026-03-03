@@ -635,7 +635,7 @@ export function PromptTemplatesClient({ categories, globalRules }: PromptTemplat
                   autoComplete="off"
                   className="bg-background font-mono text-sm dark:border-muted-foreground/20 dark:bg-muted/30"
                 />
-                <p className="text-[10px] text-muted-foreground/70">
+                <p className="text-xs text-muted-foreground/70">
                   {t("categorySlugHint")}
                 </p>
               </div>
