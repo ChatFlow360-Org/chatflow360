@@ -214,7 +214,7 @@
       "noCategoryAssigned": "No business category assigned to your organization. Contact your administrator.",
       "globalRules": "Global Rules",
       "globalRulesCount": "{count, plural, one {# rule} other {# rules}}",
-      "globalRulesHint": "These rules are set by the platform administrator and apply to all organizations",
+      "globalRulesHint": "These rules are enforced across all organizations to ensure consistent AI behavior and performance",
       "specificRules": "Specific Rules",
       "clearAllRules": "Clear all rules",
       "editRule": "Edit",

@@ -593,13 +593,18 @@ export function AiSettingsClient({
                     {/* Global Rules */}
                     {globalRules.length > 0 && (
                       <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <Label>{t("agentInstructions.globalRules")}</Label>
-                          {globalRulesOpen && (
-                            <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                              {t("agentInstructions.globalRulesCount", { count: globalRules.length })}
-                            </Badge>
-                          )}
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <Label>{t("agentInstructions.globalRules")}</Label>
+                            {globalRulesOpen && (
+                              <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                                {t("agentInstructions.globalRulesCount", { count: globalRules.length })}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="mt-1 text-[10px] text-muted-foreground/70">
+                            {t("agentInstructions.globalRulesHint")}
+                          </p>
                         </div>
                         <div className="rounded-lg border border-amber-500/20 bg-amber-500/5">
                           <button
@@ -627,9 +632,6 @@ export function AiSettingsClient({
                                   </div>
                                 </div>
                               ))}
-                              <p className="text-[10px] text-muted-foreground/70">
-                                {t("agentInstructions.globalRulesHint")}
-                              </p>
                             </div>
                           )}
                         </div>

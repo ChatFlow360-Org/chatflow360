@@ -214,7 +214,7 @@
       "noCategoryAssigned": "No hay categoria de negocio asignada a tu organizacion. Contacta a tu administrador.",
       "globalRules": "Reglas Globales",
       "globalRulesCount": "{count, plural, one {# regla} other {# reglas}}",
-      "globalRulesHint": "Estas reglas son establecidas por el administrador de la plataforma y aplican a todas las organizaciones",
+      "globalRulesHint": "Estas reglas se aplican de forma obligatoria para mantener un comportamiento consistente del agente de IA",
       "specificRules": "Reglas Específicas",
       "clearAllRules": "Limpiar todas las reglas",
       "editRule": "Editar",
