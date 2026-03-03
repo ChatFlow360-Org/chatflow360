@@ -31,10 +31,10 @@ import {
 // ─── Constants ───────────────────────────────────────────────────
 
 const TIMEZONES = [
-  { value: "Eastern Standard Time (EST)", label: "Eastern (EST)" },
-  { value: "Central Standard Time (CST)", label: "Central (CST)" },
-  { value: "Mountain Standard Time (MST)", label: "Mountain (MST)" },
-  { value: "Pacific Standard Time (PST)", label: "Pacific (PST)" },
+  { value: "Eastern Standard Time (EST)", label: "Eastern Standard Time (EST)" },
+  { value: "Central Standard Time (CST)", label: "Central Standard Time (CST)" },
+  { value: "Mountain Standard Time (MST)", label: "Mountain Standard Time (MST)" },
+  { value: "Pacific Standard Time (PST)", label: "Pacific Standard Time (PST)" },
 ] as const;
 
 /** Tuesday through Friday -- used by "Copy Monday" action. */
