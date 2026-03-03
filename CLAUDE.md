@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.3.15 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.3.16 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -74,4 +74,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.3.15** - Rules UX overhaul: Edit/Duplicate/Delete inline buttons with responsive layout (icons+tooltips on desktop, icons+labels on mobile). Global Rules and Specific Rules split into separate sections. Auto-save integration (edits confirm locally, auto-save persists). Clear all rules text updated, responsive positioning. Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).
+**v0.3.16** - Client View toggle for super_admins: Switch in sidebar (below channel selector) hides admin-only nav items (Organizations, Users, Prompt Templates, API Keys) so super_admins can preview the app as a client admin sees it. Persisted via cookie, auto-resets on org/channel deselect. Typography: hint text minimum 12px (text-xs) across the app. Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).

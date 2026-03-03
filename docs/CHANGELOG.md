@@ -2,6 +2,20 @@
 
 > Historial completo de versiones y cambios del proyecto.
 
+## v0.3.16 (2026-03-03)
+
+### Client View Toggle (f2b261a)
+- **"Client View" switch** — new toggle in sidebar context section, visible only when both org AND channel are selected. When ON, hides super_admin-only nav items (Organizations, Users, Prompt Templates, API Keys). When OFF, full admin view restored.
+- **Cookie persistence** — `clientViewEnabled` cookie (90 days, SameSite=Lax, Secure). Survives page reloads and navigation. Auto-resets to OFF when org or channel is deselected. Stale cookie guard: ignored if org/channel not selected on load.
+- **Security** — purely cosmetic toggle. All admin pages retain server-side `isSuperAdmin` guards (`redirect("/")` + `requireSuperAdmin()`). Cookie cannot escalate privileges.
+- **i18n** — `clientView` key (EN: "Client View", ES: "Vista Cliente").
+
+### Typography Minimum Size (ef12608)
+- **Hint text upgraded** — 12 `text-[10px]` hint paragraphs changed to `text-xs` (12px) across `ai-settings-client.tsx` (10), `prompt-templates-client.tsx` (1), `chat-message.tsx` (1). Micro-UI elements (model labels, badges, avatars, sidebar labels) kept at `text-[10px]`.
+- **Design system rule** — `text-xs` (12px) is now the minimum readable size for any paragraph or descriptive text. Documented in `.interface-design/system.md`.
+
+---
+
 ## v0.3.15 (2026-03-03)
 
 ### Rules UX Overhaul (378cd8d)
