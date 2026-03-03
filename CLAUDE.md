@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.3.20 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.3.21 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -77,4 +77,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.3.20** - RLS Policies for 3 tables: `business_categories` (super_admin SELECT), `leads` (org-scoped SELECT/DELETE via `get_user_org_ids()`), `prompt_pieces` (super_admin + org member category pieces + global rules). Post-chat flow reorder: transcript first, then rating. All tables accessed exclusively via Prisma (bypasses RLS) — policies are defense-in-depth for PostgREST. Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).
+**v0.3.21** - AI-Powered FAQ Import: Hybrid import feature (URL fetch + paste text) using `gpt-4o-mini` to extract Q&A pairs. New `POST /api/knowledge/extract-faqs` endpoint. `FaqImportDialog` component with tabs (From Text / From URL), preview with checkboxes, respects 20 FAQ limit. New `Checkbox` UI component. Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).

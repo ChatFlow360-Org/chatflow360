@@ -80,6 +80,7 @@ import { BusinessHoursForm } from "@/components/knowledge/business-hours-form";
 import { DEFAULT_BUSINESS_HOURS } from "@/lib/knowledge/business-hours";
 import type { BusinessHoursData, KnowledgeCategory } from "@/lib/knowledge/business-hours";
 import { FAQsForm } from "@/components/knowledge/faqs-form";
+import { FaqImportDialog } from "@/components/knowledge/faq-import-dialog";
 import { DEFAULT_FAQS } from "@/lib/knowledge/faqs";
 import type { FAQsData } from "@/lib/knowledge/faqs";
 import { PricingForm } from "@/components/knowledge/pricing-form";
@@ -213,6 +214,7 @@ export function AiSettingsClient({
     () => (existingFaqs?.structured_data as unknown as FAQsData) ?? { ...DEFAULT_FAQS }
   );
   const [faqsState, faqsAction, isFaqsSaving] = useActionState(upsertStructuredKnowledge, null);
+  const [showFaqImportDialog, setShowFaqImportDialog] = useState(false);
 
   // Pricing state
   const existingPricing = knowledgeItems.find((i) => i.category === "pricing");
@@ -1679,6 +1681,7 @@ export function AiSettingsClient({
                 data={faqsData}
                 onChange={setFaqsData}
                 t={(key, values) => t(`faqs.${key}`, values as Record<string, string | number | Date> | undefined)}
+                onImport={() => setShowFaqImportDialog(true)}
               />
             </div>
             <DialogFooter className="gap-2 sm:gap-0">
@@ -1703,6 +1706,28 @@ export function AiSettingsClient({
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* ── FAQ Import Dialog ── */}
+      <FaqImportDialog
+        open={showFaqImportDialog}
+        onClose={() => setShowFaqImportDialog(false)}
+        onImport={(newItems) => {
+          setFaqsData((prev) => ({
+            ...prev,
+            items: [...prev.items, ...newItems].slice(0, 20),
+          }));
+          toast.success(
+            t("faqs.import.importSuccess", { count: newItems.length }),
+          );
+        }}
+        currentCount={faqsData.items.length}
+        t={(key, values) =>
+          t(
+            `faqs.${key}`,
+            values as Record<string, string | number | Date> | undefined,
+          )
+        }
+      />
 
       {/* ── Pricing Dialog ── */}
       <Dialog open={showPricingDialog} onOpenChange={setShowPricingDialog}>

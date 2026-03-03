@@ -2,6 +2,17 @@
 
 > Versiones recientes. Para historial completo ver los archivos en [`changelog/`](./changelog/).
 
+## v0.3.21 (2026-03-03)
+
+### AI-Powered FAQ Import (Hybrid: URL + Text)
+- **`POST /api/knowledge/extract-faqs`** — new authenticated endpoint. Accepts `{ source: "url", url }` or `{ source: "text", text }`. For URLs: server-side fetch with 10s timeout + User-Agent, strips HTML (script/style/nav/header/footer/aside), limits to 15K chars. For text: processes directly. Uses `gpt-4o-mini` (temperature 0.1, `response_format: json_object`) to extract up to 30 Q&A pairs. Post-processes: validates types, truncates question to 300 chars and answer to 1000 chars. Auth via `getCurrentUser()`, API key via `resolvePlatformApiKey()`. Zod validation with discriminated union.
+- **`FaqImportDialog`** — new component (`components/knowledge/faq-import-dialog.tsx`). Two tabs: "From Text" (primary/default) and "From URL". Three phases: idle → extracting (with Loader2 spinner) → preview. Preview shows scrollable list of extracted FAQs with checkboxes. Auto-selects up to available slots (20 - existing count). Amber warning when extracted FAQs exceed available slots. "Import N FAQs" button adds selected items to the editor.
+- **`FAQsForm` updated** — new `onImport` prop + "Import FAQs" button (outline muted style) alongside "Add FAQ" in both empty state and items view.
+- **`Checkbox` UI component** — new `components/ui/checkbox.tsx` using Radix UI Checkbox primitive. Follows same pattern as Switch component.
+- **i18n** — 16 new keys (EN + ES) under `settings.faqs.import`: dialogTitle, tabUrl, tabText, urlLabel, textLabel, extractButton, extracting, noFaqsFound, selectAll, slotWarning, importSelected, importSuccess, etc.
+
+---
+
 ## v0.3.20 (2026-03-03)
 
 ### RLS Policies for 3 Tables + Post-Chat Flow Reorder (ce111ba)
@@ -53,18 +64,6 @@
 
 ---
 
-## v0.3.16 (2026-03-03)
-
-### Client View Toggle (f2b261a)
-- **"Client View" switch** — new toggle in sidebar context section, visible only when both org AND channel are selected. When ON, hides super_admin-only nav items (Organizations, Users, Prompt Templates, API Keys). When OFF, full admin view restored.
-- **Cookie persistence** — `clientViewEnabled` cookie (90 days, SameSite=Lax, Secure). Survives page reloads and navigation. Auto-resets to OFF when org or channel is deselected. Stale cookie guard: ignored if org/channel not selected on load.
-- **Security** — purely cosmetic toggle. All admin pages retain server-side `isSuperAdmin` guards (`redirect("/")` + `requireSuperAdmin()`). Cookie cannot escalate privileges.
-- **i18n** — `clientView` key (EN: "Client View", ES: "Vista Cliente").
-
-### Typography Minimum Size (ef12608)
-- **Hint text upgraded** — 12 `text-[10px]` hint paragraphs changed to `text-xs` (12px) across `ai-settings-client.tsx` (10), `prompt-templates-client.tsx` (1), `chat-message.tsx` (1). Micro-UI elements (model labels, badges, avatars, sidebar labels) kept at `text-[10px]`.
-- **Design system rule** — `text-xs` (12px) is now the minimum readable size for any paragraph or descriptive text. Documented in `.interface-design/system.md`.
-
 ---
 
 ## Indice de Todas las Versiones
@@ -75,6 +74,7 @@
 
 | Version | Fecha | Resumen |
 |---------|-------|---------|
+| v0.3.16 | 2026-03-03 | Client View Toggle + Typography Minimum Size |
 | v0.3.15 | 2026-03-03 | Rules UX Overhaul (Edit/Duplicate/Delete + Global/Specific split) |
 | v0.3.14 | 2026-03-02 | Dynamic Global Rules Injection + Take Control Amber + Post-Chat on Close + Welcome Texts |
 | v0.3.13 | 2026-03-02 | Satisfaction Rating Widget + Enhanced Recent Conversations + Take Control Button |

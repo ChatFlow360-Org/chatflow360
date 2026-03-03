@@ -366,7 +366,28 @@
       "itemCount": "{count} preguntas",
       "deleteConfirmTitle": "Eliminar esta pregunta?",
       "deleteConfirmDescription": "Esta pregunta y respuesta sera eliminada.",
-      "newQuestion": "Nueva Pregunta"
+      "newQuestion": "Nueva Pregunta",
+      "importFaqs": "Importar Preguntas",
+      "import": {
+        "dialogTitle": "Importar Preguntas Frecuentes",
+        "dialogDescription": "Extrae preguntas y respuestas de un sitio web o texto pegado usando IA",
+        "tabUrl": "Desde URL",
+        "tabText": "Desde Texto",
+        "urlLabel": "URL del Sitio",
+        "urlPlaceholder": "https://ejemplo.com/preguntas",
+        "urlHint": "Funciona para la mayoria de sitios estaticos. Puede no funcionar en apps de pagina unica.",
+        "textLabel": "Pegar Contenido",
+        "textPlaceholder": "Pega aqui el contenido de tu pagina de preguntas frecuentes...",
+        "textHint": "Pega el texto de tu pagina de FAQs. La IA extraera los pares de pregunta y respuesta.",
+        "extractButton": "Extraer Preguntas",
+        "extracting": "Extrayendo...",
+        "noFaqsFound": "No se detecto contenido de preguntas en esta fuente.",
+        "extractError": "Fallo la extraccion. Por favor intenta de nuevo.",
+        "selectAll": "Seleccionar todos",
+        "slotWarning": "{available} de {total} pueden importarse (limite de 20 preguntas)",
+        "importSelected": "Importar {count} preguntas",
+        "importSuccess": "{count} preguntas importadas exitosamente"
+      }
     },
     "pricing": {
       "title": "Precios y Servicios",

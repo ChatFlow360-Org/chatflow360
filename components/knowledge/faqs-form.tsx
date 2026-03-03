@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { Plus, Trash2, HelpCircle } from "lucide-react";
+import { Plus, Trash2, HelpCircle, Upload } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,11 +29,12 @@ interface FAQsFormProps {
   data: FAQsData;
   onChange: (data: FAQsData) => void;
   t: (key: string, values?: Record<string, unknown>) => string;
+  onImport?: () => void;
 }
 
 // ─── Main Component ──────────────────────────────────────────────
 
-export function FAQsForm({ data, onChange, t }: FAQsFormProps) {
+export function FAQsForm({ data, onChange, t, onImport }: FAQsFormProps) {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 
@@ -100,16 +101,30 @@ export function FAQsForm({ data, onChange, t }: FAQsFormProps) {
           <p className="text-xs text-muted-foreground mt-1 max-w-xs">
             {t("emptyDescription")}
           </p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="mt-4 border-cta/30 text-cta hover:bg-cta/10 hover:text-cta"
-            onClick={addItem}
-          >
-            <Plus className="size-4" />
-            {t("addFaq")}
-          </Button>
+          <div className="flex items-center gap-2 mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="border-cta/30 text-cta hover:bg-cta/10 hover:text-cta"
+              onClick={addItem}
+            >
+              <Plus className="size-4" />
+              {t("addFaq")}
+            </Button>
+            {onImport && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="border-border/60 text-muted-foreground hover:text-foreground"
+                onClick={onImport}
+              >
+                <Upload className="size-4" />
+                {t("importFaqs")}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -218,19 +233,33 @@ export function FAQsForm({ data, onChange, t }: FAQsFormProps) {
         })}
       </Accordion>
 
-      {/* Add FAQ button */}
-      {data.items.length < ITEMS_MAX && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="border-cta/30 text-cta hover:bg-cta/10 hover:text-cta"
-          onClick={addItem}
-        >
-          <Plus className="size-4" />
-          {t("addFaq")}
-        </Button>
-      )}
+      {/* Action buttons */}
+      <div className="flex flex-wrap items-center gap-2">
+        {data.items.length < ITEMS_MAX && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="border-cta/30 text-cta hover:bg-cta/10 hover:text-cta"
+            onClick={addItem}
+          >
+            <Plus className="size-4" />
+            {t("addFaq")}
+          </Button>
+        )}
+        {onImport && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="border-border/60 text-muted-foreground hover:text-foreground"
+            onClick={onImport}
+          >
+            <Upload className="size-4" />
+            {t("importFaqs")}
+          </Button>
+        )}
+      </div>
 
       {/* Delete confirmation dialog */}
       <ConfirmDialog

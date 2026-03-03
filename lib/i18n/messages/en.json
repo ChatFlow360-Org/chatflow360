@@ -366,7 +366,28 @@
       "itemCount": "{count} questions",
       "deleteConfirmTitle": "Delete this FAQ?",
       "deleteConfirmDescription": "This question and answer will be removed.",
-      "newQuestion": "New Question"
+      "newQuestion": "New Question",
+      "importFaqs": "Import FAQs",
+      "import": {
+        "dialogTitle": "Import FAQs",
+        "dialogDescription": "Extract FAQ content from a website or pasted text using AI",
+        "tabUrl": "From URL",
+        "tabText": "From Text",
+        "urlLabel": "Website URL",
+        "urlPlaceholder": "https://example.com/faq",
+        "urlHint": "Works for most static websites. May not work for single-page apps.",
+        "textLabel": "Paste Content",
+        "textPlaceholder": "Paste FAQ content from your website here...",
+        "textHint": "Paste the text content from your FAQ page. The AI will extract Q&A pairs.",
+        "extractButton": "Extract FAQs",
+        "extracting": "Extracting...",
+        "noFaqsFound": "No FAQ content detected in this source.",
+        "extractError": "Extraction failed. Please try again.",
+        "selectAll": "Select all",
+        "slotWarning": "{available} of {total} can be imported (20 FAQ limit)",
+        "importSelected": "Import {count} FAQs",
+        "importSuccess": "{count} FAQs imported successfully"
+      }
     },
     "pricing": {
       "title": "Pricing & Services",
