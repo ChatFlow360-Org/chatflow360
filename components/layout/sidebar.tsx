@@ -113,6 +113,7 @@ export function Sidebar({ isOpen, onClose, isSuperAdmin, userName, userEmail, ad
   const handleClientViewChange = (checked: boolean) => {
     setClientView(checked);
     document.cookie = `clientViewEnabled=${checked};path=/;max-age=${60 * 60 * 24 * 90};SameSite=Lax;Secure`;
+    window.dispatchEvent(new CustomEvent("clientViewChanged", { detail: checked }));
   };
 
   const initials = userName

@@ -288,6 +288,17 @@ export function AiSettingsClient({
     if (policiesState?.success) { setShowPoliciesDialog(false); toast.success(t("saved")); }
   }, [policiesState]);
 
+  // Client View — hide super_admin-only cards when simulating client view
+  const [isClientView, setIsClientView] = useState(() => {
+    if (typeof document === "undefined") return false;
+    return document.cookie.split("; ").some((c) => c === "clientViewEnabled=true");
+  });
+  useEffect(() => {
+    const handler = (e: Event) => setIsClientView((e as CustomEvent<boolean>).detail);
+    window.addEventListener("clientViewChanged", handler);
+    return () => window.removeEventListener("clientViewChanged", handler);
+  }, []);
+
   // Form state — technical params (editable by super_admin)
   const [model, setModel] = useState(aiSettings?.model || "gpt-4o-mini");
   const [temperature, setTemperature] = useState(aiSettings?.temperature ?? 0.7);
@@ -939,8 +950,8 @@ export function AiSettingsClient({
                   </CardContent>
                 </Card>
 
-                {/* Custom API Key (super admin only) */}
-                {isSuperAdmin && (
+                {/* Custom API Key (super admin only, hidden in client view) */}
+                {isSuperAdmin && !isClientView && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-base">
@@ -1030,8 +1041,8 @@ export function AiSettingsClient({
                   </CardContent>
                 </Card>
 
-                {/* Technical Settings — super_admin only */}
-                {isSuperAdmin && (
+                {/* Technical Settings — super_admin only, hidden in client view */}
+                {isSuperAdmin && !isClientView && (
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm">
