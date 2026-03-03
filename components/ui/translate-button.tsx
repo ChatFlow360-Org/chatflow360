@@ -68,11 +68,10 @@ export function TranslateButton({
       <TooltipTrigger asChild>
         <Button
           type="button"
-          variant="ghost"
           size="icon-xs"
           disabled={disabled}
           onClick={handleTranslate}
-          className={className}
+          className={`bg-amber-500 hover:bg-amber-600 text-black disabled:opacity-40 ${className ?? ""}`}
         >
           {loading ? (
             <Loader2 className="h-3 w-3 animate-spin" />
