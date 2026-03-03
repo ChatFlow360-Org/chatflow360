@@ -224,7 +224,9 @@
     resolved: false,
     realtimeConfig: null,
     postChatConfig: null, // fetched from /api/widget/config
-    contactName: null
+    contactName: null,
+    useStarterQuestions: false,
+    starterQuestions: []
   };
 
   // ─── Realtime Typing via Supabase Broadcast (Phoenix Channels) ──
@@ -725,6 +727,14 @@
       ".cf360-welcome-text{font-size:16px;font-weight:600;color:#1e293b;letter-spacing:-0.01em;}",
       ".cf360-welcome-sub{font-size:13px;color:#94a3b8;line-height:1.5;}",
 
+      // Starter questions
+      ".cf360-starter-wrap{display:flex;flex-direction:column;gap:8px;width:100%;margin-top:12px;}",
+      ".cf360-starter-btn{padding:10px 16px;border:1px solid " + primaryAlpha15 + ";border-radius:20px;",
+      "  font-size:13px;color:" + primaryColor + ";background:transparent;",
+      "  cursor:pointer;text-align:left;font-family:inherit;",
+      "  transition:background 0.15s,border-color 0.15s;outline:none;}",
+      ".cf360-starter-btn:hover{background:" + primaryAlpha15 + ";}",
+
       // Mobile fullscreen — use dvh for real viewport height on mobile browsers
       "@media (max-width:480px){",
       "  .cf360-container{bottom:0 !important;right:0 !important;left:0 !important;}",
@@ -1020,11 +1030,40 @@
       : "Send us a message to get started.");
     welcome.appendChild(wSub);
 
+    // Starter questions
+    if (state.useStarterQuestions && state.starterQuestions.length > 0) {
+      var wrap = el("div", "cf360-starter-wrap");
+      renderStarterButtons(wrap);
+      welcome.appendChild(wrap);
+    }
+
     messagesArea.appendChild(welcome);
     state.resolved = false;
     newConvBtn.classList.remove("cf360-new-conv--show");
     connectingEl.textContent = t("connecting");
     connectingEl.classList.remove("cf360-connecting--show", "cf360-connecting--connected");
+  }
+
+  function renderStarterButtons(wrap) {
+    wrap.innerHTML = "";
+    for (var i = 0; i < state.starterQuestions.length; i++) {
+      var q = state.starterQuestions[i];
+      var text = lang === "es" ? (q.textEs || q.textEn) : (q.textEn || q.textEs);
+      if (!text) continue;
+      var btn = el("button", "cf360-starter-btn");
+      btn.type = "button";
+      btn.textContent = text;
+      btn.addEventListener("click", (function (txt) {
+        return function () { handleStarterClick(txt); };
+      })(text));
+      wrap.appendChild(btn);
+    }
+  }
+
+  function handleStarterClick(text) {
+    var welcome = messagesArea.querySelector(".cf360-welcome");
+    if (welcome) welcome.remove();
+    sendMessage(text);
   }
 
   // ─── Message rendering ────────────────────────────────────────────
@@ -1748,6 +1787,15 @@
     if (wt && welTitleEl) welTitleEl.textContent = wt;
     if (ws && welSubEl) welSubEl.textContent = ws;
 
+    // Store starter questions config
+    if (cfg.useStarterQuestions && Array.isArray(cfg.starterQuestions)) {
+      state.useStarterQuestions = true;
+      state.starterQuestions = cfg.starterQuestions;
+    } else {
+      state.useStarterQuestions = false;
+      state.starterQuestions = [];
+    }
+
     // Build CSS overrides (safeHex prevents CSS injection via malformed color values)
     var hc = safeHex(cfg.headerColor, primaryColor);
     var hic = safeHex(cfg.headerIconColor, "#ffffff");
@@ -1785,7 +1833,9 @@
       ".cf360-postchat-btn--primary{background:" + sbc + ";}",
       ".cf360-footer a:hover{color:" + sbc + ";}",
       ".cf360-welcome-icon{background:" + bcAlpha15 + ";}",
-      ".cf360-welcome-icon svg{fill:" + bc + ";}"
+      ".cf360-welcome-icon svg{fill:" + bc + ";}",
+      ".cf360-starter-btn{color:" + bc + ";border-color:" + bcAlpha15 + ";}",
+      ".cf360-starter-btn:hover{background:" + bcAlpha15 + ";}"
     ].join("\n");
 
     // Remove old overrides if any

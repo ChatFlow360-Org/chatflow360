@@ -503,7 +503,15 @@
       "copyCode": "Copy to Clipboard",
       "copied": "Copied!",
       "saved": "Widget appearance saved",
-      "saveError": "Failed to save widget appearance"
+      "saveError": "Failed to save widget appearance",
+      "sectionWelcome": "Welcome Screen",
+      "sectionWelcomeHint": "Customize the first thing visitors see when they open the chat",
+      "useStarterQuestions": "Use starter questions",
+      "useStarterQuestionsHint": "Show clickable conversation starters on the welcome screen",
+      "starterQuestionsLabel": "Starter Questions",
+      "starterPlaceholderEn": "e.g., What are your business hours?",
+      "starterPlaceholderEs": "e.g., What is your schedule?",
+      "addStarterQuestion": "Add question"
     },
     "postChat": {
       "title": "Post-Chat Experience",

@@ -22,6 +22,7 @@ function ChatBubbleIcon({ size = 24, fill = "currentColor", dotFill = "#fff" }: 
 
 interface WidgetPreviewProps {
   appearance: Required<WidgetAppearance>;
+  activeSection?: "welcome" | "texts" | "colors";
   className?: string;
 }
 
@@ -59,9 +60,14 @@ const DEFAULT_TITLES = {
   es: { title: "Chatea con nosotros", subtitle: "Normalmente respondemos al instante" },
 };
 
+const DEFAULT_WELCOME = {
+  en: { title: "Chat with us", subtitle: "Send us a message to get started." },
+  es: { title: "Chatea con nosotros", subtitle: "Envíanos un mensaje para comenzar." },
+};
+
 // ─── Component ────────────────────────────────────────────────────
 
-export function WidgetPreview({ appearance, className }: WidgetPreviewProps) {
+export function WidgetPreview({ appearance, activeSection, className }: WidgetPreviewProps) {
   const t = useTranslations("settings.widgetAppearance");
   const [previewLang, setPreviewLang] = useState<"en" | "es">("en");
 
@@ -82,6 +88,14 @@ export function WidgetPreview({ appearance, className }: WidgetPreviewProps) {
     (previewLang === "es" ? appearance.headerSubtitleEs : appearance.headerSubtitleEn) ||
     DEFAULT_TITLES[previewLang].subtitle;
 
+  const welcomeTitle =
+    (previewLang === "es" ? appearance.welcomeTitleEs : appearance.welcomeTitleEn) ||
+    DEFAULT_WELCOME[previewLang].title;
+  const welcomeSubtitle =
+    (previewLang === "es" ? appearance.welcomeSubtitleEs : appearance.welcomeSubtitleEn) ||
+    DEFAULT_WELCOME[previewLang].subtitle;
+
+  const showWelcome = activeSection === "welcome";
   const messages = SAMPLE_MESSAGES[previewLang];
 
   return (
@@ -192,9 +206,9 @@ export function WidgetPreview({ appearance, className }: WidgetPreviewProps) {
             </div>
           </div>
 
-          {/* Messages Area */}
+          {/* Messages Area — conditional: welcome screen vs chat */}
           <div
-            className="flex-1 flex flex-col gap-1.5 overflow-y-auto"
+            className="flex-1 flex flex-col overflow-y-auto"
             style={{
               padding: "20px 16px",
               background: "#f8fafc",
@@ -204,62 +218,122 @@ export function WidgetPreview({ appearance, className }: WidgetPreviewProps) {
               zIndex: 1,
             }}
           >
-            {messages.map((msg, i) => (
-              <div
-                key={i}
-                className={`flex flex-col ${
-                  msg.role === "visitor" ? "items-end" : "items-start"
-                }`}
-                style={{ marginBottom: 2 }}
-              >
+            {showWelcome ? (
+              /* Welcome Screen View */
+              <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
                 <div
+                  className="flex items-center justify-center"
                   style={{
-                    maxWidth: "78%",
-                    padding: "10px 16px",
-                    fontSize: 14,
-                    lineHeight: 1.5,
-                    letterSpacing: "-0.01em",
-                    wordWrap: "break-word",
-                    borderRadius:
-                      msg.role === "visitor"
-                        ? "20px 20px 6px 20px"
-                        : "20px 20px 20px 6px",
-                    background: msg.role === "visitor" ? vbg : abg,
-                    color: msg.role === "visitor" ? vbt : abt,
+                    width: 56,
+                    height: 56,
+                    borderRadius: "50%",
+                    background: `${bc}22`,
                   }}
                 >
-                  {msg.text}
+                  <ChatBubbleIcon size={28} fill={bc} dotFill="#fff" />
+                </div>
+                <span style={{ fontSize: 16, fontWeight: 600, color: "#1e293b" }}>
+                  {welcomeTitle}
+                </span>
+                <span style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.5 }}>
+                  {welcomeSubtitle}
+                </span>
+                {appearance.useStarterQuestions && appearance.starterQuestions.length > 0 && (
+                  <div className="flex w-full flex-col gap-2 mt-2">
+                    {appearance.starterQuestions
+                      .filter((q) =>
+                        previewLang === "es"
+                          ? q.textEs || q.textEn
+                          : q.textEn || q.textEs
+                      )
+                      .map((q) => {
+                        const text =
+                          previewLang === "es"
+                            ? q.textEs || q.textEn
+                            : q.textEn || q.textEs;
+                        return (
+                          <div
+                            key={q.id}
+                            style={{
+                              padding: "10px 16px",
+                              border: `1px solid ${bc}40`,
+                              borderRadius: 20,
+                              fontSize: 13,
+                              color: bc,
+                              background: `${bc}08`,
+                              cursor: "pointer",
+                              textAlign: "left",
+                              transition: "background 0.15s",
+                            }}
+                          >
+                            {text}
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Chat View */
+              <div className="flex flex-col gap-1.5">
+                {messages.map((msg, i) => (
+                  <div
+                    key={i}
+                    className={`flex flex-col ${
+                      msg.role === "visitor" ? "items-end" : "items-start"
+                    }`}
+                    style={{ marginBottom: 2 }}
+                  >
+                    <div
+                      style={{
+                        maxWidth: "78%",
+                        padding: "10px 16px",
+                        fontSize: 14,
+                        lineHeight: 1.5,
+                        letterSpacing: "-0.01em",
+                        wordWrap: "break-word",
+                        borderRadius:
+                          msg.role === "visitor"
+                            ? "20px 20px 6px 20px"
+                            : "20px 20px 20px 6px",
+                        background: msg.role === "visitor" ? vbg : abg,
+                        color: msg.role === "visitor" ? vbt : abt,
+                      }}
+                    >
+                      {msg.text}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Typing indicator */}
+                <div className="flex flex-col items-start" style={{ marginBottom: 2 }}>
+                  <div
+                    className="flex items-end gap-1"
+                    style={{
+                      padding: "14px 20px",
+                      background: abg,
+                      borderRadius: "20px 20px 20px 6px",
+                      minHeight: 44,
+                    }}
+                  >
+                    {[0, 1, 2].map((i) => (
+                      <span
+                        key={i}
+                        className="inline-block rounded-full"
+                        style={{
+                          width: 7,
+                          height: 7,
+                          background: sbc,
+                          opacity: 0.6,
+                          animation: `cf360PreviewWave 1.3s cubic-bezier(0.4,0,0.2,1) infinite`,
+                          animationDelay: `${i * 0.15}s`,
+                        }}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
-            ))}
-
-            {/* Typing indicator */}
-            <div className="flex flex-col items-start" style={{ marginBottom: 2 }}>
-              <div
-                className="flex items-end gap-1"
-                style={{
-                  padding: "14px 20px",
-                  background: abg,
-                  borderRadius: "20px 20px 20px 6px",
-                  minHeight: 44,
-                }}
-              >
-                {[0, 1, 2].map((i) => (
-                  <span
-                    key={i}
-                    className="inline-block rounded-full"
-                    style={{
-                      width: 7,
-                      height: 7,
-                      background: sbc,
-                      opacity: 0.6,
-                      animation: `cf360PreviewWave 1.3s cubic-bezier(0.4,0,0.2,1) infinite`,
-                      animationDelay: `${i * 0.15}s`,
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Input Area */}

@@ -2,6 +2,21 @@
 
 > Historial completo de versiones y cambios del proyecto.
 
+## v0.3.17 (2026-03-03)
+
+### Starter Questions for Widget
+- **New WELCOME card** — Settings > Widget restructured: welcome title/subtitle fields moved from TEXTS into a new "Welcome Screen" card (first position). TEXTS card now contains only header title/subtitle.
+- **Starter Questions toggle** — "Use starter questions" switch with hint text. When ON, reveals the Starter Questions editor. When OFF, editor hidden and questions not rendered.
+- **Drag-and-drop editor** — up to 5 bilingual questions (EN/ES) with `@dnd-kit` sortable rows. Each row: drag handle (GripVertical) + two inputs (side-by-side on desktop, stacked on mobile) + delete button. Counter shows `{n}/5`, "Add question" button auto-hides at max.
+- **Context-aware preview** — `activeSection` state (`"welcome" | "texts" | "colors"`) switches the live preview between welcome screen mode (icon + title + subtitle + starter buttons) and chat view mode (sample messages + typing indicator). Controlled by `onFocus` on each Card.
+- **Widget embed** — `chatflow360.js` renders starter question buttons on the welcome screen using `bubbleColor` as accent. Click sends the question text via `sendMessage()`. Buttons auto-disappear when any message is sent (existing `appendMessage()` removes `.cf360-welcome`).
+- **Data model** — `StarterQuestion` interface (`id`, `textEn`, `textEs`). `WidgetAppearance` extended with `useStarterQuestions: boolean` and `starterQuestions: StarterQuestion[]`. Zod validation: max 5 items, max 100 chars per text. `resolveAppearance()` updated for boolean + array types.
+- **Auto-save** — works without changes via existing `useAutoSave` hook (JSON snapshot comparison).
+- **i18n** — 8 new keys (EN + ES): sectionWelcome, sectionWelcomeHint, useStarterQuestions, useStarterQuestionsHint, starterQuestionsLabel, starterPlaceholderEn/Es, addStarterQuestion.
+- **Dependencies** — `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities` added.
+
+---
+
 ## v0.3.16 (2026-03-03)
 
 ### Client View Toggle (f2b261a)

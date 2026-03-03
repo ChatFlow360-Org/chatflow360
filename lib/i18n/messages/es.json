@@ -503,7 +503,15 @@
       "copyCode": "Copiar al Portapapeles",
       "copied": "Copiado!",
       "saved": "Apariencia del widget guardada",
-      "saveError": "Error al guardar la apariencia del widget"
+      "saveError": "Error al guardar la apariencia del widget",
+      "sectionWelcome": "Pantalla de Bienvenida",
+      "sectionWelcomeHint": "Personaliza lo primero que ven los visitantes al abrir el chat",
+      "useStarterQuestions": "Usar preguntas iniciales",
+      "useStarterQuestionsHint": "Muestra botones de conversacion en la pantalla de bienvenida",
+      "starterQuestionsLabel": "Preguntas Iniciales",
+      "starterPlaceholderEn": "ej., What are your business hours?",
+      "starterPlaceholderEs": "ej., Cual es su horario de atencion?",
+      "addStarterQuestion": "Agregar pregunta"
     },
     "postChat": {
       "title": "Experiencia Post-Chat",

@@ -2,6 +2,12 @@ import { z } from "zod";
 
 // ─── Types ────────────────────────────────────────────────────────
 
+export interface StarterQuestion {
+  id: string;
+  textEn: string;
+  textEs: string;
+}
+
 export interface WidgetAppearance {
   headerTitleEn?: string;
   headerTitleEs?: string;
@@ -20,6 +26,8 @@ export interface WidgetAppearance {
   aiBubbleBg?: string;
   aiBubbleText?: string;
   sendButtonColor?: string;
+  useStarterQuestions?: boolean;
+  starterQuestions?: StarterQuestion[];
 }
 
 /** Shape of `Channel.config` JSONB (only the widget slice). */
@@ -47,6 +55,8 @@ export const DEFAULT_WIDGET_APPEARANCE: Required<WidgetAppearance> = {
   aiBubbleBg: "#e8ecf1",
   aiBubbleText: "#1e293b",
   sendButtonColor: "#2f92ad",
+  useStarterQuestions: false,
+  starterQuestions: [],
 };
 
 // ─── Zod Schema ───────────────────────────────────────────────────
@@ -54,6 +64,12 @@ export const DEFAULT_WIDGET_APPEARANCE: Required<WidgetAppearance> = {
 const hexColor = z
   .string()
   .regex(/^#[0-9A-Fa-f]{6}$/, "Must be a valid hex color (#RRGGBB)");
+
+const starterQuestionSchema = z.object({
+  id: z.string().min(1),
+  textEn: z.string().max(100),
+  textEs: z.string().max(100),
+});
 
 export const widgetAppearanceSchema = z.object({
   headerTitleEn: z.string().max(40).optional().default(""),
@@ -73,6 +89,8 @@ export const widgetAppearanceSchema = z.object({
   aiBubbleBg: hexColor.optional().default(DEFAULT_WIDGET_APPEARANCE.aiBubbleBg),
   aiBubbleText: hexColor.optional().default(DEFAULT_WIDGET_APPEARANCE.aiBubbleText),
   sendButtonColor: hexColor.optional().default(DEFAULT_WIDGET_APPEARANCE.sendButtonColor),
+  useStarterQuestions: z.boolean().optional().default(false),
+  starterQuestions: z.array(starterQuestionSchema).max(5).optional().default([]),
 });
 
 // ─── Resolver ─────────────────────────────────────────────────────
@@ -101,9 +119,20 @@ export function resolveAppearance(
 
   const resolved = { ...DEFAULT_WIDGET_APPEARANCE };
   for (const key of Object.keys(DEFAULT_WIDGET_APPEARANCE) as (keyof WidgetAppearance)[]) {
-    const val = compat[key];
-    if (val && val.length > 0) {
-      (resolved as Record<string, string>)[key] = val;
+    if (key === "useStarterQuestions") {
+      if (typeof compat[key] === "boolean") {
+        (resolved as Record<string, unknown>)[key] = compat[key];
+      }
+    } else if (key === "starterQuestions") {
+      const arr = (stored as Record<string, unknown>)?.[key];
+      if (Array.isArray(arr)) {
+        (resolved as Record<string, unknown>)[key] = arr;
+      }
+    } else {
+      const val = compat[key];
+      if (val && typeof val === "string" && val.length > 0) {
+        (resolved as Record<string, unknown>)[key] = val;
+      }
     }
   }
   return resolved;

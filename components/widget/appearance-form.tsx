@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { RotateCcw, Loader2, Eye, Check } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import {
   Card,
   CardContent,
@@ -30,6 +31,7 @@ import {
 import { WidgetPreview } from "@/components/widget/widget-preview";
 import { EmbedCodeCard } from "@/components/widget/embed-code-card";
 import { useAutoSave } from "@/lib/hooks/use-auto-save";
+import { StarterQuestionsEditor } from "@/components/widget/starter-questions-editor";
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -91,6 +93,36 @@ export function AppearanceForm({
   const tCommon = useTranslations("common");
   const [resetId, setResetId] = useState<string | null>(null);
   const [mobilePreview, setMobilePreview] = useState(false);
+  const [activeSection, setActiveSection] = useState<"welcome" | "texts" | "colors">("welcome");
+
+  // Scroll-spy refs
+  const welcomeRef = useRef<HTMLDivElement>(null);
+  const textsRef = useRef<HTMLDivElement>(null);
+  const colorsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const map = new Map<Element, "welcome" | "texts" | "colors">();
+    if (welcomeRef.current) map.set(welcomeRef.current, "welcome");
+    if (textsRef.current) map.set(textsRef.current, "texts");
+    if (colorsRef.current) map.set(colorsRef.current, "colors");
+    if (map.size === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const section = map.get(entry.target);
+            if (section) setActiveSection(section);
+          }
+        }
+      },
+      // Trigger zone: top 20%-40% of viewport
+      { rootMargin: "-20% 0px -60% 0px" },
+    );
+
+    map.forEach((_, el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
 
   // Form state
   const [appearance, setAppearance] = useState<Required<WidgetAppearance>>(
@@ -127,8 +159,119 @@ export function AppearanceForm({
 
   const formContent = (
     <div className="space-y-6">
-      {/* Texts Section — EN/ES pairs */}
-      <Card>
+      {/* Welcome Screen Section */}
+      <Card ref={welcomeRef}>
+        <CardHeader className="pb-4">
+          <CardTitle className="text-base">{t("sectionWelcome")}</CardTitle>
+          <CardDescription className="text-xs">
+            {t("sectionWelcomeHint")}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {/* Welcome Title — EN / ES */}
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">{t("welcomeTitle")}</Label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="welcomeTitleEn" className="text-xs text-muted-foreground">
+                  {t("english")}
+                </Label>
+                <Input
+                  id="welcomeTitleEn"
+                  value={appearance.welcomeTitleEn}
+                  onChange={(e) => update("welcomeTitleEn", e.target.value)}
+                  placeholder={t("welcomeTitlePlaceholderEn")}
+                  maxLength={60}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="welcomeTitleEs" className="text-xs text-muted-foreground">
+                  {t("spanish")}
+                </Label>
+                <Input
+                  id="welcomeTitleEs"
+                  value={appearance.welcomeTitleEs}
+                  onChange={(e) => update("welcomeTitleEs", e.target.value)}
+                  placeholder={t("welcomeTitlePlaceholderEs")}
+                  maxLength={60}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t("welcomeTitleHint")}
+            </p>
+          </div>
+
+          <Separator />
+
+          {/* Welcome Subtitle — EN / ES */}
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">{t("welcomeSubtitle")}</Label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="welcomeSubtitleEn" className="text-xs text-muted-foreground">
+                  {t("english")}
+                </Label>
+                <Input
+                  id="welcomeSubtitleEn"
+                  value={appearance.welcomeSubtitleEn}
+                  onChange={(e) => update("welcomeSubtitleEn", e.target.value)}
+                  placeholder={t("welcomeSubtitlePlaceholderEn")}
+                  maxLength={80}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="welcomeSubtitleEs" className="text-xs text-muted-foreground">
+                  {t("spanish")}
+                </Label>
+                <Input
+                  id="welcomeSubtitleEs"
+                  value={appearance.welcomeSubtitleEs}
+                  onChange={(e) => update("welcomeSubtitleEs", e.target.value)}
+                  placeholder={t("welcomeSubtitlePlaceholderEs")}
+                  maxLength={80}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t("welcomeSubtitleHint")}
+            </p>
+          </div>
+
+          <Separator />
+
+          {/* Starter Questions Toggle */}
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <Label htmlFor="useStarterQuestions" className="cursor-pointer text-sm font-medium">
+                {t("useStarterQuestions")}
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                {t("useStarterQuestionsHint")}
+              </p>
+            </div>
+            <Switch
+              id="useStarterQuestions"
+              checked={appearance.useStarterQuestions}
+              onCheckedChange={(v) => update("useStarterQuestions", v)}
+            />
+          </div>
+
+          {/* Starter Questions Editor */}
+          {appearance.useStarterQuestions && (
+            <>
+              <Separator />
+              <StarterQuestionsEditor
+                questions={appearance.starterQuestions}
+                onChange={(qs) => update("starterQuestions", qs)}
+              />
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Texts Section — Header EN/ES pairs */}
+      <Card ref={textsRef}>
         <CardHeader className="pb-4">
           <CardTitle className="text-base">{t("sectionTexts")}</CardTitle>
           <CardDescription className="text-xs">
@@ -205,83 +348,11 @@ export function AppearanceForm({
               {t("headerSubtitleHint")}
             </p>
           </div>
-
-          <Separator />
-
-          {/* Welcome Title — EN / ES */}
-          <div className="space-y-1.5">
-            <Label className="text-sm font-medium">{t("welcomeTitle")}</Label>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="welcomeTitleEn" className="text-xs text-muted-foreground">
-                  {t("english")}
-                </Label>
-                <Input
-                  id="welcomeTitleEn"
-                  value={appearance.welcomeTitleEn}
-                  onChange={(e) => update("welcomeTitleEn", e.target.value)}
-                  placeholder={t("welcomeTitlePlaceholderEn")}
-                  maxLength={60}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="welcomeTitleEs" className="text-xs text-muted-foreground">
-                  {t("spanish")}
-                </Label>
-                <Input
-                  id="welcomeTitleEs"
-                  value={appearance.welcomeTitleEs}
-                  onChange={(e) => update("welcomeTitleEs", e.target.value)}
-                  placeholder={t("welcomeTitlePlaceholderEs")}
-                  maxLength={60}
-                />
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {t("welcomeTitleHint")}
-            </p>
-          </div>
-
-          <Separator />
-
-          {/* Welcome Subtitle — EN / ES */}
-          <div className="space-y-1.5">
-            <Label className="text-sm font-medium">{t("welcomeSubtitle")}</Label>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="welcomeSubtitleEn" className="text-xs text-muted-foreground">
-                  {t("english")}
-                </Label>
-                <Input
-                  id="welcomeSubtitleEn"
-                  value={appearance.welcomeSubtitleEn}
-                  onChange={(e) => update("welcomeSubtitleEn", e.target.value)}
-                  placeholder={t("welcomeSubtitlePlaceholderEn")}
-                  maxLength={80}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="welcomeSubtitleEs" className="text-xs text-muted-foreground">
-                  {t("spanish")}
-                </Label>
-                <Input
-                  id="welcomeSubtitleEs"
-                  value={appearance.welcomeSubtitleEs}
-                  onChange={(e) => update("welcomeSubtitleEs", e.target.value)}
-                  placeholder={t("welcomeSubtitlePlaceholderEs")}
-                  maxLength={80}
-                />
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {t("welcomeSubtitleHint")}
-            </p>
-          </div>
         </CardContent>
       </Card>
 
       {/* Color Sections — 2-col grid */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div ref={colorsRef} className="grid gap-4 sm:grid-cols-2">
         {/* Header */}
         <Card>
           <CardHeader className="pb-4">
@@ -449,7 +520,7 @@ export function AppearanceForm({
         {/* Preview Column — desktop only (lg+) */}
         <div className="hidden lg:block w-[380px] shrink-0">
           <div className="sticky top-24">
-            <WidgetPreview appearance={appearance} />
+            <WidgetPreview appearance={appearance} activeSection={activeSection} />
           </div>
         </div>
       </div>
@@ -471,7 +542,7 @@ export function AppearanceForm({
             <DrawerTitle>{t("preview")}</DrawerTitle>
           </DrawerHeader>
           <div className="px-4 pb-6 overflow-y-auto max-h-[80vh]">
-            <WidgetPreview appearance={appearance} />
+            <WidgetPreview appearance={appearance} activeSection={activeSection} />
           </div>
         </DrawerContent>
       </Drawer>
