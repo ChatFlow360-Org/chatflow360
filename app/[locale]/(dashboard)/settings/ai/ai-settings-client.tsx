@@ -595,9 +595,11 @@ export function AiSettingsClient({
                       <div className="space-y-3">
                         <div className="flex items-center gap-2">
                           <Label>{t("agentInstructions.globalRules")}</Label>
-                          <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                            {t("agentInstructions.globalRulesCount", { count: globalRules.length })}
-                          </Badge>
+                          {globalRulesOpen && (
+                            <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                              {t("agentInstructions.globalRulesCount", { count: globalRules.length })}
+                            </Badge>
+                          )}
                         </div>
                         <div className="rounded-lg border border-amber-500/20 bg-amber-500/5">
                           <button
