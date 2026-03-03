@@ -13,6 +13,7 @@ import {
   Mail,
   ImageIcon,
   Check,
+  Languages,
 } from "lucide-react";
 import { LogoCropModal } from "@/components/widget/logo-crop-modal";
 import {
@@ -42,6 +43,8 @@ import {
 } from "@/lib/widget/post-chat";
 import { EmailPreview } from "@/components/widget/email-preview";
 import { useAutoSave } from "@/lib/hooks/use-auto-save";
+import { TranslateButton } from "@/components/ui/translate-button";
+import { useBulkTranslate } from "@/lib/hooks/use-bulk-translate";
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -62,6 +65,7 @@ export function PostChatForm({
   const tCommon = useTranslations("common");
   const [resetId, setResetId] = useState<string | null>(null);
   const [mobilePreview, setMobilePreview] = useState(false);
+  const { translateAll: translateTemplate, loading: bulkTemplate } = useBulkTranslate();
   const [feedback, setFeedback] = useState<{
     type: "error";
     msg: string;
@@ -304,10 +308,40 @@ export function PostChatForm({
       {/* Email Template Section */}
       <Card>
         <CardHeader className="pb-4">
-          <CardTitle className="text-base">{t("sectionTemplate")}</CardTitle>
-          <CardDescription className="text-xs">
-            {t("sectionTemplateHint")}
-          </CardDescription>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle className="text-base">{t("sectionTemplate")}</CardTitle>
+              <CardDescription className="text-xs">
+                {t("sectionTemplateHint")}
+              </CardDescription>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="xs"
+              disabled={bulkTemplate}
+              onClick={() => {
+                const fields = [
+                  { en: "emailSubjectEn", es: "emailSubjectEs" },
+                  { en: "emailGreetingEn", es: "emailGreetingEs" },
+                  { en: "emailClosingEn", es: "emailClosingEs" },
+                  { en: "emailFooterTextEn", es: "emailFooterTextEs" },
+                ] as const;
+                const pairs: { sourceText: string; direction: "en-to-es" | "es-to-en"; onTranslated: (t: string) => void }[] = [];
+                for (const f of fields) {
+                  if (settings[f.en] && !settings[f.es])
+                    pairs.push({ sourceText: settings[f.en], direction: "en-to-es", onTranslated: (v) => update(f.es, v) });
+                  else if (settings[f.es] && !settings[f.en])
+                    pairs.push({ sourceText: settings[f.es], direction: "es-to-en", onTranslated: (v) => update(f.en, v) });
+                }
+                if (pairs.length > 0) translateTemplate(pairs);
+              }}
+              className="text-xs text-muted-foreground shrink-0"
+            >
+              {bulkTemplate ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Languages className="mr-1 h-3 w-3" />}
+              {tCommon("translateEmpty")}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-5">
           {/* Variables hint */}
@@ -331,9 +365,10 @@ export function PostChatForm({
             <Label className="text-sm font-medium">{t("emailSubject")}</Label>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">
-                  {t("english")}
-                </Label>
+                <div className="flex items-center gap-1">
+                  <Label className="text-xs text-muted-foreground">{t("english")}</Label>
+                  <TranslateButton sourceText={settings.emailSubjectEs} direction="es-to-en" onTranslated={(v) => update("emailSubjectEn", v)} />
+                </div>
                 <Input
                   value={settings.emailSubjectEn}
                   onChange={(e) => update("emailSubjectEn", e.target.value)}
@@ -342,9 +377,10 @@ export function PostChatForm({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">
-                  {t("spanish")}
-                </Label>
+                <div className="flex items-center gap-1">
+                  <Label className="text-xs text-muted-foreground">{t("spanish")}</Label>
+                  <TranslateButton sourceText={settings.emailSubjectEn} direction="en-to-es" onTranslated={(v) => update("emailSubjectEs", v)} />
+                </div>
                 <Input
                   value={settings.emailSubjectEs}
                   onChange={(e) => update("emailSubjectEs", e.target.value)}
@@ -362,9 +398,10 @@ export function PostChatForm({
             <Label className="text-sm font-medium">{t("emailGreeting")}</Label>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">
-                  {t("english")}
-                </Label>
+                <div className="flex items-center gap-1">
+                  <Label className="text-xs text-muted-foreground">{t("english")}</Label>
+                  <TranslateButton sourceText={settings.emailGreetingEs} direction="es-to-en" onTranslated={(v) => update("emailGreetingEn", v)} />
+                </div>
                 <Input
                   value={settings.emailGreetingEn}
                   onChange={(e) => update("emailGreetingEn", e.target.value)}
@@ -373,9 +410,10 @@ export function PostChatForm({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">
-                  {t("spanish")}
-                </Label>
+                <div className="flex items-center gap-1">
+                  <Label className="text-xs text-muted-foreground">{t("spanish")}</Label>
+                  <TranslateButton sourceText={settings.emailGreetingEn} direction="en-to-es" onTranslated={(v) => update("emailGreetingEs", v)} />
+                </div>
                 <Input
                   value={settings.emailGreetingEs}
                   onChange={(e) => update("emailGreetingEs", e.target.value)}
@@ -393,9 +431,10 @@ export function PostChatForm({
             <Label className="text-sm font-medium">{t("emailClosing")}</Label>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">
-                  {t("english")}
-                </Label>
+                <div className="flex items-center gap-1">
+                  <Label className="text-xs text-muted-foreground">{t("english")}</Label>
+                  <TranslateButton sourceText={settings.emailClosingEs} direction="es-to-en" onTranslated={(v) => update("emailClosingEn", v)} />
+                </div>
                 <Input
                   value={settings.emailClosingEn}
                   onChange={(e) => update("emailClosingEn", e.target.value)}
@@ -404,9 +443,10 @@ export function PostChatForm({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">
-                  {t("spanish")}
-                </Label>
+                <div className="flex items-center gap-1">
+                  <Label className="text-xs text-muted-foreground">{t("spanish")}</Label>
+                  <TranslateButton sourceText={settings.emailClosingEn} direction="en-to-es" onTranslated={(v) => update("emailClosingEs", v)} />
+                </div>
                 <Input
                   value={settings.emailClosingEs}
                   onChange={(e) => update("emailClosingEs", e.target.value)}
@@ -457,9 +497,10 @@ export function PostChatForm({
             <Label className="text-sm font-medium">{t("emailFooter")}</Label>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">
-                  {t("english")}
-                </Label>
+                <div className="flex items-center gap-1">
+                  <Label className="text-xs text-muted-foreground">{t("english")}</Label>
+                  <TranslateButton sourceText={settings.emailFooterTextEs} direction="es-to-en" onTranslated={(v) => update("emailFooterTextEn", v)} />
+                </div>
                 <Input
                   value={settings.emailFooterTextEn}
                   onChange={(e) => update("emailFooterTextEn", e.target.value)}
@@ -468,9 +509,10 @@ export function PostChatForm({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">
-                  {t("spanish")}
-                </Label>
+                <div className="flex items-center gap-1">
+                  <Label className="text-xs text-muted-foreground">{t("spanish")}</Label>
+                  <TranslateButton sourceText={settings.emailFooterTextEn} direction="en-to-es" onTranslated={(v) => update("emailFooterTextEs", v)} />
+                </div>
                 <Input
                   value={settings.emailFooterTextEs}
                   onChange={(e) => update("emailFooterTextEs", e.target.value)}

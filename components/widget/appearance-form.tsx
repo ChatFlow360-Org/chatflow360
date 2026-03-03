@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { RotateCcw, Loader2, Eye, Check } from "lucide-react";
+import { RotateCcw, Loader2, Eye, Check, Languages } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import {
   Card,
@@ -32,6 +32,8 @@ import { WidgetPreview } from "@/components/widget/widget-preview";
 import { EmbedCodeCard } from "@/components/widget/embed-code-card";
 import { useAutoSave } from "@/lib/hooks/use-auto-save";
 import { StarterQuestionsEditor } from "@/components/widget/starter-questions-editor";
+import { TranslateButton } from "@/components/ui/translate-button";
+import { useBulkTranslate } from "@/lib/hooks/use-bulk-translate";
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -94,6 +96,8 @@ export function AppearanceForm({
   const [resetId, setResetId] = useState<string | null>(null);
   const [mobilePreview, setMobilePreview] = useState(false);
   const [activeSection, setActiveSection] = useState<"welcome" | "texts" | "colors">("welcome");
+  const { translateAll: translateWelcome, loading: bulkWelcome } = useBulkTranslate();
+  const { translateAll: translateTexts, loading: bulkTexts } = useBulkTranslate();
 
   // Scroll-spy refs
   const welcomeRef = useRef<HTMLDivElement>(null);
@@ -162,10 +166,36 @@ export function AppearanceForm({
       {/* Welcome Screen Section */}
       <Card ref={welcomeRef}>
         <CardHeader className="pb-4">
-          <CardTitle className="text-base">{t("sectionWelcome")}</CardTitle>
-          <CardDescription className="text-xs">
-            {t("sectionWelcomeHint")}
-          </CardDescription>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle className="text-base">{t("sectionWelcome")}</CardTitle>
+              <CardDescription className="text-xs">
+                {t("sectionWelcomeHint")}
+              </CardDescription>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="xs"
+              disabled={bulkWelcome}
+              onClick={() => {
+                const pairs: { sourceText: string; direction: "en-to-es" | "es-to-en"; onTranslated: (t: string) => void }[] = [];
+                if (appearance.welcomeTitleEn && !appearance.welcomeTitleEs)
+                  pairs.push({ sourceText: appearance.welcomeTitleEn, direction: "en-to-es", onTranslated: (v) => update("welcomeTitleEs", v) });
+                else if (appearance.welcomeTitleEs && !appearance.welcomeTitleEn)
+                  pairs.push({ sourceText: appearance.welcomeTitleEs, direction: "es-to-en", onTranslated: (v) => update("welcomeTitleEn", v) });
+                if (appearance.welcomeSubtitleEn && !appearance.welcomeSubtitleEs)
+                  pairs.push({ sourceText: appearance.welcomeSubtitleEn, direction: "en-to-es", onTranslated: (v) => update("welcomeSubtitleEs", v) });
+                else if (appearance.welcomeSubtitleEs && !appearance.welcomeSubtitleEn)
+                  pairs.push({ sourceText: appearance.welcomeSubtitleEs, direction: "es-to-en", onTranslated: (v) => update("welcomeSubtitleEn", v) });
+                if (pairs.length > 0) translateWelcome(pairs);
+              }}
+              className="text-xs text-muted-foreground shrink-0"
+            >
+              {bulkWelcome ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Languages className="mr-1 h-3 w-3" />}
+              {tCommon("translateEmpty")}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-5">
           {/* Welcome Title — EN / ES */}
@@ -173,9 +203,12 @@ export function AppearanceForm({
             <Label className="text-sm font-medium">{t("welcomeTitle")}</Label>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="welcomeTitleEn" className="text-xs text-muted-foreground">
-                  {t("english")}
-                </Label>
+                <div className="flex items-center gap-1">
+                  <Label htmlFor="welcomeTitleEn" className="text-xs text-muted-foreground">
+                    {t("english")}
+                  </Label>
+                  <TranslateButton sourceText={appearance.welcomeTitleEs} direction="es-to-en" onTranslated={(v) => update("welcomeTitleEn", v)} />
+                </div>
                 <Input
                   id="welcomeTitleEn"
                   value={appearance.welcomeTitleEn}
@@ -185,9 +218,12 @@ export function AppearanceForm({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="welcomeTitleEs" className="text-xs text-muted-foreground">
-                  {t("spanish")}
-                </Label>
+                <div className="flex items-center gap-1">
+                  <Label htmlFor="welcomeTitleEs" className="text-xs text-muted-foreground">
+                    {t("spanish")}
+                  </Label>
+                  <TranslateButton sourceText={appearance.welcomeTitleEn} direction="en-to-es" onTranslated={(v) => update("welcomeTitleEs", v)} />
+                </div>
                 <Input
                   id="welcomeTitleEs"
                   value={appearance.welcomeTitleEs}
@@ -209,9 +245,12 @@ export function AppearanceForm({
             <Label className="text-sm font-medium">{t("welcomeSubtitle")}</Label>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="welcomeSubtitleEn" className="text-xs text-muted-foreground">
-                  {t("english")}
-                </Label>
+                <div className="flex items-center gap-1">
+                  <Label htmlFor="welcomeSubtitleEn" className="text-xs text-muted-foreground">
+                    {t("english")}
+                  </Label>
+                  <TranslateButton sourceText={appearance.welcomeSubtitleEs} direction="es-to-en" onTranslated={(v) => update("welcomeSubtitleEn", v)} />
+                </div>
                 <Input
                   id="welcomeSubtitleEn"
                   value={appearance.welcomeSubtitleEn}
@@ -221,9 +260,12 @@ export function AppearanceForm({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="welcomeSubtitleEs" className="text-xs text-muted-foreground">
-                  {t("spanish")}
-                </Label>
+                <div className="flex items-center gap-1">
+                  <Label htmlFor="welcomeSubtitleEs" className="text-xs text-muted-foreground">
+                    {t("spanish")}
+                  </Label>
+                  <TranslateButton sourceText={appearance.welcomeSubtitleEn} direction="en-to-es" onTranslated={(v) => update("welcomeSubtitleEs", v)} />
+                </div>
                 <Input
                   id="welcomeSubtitleEs"
                   value={appearance.welcomeSubtitleEs}
@@ -273,10 +315,36 @@ export function AppearanceForm({
       {/* Texts Section — Header EN/ES pairs */}
       <Card ref={textsRef}>
         <CardHeader className="pb-4">
-          <CardTitle className="text-base">{t("sectionTexts")}</CardTitle>
-          <CardDescription className="text-xs">
-            {t("sectionTextsHint")}
-          </CardDescription>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle className="text-base">{t("sectionTexts")}</CardTitle>
+              <CardDescription className="text-xs">
+                {t("sectionTextsHint")}
+              </CardDescription>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="xs"
+              disabled={bulkTexts}
+              onClick={() => {
+                const pairs: { sourceText: string; direction: "en-to-es" | "es-to-en"; onTranslated: (t: string) => void }[] = [];
+                if (appearance.headerTitleEn && !appearance.headerTitleEs)
+                  pairs.push({ sourceText: appearance.headerTitleEn, direction: "en-to-es", onTranslated: (v) => update("headerTitleEs", v) });
+                else if (appearance.headerTitleEs && !appearance.headerTitleEn)
+                  pairs.push({ sourceText: appearance.headerTitleEs, direction: "es-to-en", onTranslated: (v) => update("headerTitleEn", v) });
+                if (appearance.headerSubtitleEn && !appearance.headerSubtitleEs)
+                  pairs.push({ sourceText: appearance.headerSubtitleEn, direction: "en-to-es", onTranslated: (v) => update("headerSubtitleEs", v) });
+                else if (appearance.headerSubtitleEs && !appearance.headerSubtitleEn)
+                  pairs.push({ sourceText: appearance.headerSubtitleEs, direction: "es-to-en", onTranslated: (v) => update("headerSubtitleEn", v) });
+                if (pairs.length > 0) translateTexts(pairs);
+              }}
+              className="text-xs text-muted-foreground shrink-0"
+            >
+              {bulkTexts ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Languages className="mr-1 h-3 w-3" />}
+              {tCommon("translateEmpty")}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-5">
           {/* Header Title — EN / ES */}
@@ -284,9 +352,12 @@ export function AppearanceForm({
             <Label className="text-sm font-medium">{t("headerTitle")}</Label>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="headerTitleEn" className="text-xs text-muted-foreground">
-                  {t("english")}
-                </Label>
+                <div className="flex items-center gap-1">
+                  <Label htmlFor="headerTitleEn" className="text-xs text-muted-foreground">
+                    {t("english")}
+                  </Label>
+                  <TranslateButton sourceText={appearance.headerTitleEs} direction="es-to-en" onTranslated={(v) => update("headerTitleEn", v)} />
+                </div>
                 <Input
                   id="headerTitleEn"
                   value={appearance.headerTitleEn}
@@ -296,9 +367,12 @@ export function AppearanceForm({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="headerTitleEs" className="text-xs text-muted-foreground">
-                  {t("spanish")}
-                </Label>
+                <div className="flex items-center gap-1">
+                  <Label htmlFor="headerTitleEs" className="text-xs text-muted-foreground">
+                    {t("spanish")}
+                  </Label>
+                  <TranslateButton sourceText={appearance.headerTitleEn} direction="en-to-es" onTranslated={(v) => update("headerTitleEs", v)} />
+                </div>
                 <Input
                   id="headerTitleEs"
                   value={appearance.headerTitleEs}
@@ -320,9 +394,12 @@ export function AppearanceForm({
             <Label className="text-sm font-medium">{t("headerSubtitle")}</Label>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="headerSubtitleEn" className="text-xs text-muted-foreground">
-                  {t("english")}
-                </Label>
+                <div className="flex items-center gap-1">
+                  <Label htmlFor="headerSubtitleEn" className="text-xs text-muted-foreground">
+                    {t("english")}
+                  </Label>
+                  <TranslateButton sourceText={appearance.headerSubtitleEs} direction="es-to-en" onTranslated={(v) => update("headerSubtitleEn", v)} />
+                </div>
                 <Input
                   id="headerSubtitleEn"
                   value={appearance.headerSubtitleEn}
@@ -332,9 +409,12 @@ export function AppearanceForm({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="headerSubtitleEs" className="text-xs text-muted-foreground">
-                  {t("spanish")}
-                </Label>
+                <div className="flex items-center gap-1">
+                  <Label htmlFor="headerSubtitleEs" className="text-xs text-muted-foreground">
+                    {t("spanish")}
+                  </Label>
+                  <TranslateButton sourceText={appearance.headerSubtitleEn} direction="en-to-es" onTranslated={(v) => update("headerSubtitleEs", v)} />
+                </div>
                 <Input
                   id="headerSubtitleEs"
                   value={appearance.headerSubtitleEs}

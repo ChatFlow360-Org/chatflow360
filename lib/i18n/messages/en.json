@@ -8,7 +8,12 @@
     "active": "Active",
     "comingSoon": "Coming soon",
     "saving": "Saving...",
-    "saved": "Saved"
+    "saved": "Saved",
+    "translateFromEn": "Translate from English",
+    "translateFromEs": "Translate from Spanish",
+    "translateEmpty": "Translate empty fields",
+    "translateError": "Translation failed. Please try again.",
+    "translateBulkSuccess": "{count, plural, one {# field translated} other {# fields translated}}"
   },
   "layout": {
     "sidebar": {

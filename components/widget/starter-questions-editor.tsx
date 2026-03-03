@@ -22,6 +22,7 @@ import { GripVertical, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TranslateButton } from "@/components/ui/translate-button";
 import type { StarterQuestion } from "@/lib/widget/appearance";
 
 // ─── Sortable Row ────────────────────────────────────────────────
@@ -54,20 +55,26 @@ function SortableQuestionRow({ question, onUpdate, onRemove, placeholderEn, plac
       </button>
 
       <div className="grid flex-1 gap-2 sm:grid-cols-2">
-        <Input
-          value={question.textEn}
-          onChange={(e) => onUpdate(question.id, "textEn", e.target.value)}
-          placeholder={placeholderEn}
-          maxLength={100}
-          className="text-sm"
-        />
-        <Input
-          value={question.textEs}
-          onChange={(e) => onUpdate(question.id, "textEs", e.target.value)}
-          placeholder={placeholderEs}
-          maxLength={100}
-          className="text-sm"
-        />
+        <div className="flex items-center gap-1">
+          <Input
+            value={question.textEn}
+            onChange={(e) => onUpdate(question.id, "textEn", e.target.value)}
+            placeholder={placeholderEn}
+            maxLength={100}
+            className="text-sm flex-1"
+          />
+          <TranslateButton sourceText={question.textEs} direction="es-to-en" onTranslated={(v) => onUpdate(question.id, "textEn", v)} />
+        </div>
+        <div className="flex items-center gap-1">
+          <Input
+            value={question.textEs}
+            onChange={(e) => onUpdate(question.id, "textEs", e.target.value)}
+            placeholder={placeholderEs}
+            maxLength={100}
+            className="text-sm flex-1"
+          />
+          <TranslateButton sourceText={question.textEn} direction="en-to-es" onTranslated={(v) => onUpdate(question.id, "textEs", v)} />
+        </div>
       </div>
 
       <button

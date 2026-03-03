@@ -37,6 +37,29 @@ export async function resolveApiKey(organizationId: string): Promise<string> {
 }
 
 /**
+ * Resolve the platform-level OpenAI API key (NOT per-org).
+ * Used for platform utilities like translation buttons.
+ * Priority: platform_settings → env var
+ */
+export async function resolvePlatformApiKey(): Promise<string> {
+  const platformKey = await prisma.platformSettings.findUnique({
+    where: { key: "openai_api_key" },
+    select: { value: true },
+  });
+
+  if (platformKey?.value) {
+    return decrypt(platformKey.value);
+  }
+
+  const envKey = process.env.OPENAI_API_KEY;
+  if (envKey) {
+    return envKey;
+  }
+
+  throw new Error("No platform OpenAI API key configured");
+}
+
+/**
  * Create an OpenAI client for a specific organization.
  */
 export async function createOpenAIClient(organizationId: string): Promise<OpenAI> {
