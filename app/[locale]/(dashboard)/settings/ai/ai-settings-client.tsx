@@ -25,6 +25,7 @@ import {
   MapPin,
   Shield,
   Check,
+  Copy,
 } from "lucide-react";
 import {
   Card,
@@ -95,6 +96,11 @@ import { PostChatForm } from "@/components/widget/post-chat-form";
 import type { WidgetAppearance } from "@/lib/widget/appearance";
 import type { PostChatSettings } from "@/lib/widget/post-chat";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { useAutoSave } from "@/lib/hooks/use-auto-save";
 
@@ -305,6 +311,8 @@ export function AiSettingsClient({
   const [selectedRuleIds, setSelectedRuleIds] = useState<Set<string>>(new Set());
   const [globalRulesOpen, setGlobalRulesOpen] = useState(false);
   const [showClearRulesConfirm, setShowClearRulesConfirm] = useState(false);
+  const [editingRuleIndex, setEditingRuleIndex] = useState<number | null>(null);
+  const [editingRuleText, setEditingRuleText] = useState("");
 
   const resolveKeywords = (settings: AiSettingsData | null): string[] => {
     if (!settings) return [...DEFAULT_HANDOFF_KEYWORDS];
@@ -417,10 +425,41 @@ export function AiSettingsClient({
     }
   };
   const removeRule = (index: number) => {
+    if (editingRuleIndex === index) cancelEditRule();
+    else if (editingRuleIndex !== null && editingRuleIndex > index) setEditingRuleIndex(editingRuleIndex - 1);
     setPromptStructure((prev) => ({
       ...prev,
       rules: prev.rules.filter((_, i) => i !== index),
     }));
+  };
+  const editRule = (index: number) => {
+    setEditingRuleIndex(index);
+    setEditingRuleText(promptStructure.rules[index]);
+  };
+  const saveEditRule = () => {
+    const trimmed = editingRuleText.trim();
+    if (!trimmed || editingRuleIndex === null) return;
+    setPromptStructure((prev) => ({
+      ...prev,
+      rules: prev.rules.map((r, i) => (i === editingRuleIndex ? trimmed : r)),
+    }));
+    setEditingRuleIndex(null);
+    setEditingRuleText("");
+  };
+  const cancelEditRule = () => {
+    setEditingRuleIndex(null);
+    setEditingRuleText("");
+  };
+  const duplicateRule = (index: number) => {
+    const ruleText = promptStructure.rules[index];
+    setPromptStructure((prev) => {
+      if (prev.rules.length >= 50) return prev;
+      const newRules = [...prev.rules];
+      newRules.splice(index + 1, 0, prev.rules[index]);
+      return { ...prev, rules: newRules };
+    });
+    setEditingRuleIndex(index + 1);
+    setEditingRuleText(ruleText);
   };
   const handleRuleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") { e.preventDefault(); addRule(); }
@@ -616,16 +655,109 @@ export function AiSettingsClient({
                           {promptStructure.rules.map((rule, index) => (
                             <div
                               key={index}
-                              className="flex items-start gap-2 rounded-lg border bg-background px-3 py-2"
+                              className={`rounded-lg border px-3 py-2 transition-colors ${
+                                editingRuleIndex === index
+                                  ? "border-cta/30 bg-muted/50"
+                                  : "bg-background"
+                              }`}
                             >
-                              <span className="flex-1 text-sm">{rule}</span>
-                              <button
-                                type="button"
-                                onClick={() => removeRule(index)}
-                                className="mt-0.5 shrink-0 rounded-full p-0.5 transition-colors hover:bg-foreground/10"
-                              >
-                                <X className="h-3.5 w-3.5 text-muted-foreground" />
-                              </button>
+                              {editingRuleIndex === index ? (
+                                /* ---- Edit mode ---- */
+                                <div className="space-y-2">
+                                  <textarea
+                                    value={editingRuleText}
+                                    onChange={(e) => {
+                                      setEditingRuleText(e.target.value);
+                                      e.target.style.height = "auto";
+                                      e.target.style.height = `${e.target.scrollHeight}px`;
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveEditRule(); }
+                                      if (e.key === "Escape") cancelEditRule();
+                                    }}
+                                    ref={(el) => {
+                                      if (el) {
+                                        el.focus();
+                                        el.selectionStart = el.value.length;
+                                        el.style.height = "auto";
+                                        el.style.height = `${el.scrollHeight}px`;
+                                      }
+                                    }}
+                                    maxLength={500}
+                                    className="w-full resize-none rounded-md border bg-background px-2.5 py-1.5 text-sm ring-2 ring-cta/50 focus:outline-none"
+                                  />
+                                  <div className="flex items-center gap-1 self-end sm:self-start">
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          type="button"
+                                          onClick={saveEditRule}
+                                          disabled={!editingRuleText.trim()}
+                                          className="inline-flex items-center gap-1 rounded-md p-1 text-muted-foreground transition-colors hover:bg-cta/10 hover:text-cta disabled:opacity-50"
+                                        >
+                                          <Check className="h-3.5 w-3.5" />
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>{t("agentInstructions.saveRule")}</TooltipContent>
+                                    </Tooltip>
+                                    <button
+                                      type="button"
+                                      onClick={cancelEditRule}
+                                      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                    >
+                                      <X className="h-3.5 w-3.5" />
+                                      <span>{t("agentInstructions.cancelEdit")}</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                /* ---- View mode ---- */
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+                                  <span className="min-w-0 flex-1 wrap-break-word text-sm">{rule}</span>
+                                  <div className="flex items-center gap-1 shrink-0 self-end sm:self-start">
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          type="button"
+                                          onClick={() => editRule(index)}
+                                          className="inline-flex items-center gap-1 rounded-md p-1 text-muted-foreground transition-colors hover:bg-cta/10 hover:text-cta"
+                                        >
+                                          <Pencil className="h-3.5 w-3.5" />
+                                          <span className="text-xs sm:hidden">{t("agentInstructions.editRule")}</span>
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent className="hidden sm:block">{t("agentInstructions.editRule")}</TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          type="button"
+                                          onClick={() => duplicateRule(index)}
+                                          disabled={promptStructure.rules.length >= 50}
+                                          className="inline-flex items-center gap-1 rounded-md p-1 text-muted-foreground transition-colors hover:bg-cta/10 hover:text-cta disabled:opacity-50"
+                                        >
+                                          <Copy className="h-3.5 w-3.5" />
+                                          <span className="text-xs sm:hidden">{t("agentInstructions.duplicateRule")}</span>
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent className="hidden sm:block">{t("agentInstructions.duplicateRule")}</TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          type="button"
+                                          onClick={() => removeRule(index)}
+                                          className="inline-flex items-center gap-1 rounded-md p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                        >
+                                          <X className="h-3.5 w-3.5" />
+                                          <span className="text-xs sm:hidden">{t("agentInstructions.deleteRule")}</span>
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent className="hidden sm:block">{t("agentInstructions.deleteRule")}</TooltipContent>
+                                    </Tooltip>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
