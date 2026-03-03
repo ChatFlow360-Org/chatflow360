@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import {
   RotateCcw,
   Loader2,
@@ -91,6 +92,7 @@ export function PostChatForm({
   const { saveStatus, hasChanges, saveNow } = useAutoSave({
     data: settings,
     onSave: handleAutoSave,
+    onSaved: () => toast.success(t("saved")),
     enabled: !uploading && !cropSrc,
   });
 

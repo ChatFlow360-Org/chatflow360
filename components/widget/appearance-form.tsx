@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { RotateCcw, Loader2, Eye, Check } from "lucide-react";
 import {
   Card,
@@ -114,6 +115,7 @@ export function AppearanceForm({
   const { saveStatus, hasChanges, saveNow } = useAutoSave({
     data: appearance,
     onSave: handleAutoSave,
+    onSaved: () => toast.success(t("saved")),
   });
 
   function handleReset() {

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "sonner";
 
 export interface AdminContext {
   organizations: { id: string; name: string; channels: { id: string; name: string; type: string }[] }[];
@@ -64,6 +65,7 @@ export function DashboardShell({
           </main>
         </div>
       </div>
+      <Toaster position="bottom-right" richColors duration={2500} />
     </TooltipProvider>
   );
 }

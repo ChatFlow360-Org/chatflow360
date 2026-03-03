@@ -7,6 +7,7 @@ export type SaveStatus = "idle" | "saving" | "saved" | "error";
 interface UseAutoSaveOptions<T> {
   data: T;
   onSave: (data: T) => Promise<{ success?: unknown; error?: unknown } | null | undefined>;
+  onSaved?: () => void;
   debounceMs?: number;
   enabled?: boolean;
 }
@@ -18,6 +19,7 @@ interface UseAutoSaveOptions<T> {
 export function useAutoSave<T>({
   data,
   onSave,
+  onSaved,
   debounceMs = 2000,
   enabled = true,
 }: UseAutoSaveOptions<T>) {
@@ -26,9 +28,11 @@ export function useAutoSave<T>({
   const mountedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onSaveRef = useRef(onSave);
+  const onSavedRef = useRef(onSaved);
   const dataRef = useRef(data);
 
   onSaveRef.current = onSave;
+  onSavedRef.current = onSaved;
   dataRef.current = data;
 
   const hasChanges = JSON.stringify(data) !== lastSavedRef.current;
@@ -54,6 +58,7 @@ export function useAutoSave<T>({
         if (result?.success) {
           lastSavedRef.current = JSON.stringify(dataRef.current);
           setSaveStatus("saved");
+          onSavedRef.current?.();
           setTimeout(() => setSaveStatus("idle"), 2000);
         } else {
           setSaveStatus("error");
@@ -77,6 +82,7 @@ export function useAutoSave<T>({
       if (result?.success) {
         lastSavedRef.current = JSON.stringify(dataRef.current);
         setSaveStatus("saved");
+        onSavedRef.current?.();
         setTimeout(() => setSaveStatus("idle"), 2000);
         return true;
       } else {
