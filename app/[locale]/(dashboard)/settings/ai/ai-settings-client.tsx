@@ -590,33 +590,15 @@ export function AiSettingsClient({
 
                     <Separator />
 
-                    {/* Rules (dynamic list) */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label>{t("agentInstructions.rules")}</Label>
+                    {/* Global Rules */}
+                    {globalRules.length > 0 && (
+                      <div className="space-y-3">
                         <div className="flex items-center gap-2">
-                          {promptStructure.rules.length > 0 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => setShowClearRulesConfirm(true)}
-                            >
-                              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                              {t("agentInstructions.clearAllRules")}
-                            </Button>
-                          )}
-                          {promptPieces.filter(p => p.type === "rule").length > 0 && (
-                            <Button type="button" variant="outline" size="sm" onClick={() => { setSelectedRuleIds(new Set()); setTemplateDrawerField("rule"); }}>
-                              <LayoutTemplate className="mr-1.5 h-4 w-4" />
-                              {t("agentInstructions.browseTemplates")}
-                            </Button>
-                          )}
+                          <Label>{t("agentInstructions.globalRules")}</Label>
+                          <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                            {t("agentInstructions.globalRulesCount", { count: globalRules.length })}
+                          </Badge>
                         </div>
-                      </div>
-                      {/* Global mandatory rules (locked, collapsible) */}
-                      {globalRules.length > 0 && (
                         <div className="rounded-lg border border-amber-500/20 bg-amber-500/5">
                           <button
                             type="button"
@@ -625,7 +607,7 @@ export function AiSettingsClient({
                           >
                             <Shield className="h-3.5 w-3.5 shrink-0 text-amber-500" />
                             <span className="flex-1 text-xs font-medium text-amber-600 dark:text-amber-400">
-                              {t("agentInstructions.globalRules")} ({globalRules.length})
+                              {globalRulesOpen ? t("agentInstructions.globalRules") : t("agentInstructions.globalRulesCount", { count: globalRules.length })}
                             </span>
                             <ChevronDown className={`h-3.5 w-3.5 text-amber-500 transition-transform ${globalRulesOpen ? "rotate-180" : ""}`} />
                           </button>
@@ -649,7 +631,36 @@ export function AiSettingsClient({
                             </div>
                           )}
                         </div>
-                      )}
+                      </div>
+                    )}
+
+                    <Separator />
+
+                    {/* Specific Rules */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label>{t("agentInstructions.specificRules")}</Label>
+                        <div className="flex items-center gap-2">
+                          {promptStructure.rules.length > 0 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => setShowClearRulesConfirm(true)}
+                            >
+                              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                              {t("agentInstructions.clearAllRules")}
+                            </Button>
+                          )}
+                          {promptPieces.filter(p => p.type === "rule").length > 0 && (
+                            <Button type="button" variant="outline" size="sm" onClick={() => { setSelectedRuleIds(new Set()); setTemplateDrawerField("rule"); }}>
+                              <LayoutTemplate className="mr-1.5 h-4 w-4" />
+                              {t("agentInstructions.browseTemplates")}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
                       {promptStructure.rules.length > 0 && (
                         <div className="space-y-2">
                           {promptStructure.rules.map((rule, index) => (
