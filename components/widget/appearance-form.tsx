@@ -188,6 +188,23 @@ export function AppearanceForm({
                   pairs.push({ sourceText: appearance.welcomeSubtitleEn, direction: "en-to-es", onTranslated: (v) => update("welcomeSubtitleEs", v) });
                 else if (appearance.welcomeSubtitleEs && !appearance.welcomeSubtitleEn)
                   pairs.push({ sourceText: appearance.welcomeSubtitleEs, direction: "es-to-en", onTranslated: (v) => update("welcomeSubtitleEn", v) });
+                // Include starter questions if enabled
+                if (appearance.useStarterQuestions) {
+                  appearance.starterQuestions.forEach((q, idx) => {
+                    if (q.textEn && !q.textEs)
+                      pairs.push({ sourceText: q.textEn, direction: "en-to-es", onTranslated: (v) => {
+                        const updated = [...appearance.starterQuestions];
+                        updated[idx] = { ...updated[idx], textEs: v };
+                        update("starterQuestions", updated);
+                      }});
+                    else if (q.textEs && !q.textEn)
+                      pairs.push({ sourceText: q.textEs, direction: "es-to-en", onTranslated: (v) => {
+                        const updated = [...appearance.starterQuestions];
+                        updated[idx] = { ...updated[idx], textEn: v };
+                        update("starterQuestions", updated);
+                      }});
+                  });
+                }
                 if (pairs.length > 0) translateWelcome(pairs);
               }}
               className="text-xs bg-amber-500 hover:bg-amber-600 text-black border-0 shrink-0"
