@@ -1430,10 +1430,10 @@
     postChatEl.innerHTML = "";
     postChatEl.classList.add("cf360-postchat--show");
 
-    if (showRating) {
-      showRatingStep(convId, showTranscript);
-    } else if (showTranscript) {
-      showTranscriptStep(convId);
+    if (showTranscript) {
+      showTranscriptStep(convId, showRating);
+    } else if (showRating) {
+      showRatingStep(convId);
     }
   }
 
@@ -1464,7 +1464,7 @@
     return body;
   }
 
-  function showRatingStep(convId, showTranscript) {
+  function showRatingStep(convId) {
     var body = buildPostChatLayout();
 
     var titleEl = el("div", "cf360-postchat-title");
@@ -1491,8 +1491,7 @@
         starBtn.addEventListener("click", function () {
           selectedRating = rating;
           highlightStars(starsContainer, rating);
-          // Submit rating
-          submitRating(convId, rating, showTranscript);
+          submitRating(convId, rating);
         });
         starsContainer.appendChild(starBtn);
       })(i);
@@ -1503,11 +1502,7 @@
     skipBtn.textContent = t("rateSkip");
     skipBtn.type = "button";
     skipBtn.addEventListener("click", function () {
-      if (showTranscript) {
-        showTranscriptStep(convId);
-      } else {
-        showPostChatDone();
-      }
+      showPostChatDone();
     });
     body.appendChild(skipBtn);
   }
@@ -1523,7 +1518,7 @@
     }
   }
 
-  function submitRating(convId, rating, showTranscript) {
+  function submitRating(convId, rating) {
     fetch(apiUrl("/api/widget/rating"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1534,22 +1529,18 @@
       })
     }).catch(function () { /* fire-and-forget */ });
 
-    // Brief "thanks" then next step
+    // Brief "thanks" then done
     var body = buildPostChatLayout();
     var msg = el("div", "cf360-postchat-msg");
     msg.textContent = t("rateThanks");
     body.appendChild(msg);
 
     setTimeout(function () {
-      if (showTranscript) {
-        showTranscriptStep(convId);
-      } else {
-        showPostChatDone();
-      }
+      showPostChatDone();
     }, 1200);
   }
 
-  function showTranscriptStep(convId) {
+  function showTranscriptStep(convId, showRating) {
     var body = buildPostChatLayout();
 
     var titleEl = el("div", "cf360-postchat-title");
@@ -1691,7 +1682,7 @@
       })
         .then(function (res) {
           if (!res.ok) throw new Error("HTTP " + res.status);
-          showTranscriptSuccess();
+          showTranscriptSuccess(convId, showRating);
         })
         .catch(function () {
           showTranscriptError(convId, sendTranscriptBtn);
@@ -1699,7 +1690,11 @@
     });
 
     skipBtn.addEventListener("click", function () {
-      showPostChatDone();
+      if (showRating) {
+        showRatingStep(convId);
+      } else {
+        showPostChatDone();
+      }
     });
 
     // Smart focus: skip pre-filled fields (no delay needed — no autofill to wait for)
@@ -1714,7 +1709,7 @@
     }
   }
 
-  function showTranscriptSuccess() {
+  function showTranscriptSuccess(convId, showRating) {
     var body = buildPostChatLayout();
 
     var checkEl = el("div", "cf360-postchat-check");
@@ -1726,7 +1721,11 @@
     body.appendChild(msg);
 
     setTimeout(function () {
-      showPostChatDone();
+      if (showRating) {
+        showRatingStep(convId);
+      } else {
+        showPostChatDone();
+      }
     }, 2000);
   }
 
