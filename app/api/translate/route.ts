@@ -34,38 +34,55 @@ export async function POST(request: NextRequest) {
     const openai = new OpenAI({ apiKey });
 
     const { texts } = parsed.data;
-    const fromLang = texts[0].from === "en" ? "English" : "Spanish";
-    const toLang = texts[0].to === "en" ? "English" : "Spanish";
 
-    const numbered = texts.map((t, i) => `${i + 1}. ${t.text}`).join("\n");
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      temperature: 0.3,
-      max_tokens: 2000,
-      messages: [
-        {
-          role: "system",
-          content: `You are a professional translator for a business chat widget. Translate from ${fromLang} to ${toLang}. Keep the same tone, length, and formality. Preserve template variables like {{visitor_name}} and {{org_name}} exactly as-is. Return ONLY the translations, one per line, numbered to match the input. No explanations.`,
-        },
-        { role: "user", content: numbered },
-      ],
-    });
-
-    const raw = completion.choices[0]?.message?.content ?? "";
-    const lines = raw.split("\n").filter((l) => l.trim());
-    const translations = lines.map((line) =>
-      line.replace(/^\d+\.\s*/, "").trim(),
-    );
-
-    if (translations.length !== texts.length) {
-      return NextResponse.json(
-        { error: "Translation mismatch" },
-        { status: 500 },
-      );
+    // Group by direction to handle mixed EN→ES and ES→EN in one batch
+    const groups = new Map<string, { indices: number[]; items: typeof texts }>();
+    for (let i = 0; i < texts.length; i++) {
+      const key = `${texts[i].from}-${texts[i].to}`;
+      if (!groups.has(key)) groups.set(key, { indices: [], items: [] });
+      const g = groups.get(key)!;
+      g.indices.push(i);
+      g.items.push(texts[i]);
     }
 
-    return NextResponse.json({ translations });
+    const results: string[] = new Array(texts.length);
+
+    await Promise.all(
+      [...groups.entries()].map(async ([, { indices, items }]) => {
+        const fromLang = items[0].from === "en" ? "English" : "Spanish";
+        const toLang = items[0].to === "en" ? "English" : "Spanish";
+        const numbered = items.map((t, i) => `${i + 1}. ${t.text}`).join("\n");
+
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          temperature: 0.3,
+          max_tokens: 2000,
+          messages: [
+            {
+              role: "system",
+              content: `You are a professional translator for a business chat widget. Translate from ${fromLang} to ${toLang}. Keep the same tone, length, and formality. Preserve template variables like {{visitor_name}} and {{org_name}} exactly as-is. Return ONLY the translations, one per line, numbered to match the input. No explanations.`,
+            },
+            { role: "user", content: numbered },
+          ],
+        });
+
+        const raw = completion.choices[0]?.message?.content ?? "";
+        const lines = raw.split("\n").filter((l) => l.trim());
+        const translations = lines.map((line) =>
+          line.replace(/^\d+\.\s*/, "").trim(),
+        );
+
+        if (translations.length !== items.length) {
+          throw new Error("Translation mismatch");
+        }
+
+        for (let i = 0; i < indices.length; i++) {
+          results[indices[i]] = translations[i];
+        }
+      }),
+    );
+
+    return NextResponse.json({ translations: results });
   } catch (error) {
     console.error(
       "[POST /api/translate]",

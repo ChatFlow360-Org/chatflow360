@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.3.17 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.3.18 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -29,12 +29,13 @@ AI responde con RAG (conocimiento) + instrucciones | Human takeover via keyword 
 | Documento | Contenido |
 |-----------|-----------|
 | [docs/INDEX.md](docs/INDEX.md) | Indice maestro - navega toda la documentacion |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Stack, estructura, API routes, decisiones tecnicas |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Stack, estructura, API routes, env vars, billing |
+| [docs/ARCHITECTURE-BUSINESS-LOGIC.md](docs/ARCHITECTURE-BUSINESS-LOGIC.md) | Logica de negocio: AI, widget, realtime, post-chat, i18n |
 | [docs/DATA-MODELS.md](docs/DATA-MODELS.md) | Schema Prisma, modelos, relaciones, enums |
 | [docs/RULES.md](docs/RULES.md) | Reglas obligatorias de desarrollo |
 | [docs/DATABASE-MIGRATIONS.md](docs/DATABASE-MIGRATIONS.md) | Guia de migraciones Prisma + Supabase |
 | [docs/RAG-KNOWLEDGE.md](docs/RAG-KNOWLEDGE.md) | Sistema RAG, embeddings, busqueda semantica |
-| [docs/CHANGELOG.md](docs/CHANGELOG.md) | Historial de versiones y cambios |
+| [docs/CHANGELOG.md](docs/CHANGELOG.md) | Ultimas 5 versiones + indice (archives en `docs/changelog/`) |
 | [docs/SUBAGENTS.md](docs/SUBAGENTS.md) | Workflows de subagentes en paralelo |
 | [docs/SECURITY.md](docs/SECURITY.md) | Audit de seguridad + checklist backend |
 | [brand/BRANDBOOK.md](brand/BRANDBOOK.md) | Design system, colores, tipografia |
@@ -51,6 +52,7 @@ AI responde con RAG (conocimiento) + instrucciones | Human takeover via keyword 
 8. **i18n obligatorio** - Todo string visible al usuario via `useTranslations()`, NUNCA hardcodear texto. Ver Regla 13
 9. **Verificacion 4-way** - Todo componente nuevo debe verse bien en Light EN, Light ES, Dark EN, Dark ES. Ver Regla 15
 10. **AM/PM uppercase** - Siempre normalizar con `normalizeAmPm()` de `@/lib/utils/format`. Ver Regla 14
+11. **Translate buttons amber** - Per-field: ghost icon amber. Bulk: full amber button. Ver Regla 16
 
 ## Enfoque Hibrido Prisma + Supabase
 
@@ -74,4 +76,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.3.17** - Starter Questions for Widget: Admins can configure up to 5 bilingual (EN/ES) conversation starters shown as clickable pill buttons on the widget welcome screen. New WELCOME card in Settings > Widget (split from TEXTS) with toggle, drag-and-drop editor (@dnd-kit), and context-aware live preview (welcome screen vs chat view). Widget embed renders buttons on welcome, sends question on click, auto-hides after first message. Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).
+**v0.3.18** - AI-Powered Translate Buttons: Per-field translate icons (amber ghost `Languages` icon) and bulk "Translate empty fields" buttons (amber full button like Take Control) across all bilingual forms (Widget Welcome, Texts, Post-Chat). New `POST /api/translate` endpoint using `gpt-4o-mini` via platform API key. `TranslateButton` component + `useBulkTranslate` hook. Client View now hides Technical Settings and Custom API Key cards. Amber styling pattern documented as Regla 16 in RULES.md and BRANDBOOK.md. Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).
