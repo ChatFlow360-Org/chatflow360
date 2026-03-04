@@ -24,6 +24,8 @@ interface WidgetPreviewProps {
   appearance: Required<WidgetAppearance>;
   activeSection?: "bubble" | "welcome" | "texts" | "colors";
   className?: string;
+  /** When true, fills parent height instead of using fixed viewport calc */
+  fillHeight?: boolean;
 }
 
 const DEFAULT_TEASER = {
@@ -72,7 +74,7 @@ const DEFAULT_WELCOME = {
 
 // ─── Component ────────────────────────────────────────────────────
 
-export function WidgetPreview({ appearance, activeSection, className }: WidgetPreviewProps) {
+export function WidgetPreview({ appearance, activeSection, className, fillHeight }: WidgetPreviewProps) {
   const t = useTranslations("settings.widgetAppearance");
   const [previewLang, setPreviewLang] = useState<"en" | "es">("en");
 
@@ -143,7 +145,7 @@ export function WidgetPreview({ appearance, activeSection, className }: WidgetPr
       </div>
 
       {/* Widget Replica */}
-      <div className="flex flex-col items-end gap-3" style={{ height: "calc(100vh - 260px)", minHeight: 400 }}>
+      <div className="flex flex-col items-end gap-3" style={fillHeight ? { height: "100%" } : { height: "calc(100vh - 260px)", minHeight: 400 }}>
         {showBubble ? (
           /* Bubble section — show teaser strip only, centered vertically */
           <div className="flex flex-1 flex-col items-end justify-center w-full gap-6">

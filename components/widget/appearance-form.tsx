@@ -820,8 +820,8 @@ export function AppearanceForm({
           <DrawerHeader className="text-left shrink-0">
             <DrawerTitle>{t("preview")}</DrawerTitle>
           </DrawerHeader>
-          <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-6">
-            <WidgetPreview appearance={appearance} activeSection={activeSection} />
+          <div className="flex-1 min-h-0 px-4 pb-6">
+            <WidgetPreview appearance={appearance} activeSection={activeSection} fillHeight />
           </div>
         </DrawerContent>
       </Drawer>
