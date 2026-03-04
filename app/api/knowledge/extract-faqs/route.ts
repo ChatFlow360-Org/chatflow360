@@ -108,15 +108,15 @@ async function fetchPageContent(
 
 // ─── System Prompt ───────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are an FAQ extraction specialist. Extract question-and-answer pairs from the provided content.
+const SYSTEM_PROMPT_BASE = `You are an FAQ extraction specialist. Extract question-and-answer pairs from the provided content.
 
 RULES:
 1. Extract questions and their corresponding answers as they appear in the content
 2. Questions should be kept as close to the original wording as possible
-3. Answers should summarize the text that follows each question, staying faithful to the original content
-4. Do NOT invent new questions that are not present in the content
-5. Do NOT fabricate answers from unrelated parts of the page
-6. If no FAQ-like content is found, return {"faqs": []}
+3. Do NOT invent new questions that are not present in the content
+4. Do NOT fabricate answers from unrelated parts of the page
+5. If no FAQ-like content is found, return {"faqs": []}
+6. If an answer contains bullet points or lists, convert them into a single flowing sentence using commas or semicolons (e.g. "Features include: topic review, article generation, and direct publishing.")
 
 What counts as a Q&A pair:
 - Explicit FAQ sections with questions and answers
@@ -132,12 +132,18 @@ What does NOT count:
 
 Format rules:
 - Each question must end with "?"
-- Keep answers under 500 characters
+- Keep answers under 800 characters
 - Extract up to 30 pairs maximum
 - If content is in Spanish, keep it in Spanish. If mixed, keep each pair in its original language.
 
 Return ONLY valid JSON: {"faqs": [{"question": "...", "answer": "..."}, ...]}
 If no explicit Q&A content is found, return: {"faqs": []}`;
+
+// Source-specific instructions appended to the user message
+const SOURCE_HINT_URL =
+  "Note: This content was scraped from a website. You may summarize long answers while staying faithful to the original meaning.";
+const SOURCE_HINT_TEXT =
+  "IMPORTANT: This content was provided directly by the user. Preserve the original wording as faithfully as possible. Do NOT summarize or rewrite answers — keep them verbatim, only removing formatting artifacts.";
 
 // ─── Constants ───────────────────────────────────────────
 
@@ -204,16 +210,19 @@ export async function POST(request: NextRequest) {
         htmlTagCount >= 3 ? stripHtml(rawText, TOTAL_CHAR_BUDGET) : rawText;
     }
 
+    const sourceHint =
+      parsed.data.source === "url" ? SOURCE_HINT_URL : SOURCE_HINT_TEXT;
+
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.1,
       max_tokens: 4000,
       response_format: { type: "json_object" },
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: SYSTEM_PROMPT_BASE },
         {
           role: "user",
-          content: `Extract FAQs from this content:\n\n${contentToProcess}`,
+          content: `${sourceHint}\n\nExtract FAQs from this content:\n\n${contentToProcess}`,
         },
       ],
     });
