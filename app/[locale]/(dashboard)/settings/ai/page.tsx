@@ -114,16 +114,18 @@ export default async function AiSettingsPage() {
   // Fetch first active website channel for widget appearance
   let widgetChannelId = "";
   let widgetPublicKey = "";
+  let channelWebsiteUrl = "";
   let widgetAppearance: WidgetAppearance = {};
   let postChatSettings: PostChatSettings = {};
   if (selectedOrgId) {
     const channel = await prisma.channel.findFirst({
       where: { organizationId: selectedOrgId, type: "website", isActive: true },
-      select: { id: true, publicKey: true, config: true },
+      select: { id: true, name: true, publicKey: true, config: true },
     });
     if (channel) {
       widgetChannelId = channel.id;
       widgetPublicKey = channel.publicKey ?? "";
+      channelWebsiteUrl = channel.name;
       const cfg = channel.config as (ChannelWidgetConfig & ChannelPostChatConfig) | null;
       widgetAppearance = cfg?.widgetAppearance || {};
       postChatSettings = cfg?.postChatSettings || {};
@@ -142,6 +144,7 @@ export default async function AiSettingsPage() {
       globalRules={globalRules}
       widgetChannelId={widgetChannelId}
       widgetPublicKey={widgetPublicKey}
+      channelWebsiteUrl={channelWebsiteUrl}
       widgetAppearance={widgetAppearance}
       postChatSettings={postChatSettings}
     />

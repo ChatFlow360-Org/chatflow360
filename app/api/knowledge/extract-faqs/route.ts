@@ -9,7 +9,7 @@ import { resolvePlatformApiKey } from "@/lib/openai/client";
 const extractFaqsSchema = z.discriminatedUnion("source", [
   z.object({
     source: z.literal("url"),
-    url: z.string().url().max(2048),
+    urls: z.array(z.string().url().max(2048)).min(1).max(5),
   }),
   z.object({
     source: z.literal("text"),
@@ -19,7 +19,7 @@ const extractFaqsSchema = z.discriminatedUnion("source", [
 
 // ─── HTML Stripping ──────────────────────────────────────
 
-function stripHtml(html: string): string {
+function stripHtml(html: string, charLimit = 15_000): string {
   const stripped = html
     // Remove script, style, nav, header, footer, aside, noscript blocks
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
@@ -44,9 +44,10 @@ function stripHtml(html: string): string {
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 
-  // Limit to 15,000 chars to avoid token overflow
-  if (stripped.length > 15_000) {
-    return stripped.slice(0, 12_000) + "\n...\n" + stripped.slice(-3_000);
+  if (stripped.length > charLimit) {
+    const headSize = Math.floor(charLimit * 0.8);
+    const tailSize = charLimit - headSize;
+    return stripped.slice(0, headSize) + "\n...\n" + stripped.slice(-tailSize);
   }
 
   return stripped;
@@ -54,7 +55,10 @@ function stripHtml(html: string): string {
 
 // ─── URL Fetch ───────────────────────────────────────────
 
-async function fetchPageContent(url: string): Promise<string> {
+async function fetchPageContent(
+  url: string,
+  charLimit = 15_000,
+): Promise<string> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10_000);
 
@@ -78,7 +82,7 @@ async function fetchPageContent(url: string): Promise<string> {
     }
 
     const html = await response.text();
-    return stripHtml(html);
+    return stripHtml(html, charLimit);
   } finally {
     clearTimeout(timeout);
   }
@@ -86,28 +90,40 @@ async function fetchPageContent(url: string): Promise<string> {
 
 // ─── System Prompt ───────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are an FAQ extraction specialist. Your job is to identify and extract question-and-answer pairs from website content.
+const SYSTEM_PROMPT = `You are an FAQ extraction specialist. You ONLY extract question-and-answer pairs that LITERALLY exist in the provided content.
 
-Extract ALL FAQ-style content you find, including:
-- Explicit FAQ sections
-- Q: / A: style formatting
-- Accordion or collapsible question blocks
-- "How do I...?", "What is...?", "Do you...?" questions with their answers
-- Service descriptions that answer common questions
+STRICT RULES:
+1. ONLY extract Q&A pairs that are VERBATIM present in the text
+2. Do NOT rephrase questions — copy them exactly as written
+3. Do NOT rephrase answers — copy them exactly as written
+4. Do NOT generate, invent, or infer any questions or answers
+5. Do NOT convert general information, service descriptions, or marketing copy into Q&A format
+6. If the content does not contain explicit Q&A pairs, return {"faqs": []}
 
-Rules:
-- Extract up to 30 Q&A pairs maximum
-- Each question must be a complete, natural question (end with "?")
-- Each answer must be a complete, informative response
-- Keep answers concise (under 500 characters) but informative
-- Do NOT invent or paraphrase questions/answers — extract only what exists
-- Skip navigation text, menu items, generic marketing slogans
+What counts as a Q&A pair:
+- Explicit FAQ sections with questions and answers
+- Q: / A: formatted text
+- Accordion or collapsible question blocks with corresponding answers
+- Text clearly structured as "Question? Answer." format
+
+What does NOT count:
+- General service or product descriptions
+- Marketing copy or slogans
+- Navigation, menu items, or page headings
+- Content that COULD be turned into Q&A but is NOT already in Q&A format
+
+Format rules:
+- Each question must end with "?"
+- Keep answers under 500 characters
+- Extract up to 30 pairs maximum
 - If content is in Spanish, keep it in Spanish. If mixed, keep each pair in its original language.
 
-Return ONLY valid JSON, no markdown, no explanation:
-{"faqs": [{"question": "...", "answer": "..."}, ...]}
+Return ONLY valid JSON: {"faqs": [{"question": "...", "answer": "..."}, ...]}
+If no explicit Q&A content is found, return: {"faqs": []}`;
 
-If no FAQ content is found, return: {"faqs": []}`;
+// ─── Constants ───────────────────────────────────────────
+
+const TOTAL_CHAR_BUDGET = 15_000;
 
 // ─── Route Handler ───────────────────────────────────────
 
@@ -128,28 +144,39 @@ export async function POST(request: NextRequest) {
     const openai = new OpenAI({ apiKey });
 
     let contentToProcess: string;
+    let warnings: string[] = [];
 
     if (parsed.data.source === "url") {
-      try {
-        contentToProcess = await fetchPageContent(parsed.data.url);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Fetch failed";
-        console.error(
-          "[POST /api/knowledge/extract-faqs] URL fetch error:",
-          message,
-        );
+      const { urls } = parsed.data;
+      const perUrlLimit = Math.floor(TOTAL_CHAR_BUDGET / urls.length);
+
+      const results = await Promise.allSettled(
+        urls.map((u) => fetchPageContent(u, perUrlLimit)),
+      );
+
+      const successes: { url: string; content: string }[] = [];
+      const failures: string[] = [];
+
+      results.forEach((result, i) => {
+        if (result.status === "fulfilled" && result.value.length >= 50) {
+          successes.push({ url: urls[i], content: result.value });
+        } else {
+          failures.push(urls[i]);
+        }
+      });
+
+      if (successes.length === 0) {
         return NextResponse.json(
-          { error: `Could not fetch URL: ${message}` },
+          { error: "Could not fetch any of the provided URLs" },
           { status: 422 },
         );
       }
 
-      if (contentToProcess.length < 100) {
-        return NextResponse.json(
-          { error: "Page content is too short or empty" },
-          { status: 422 },
-        );
-      }
+      warnings = failures;
+
+      contentToProcess = successes
+        .map(({ url, content }) => `--- Content from ${url} ---\n${content}`)
+        .join("\n\n");
     } else {
       contentToProcess = parsed.data.text;
     }
@@ -197,7 +224,10 @@ export async function POST(request: NextRequest) {
         answer: item.answer.trim().slice(0, 1000),
       }));
 
-    return NextResponse.json({ faqs });
+    return NextResponse.json({
+      faqs,
+      ...(warnings.length > 0 ? { warnings } : {}),
+    });
   } catch (error) {
     console.error(
       "[POST /api/knowledge/extract-faqs]",

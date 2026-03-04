@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import {
   Globe,
@@ -8,6 +8,9 @@ import {
   Loader2,
   AlertTriangle,
   CheckCheck,
+  Plus,
+  Trash2,
+  Info,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -32,6 +35,7 @@ import type { FAQItem } from "@/lib/knowledge/faqs";
 // ─── Constants ───────────────────────────────────────────
 
 const ITEMS_MAX = 20;
+const URLS_MAX = 5;
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -48,6 +52,7 @@ interface FaqImportDialogProps {
   onClose: () => void;
   onImport: (items: FAQItem[]) => void;
   currentCount: number;
+  channelWebsiteUrl?: string;
   t: (key: string, values?: Record<string, unknown>) => string;
 }
 
@@ -58,6 +63,7 @@ export function FaqImportDialog({
   onClose,
   onImport,
   currentCount,
+  channelWebsiteUrl,
   t,
 }: FaqImportDialogProps) {
   const tCommon = useTranslations("common");
@@ -66,13 +72,24 @@ export function FaqImportDialog({
   const [activeTab, setActiveTab] = useState<"text" | "url">("text");
 
   // Input fields
-  const [url, setUrl] = useState("");
+  const [urls, setUrls] = useState<string[]>([""]);
   const [pastedText, setPastedText] = useState("");
 
   // Extraction state
   const [phase, setPhase] = useState<Phase>("idle");
   const [extractedFaqs, setExtractedFaqs] = useState<ExtractedFAQ[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Reset & pre-populate when dialog opens
+  useEffect(() => {
+    if (open) {
+      setUrls([channelWebsiteUrl || ""]);
+      setPastedText("");
+      setPhase("idle");
+      setExtractedFaqs([]);
+      setSelectedIds(new Set());
+    }
+  }, [open, channelWebsiteUrl]);
 
   // Computed
   const availableSlots = ITEMS_MAX - currentCount;
@@ -84,6 +101,21 @@ export function FaqImportDialog({
   const allSelectableSelected =
     selectedIds.size > 0 && selectedIds.size >= maxSelectable;
 
+  // ─── URL list helpers ─────────────────────────────────────
+
+  const addUrl = useCallback(() => {
+    if (urls.length >= URLS_MAX) return;
+    setUrls((prev) => [...prev, ""]);
+  }, [urls.length]);
+
+  const removeUrl = useCallback((index: number) => {
+    setUrls((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const updateUrl = useCallback((index: number, value: string) => {
+    setUrls((prev) => prev.map((u, i) => (i === index ? value : u)));
+  }, []);
+
   // ─── Extract handler ────────────────────────────────────
 
   const handleExtract = useCallback(async () => {
@@ -94,7 +126,12 @@ export function FaqImportDialog({
     try {
       const body =
         activeTab === "url"
-          ? { source: "url", url: url.trim() }
+          ? {
+              source: "url",
+              urls: urls
+                .map((u) => u.trim())
+                .filter((u) => u.length > 0),
+            }
           : { source: "text", text: pastedText.trim() };
 
       const res = await fetch("/api/knowledge/extract-faqs", {
@@ -107,6 +144,16 @@ export function FaqImportDialog({
 
       if (!res.ok) {
         throw new Error(data.error || t("import.extractError"));
+      }
+
+      // Show warnings for failed URLs
+      if (
+        Array.isArray(data.warnings) &&
+        data.warnings.length > 0
+      ) {
+        toast.warning(
+          t("import.urlFetchWarning", { count: data.warnings.length }),
+        );
       }
 
       const faqs: ExtractedFAQ[] = (data.faqs as FAQItem[]).map(
@@ -135,7 +182,7 @@ export function FaqImportDialog({
       );
       setPhase("idle");
     }
-  }, [activeTab, url, pastedText, availableSlots, t]);
+  }, [activeTab, urls, pastedText, availableSlots, t]);
 
   // ─── Import handler ─────────────────────────────────────
 
@@ -147,12 +194,6 @@ export function FaqImportDialog({
     if (selected.length === 0) return;
 
     onImport(selected);
-    // Reset
-    setPhase("idle");
-    setExtractedFaqs([]);
-    setSelectedIds(new Set());
-    setUrl("");
-    setPastedText("");
     onClose();
   }, [extractedFaqs, selectedIds, onImport, onClose]);
 
@@ -160,9 +201,6 @@ export function FaqImportDialog({
 
   const handleClose = useCallback(() => {
     if (phase === "extracting") return;
-    setPhase("idle");
-    setExtractedFaqs([]);
-    setSelectedIds(new Set());
     onClose();
   }, [phase, onClose]);
 
@@ -170,7 +208,9 @@ export function FaqImportDialog({
 
   const canExtract =
     phase !== "extracting" &&
-    (activeTab === "url" ? url.trim().length > 0 : pastedText.trim().length >= 50);
+    (activeTab === "url"
+      ? urls.some((u) => u.trim().length > 0)
+      : pastedText.trim().length >= 50);
 
   // ─── Render ─────────────────────────────────────────────
 
@@ -236,14 +276,50 @@ export function FaqImportDialog({
                 <Label className="text-sm font-medium">
                   {t("import.urlLabel")}
                 </Label>
-                <Input
-                  type="url"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder={t("import.urlPlaceholder")}
-                  disabled={phase === "extracting"}
-                  className="dark:border-muted-foreground/20 dark:bg-muted/30"
-                />
+
+                {/* Dynamic URL list */}
+                <div className="space-y-2">
+                  {urls.map((urlValue, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        type="url"
+                        value={urlValue}
+                        onChange={(e) => updateUrl(index, e.target.value)}
+                        placeholder={t("import.urlPlaceholder")}
+                        disabled={phase === "extracting"}
+                        className="dark:border-muted-foreground/20 dark:bg-muted/30"
+                      />
+                      {urls.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-8 shrink-0 text-destructive/70 hover:text-destructive"
+                          onClick={() => removeUrl(index)}
+                          disabled={phase === "extracting"}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add another URL */}
+                {urls.length < URLS_MAX && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addUrl}
+                    disabled={phase === "extracting"}
+                    className="gap-1.5"
+                  >
+                    <Plus className="size-3.5" />
+                    {t("import.addUrl")}
+                  </Button>
+                )}
+
                 <p className="text-xs text-muted-foreground">
                   {t("import.urlHint")}
                 </p>
@@ -255,6 +331,14 @@ export function FaqImportDialog({
         {/* Phase: preview — show extracted FAQs */}
         {phase === "preview" && extractedFaqs.length > 0 && (
           <div className="space-y-3">
+            {/* AI Disclaimer */}
+            <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-400/30 dark:bg-amber-950/20">
+              <Info className="size-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+              <p className="text-xs text-amber-700 dark:text-amber-300">
+                {t("import.aiDisclaimer")}
+              </p>
+            </div>
+
             {/* Select all + count */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">

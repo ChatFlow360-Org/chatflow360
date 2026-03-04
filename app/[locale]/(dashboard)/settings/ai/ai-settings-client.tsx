@@ -154,6 +154,7 @@ interface AiSettingsClientProps {
   globalRules: GlobalRuleData[];
   widgetChannelId?: string;
   widgetPublicKey?: string;
+  channelWebsiteUrl?: string;
   widgetAppearance?: WidgetAppearance;
   postChatSettings?: PostChatSettings;
 }
@@ -171,6 +172,7 @@ export function AiSettingsClient({
   globalRules,
   widgetChannelId,
   widgetPublicKey,
+  channelWebsiteUrl,
   widgetAppearance,
   postChatSettings,
 }: AiSettingsClientProps) {
@@ -1721,6 +1723,7 @@ export function AiSettingsClient({
           );
         }}
         currentCount={faqsData.items.length}
+        channelWebsiteUrl={channelWebsiteUrl}
         t={(key, values) =>
           t(
             `faqs.${key}`,
