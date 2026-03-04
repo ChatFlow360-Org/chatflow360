@@ -114,9 +114,9 @@ export function WidgetPreview({ appearance, activeSection, className, fillHeight
     DEFAULT_TEASER[previewLang].cta;
 
   return (
-    <div className={className}>
+    <div className={`${className || ""} ${fillHeight ? "flex flex-col h-full" : ""}`.trim()}>
       {/* Language Toggle */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-3 shrink-0">
         <span className="text-xs font-medium text-muted-foreground">{t("preview")}</span>
         <div className="flex items-center gap-0.5 rounded-full border border-border bg-muted/40 p-0.5">
           <button
@@ -145,7 +145,7 @@ export function WidgetPreview({ appearance, activeSection, className, fillHeight
       </div>
 
       {/* Widget Replica */}
-      <div className="flex flex-col items-end gap-3" style={fillHeight ? { height: "100%" } : { height: "calc(100vh - 260px)", minHeight: 400 }}>
+      <div className={`flex flex-col items-end gap-3 ${fillHeight ? "flex-1 min-h-0" : ""}`} style={fillHeight ? undefined : { height: "calc(100vh - 260px)", minHeight: 400 }}>
         {showBubble ? (
           /* Bubble section — show teaser strip only, centered vertically */
           <div className="flex flex-1 flex-col items-end justify-center w-full gap-6">
@@ -156,7 +156,7 @@ export function WidgetPreview({ appearance, activeSection, className, fillHeight
                 overflow: "hidden",
                 maxWidth: 86,
                 borderRadius: "32px 0 0 32px",
-                background: appearance.teaserBgColor,
+                background: "#fff",
                 padding: "0 25px 0 0",
               }}
             >
@@ -167,8 +167,8 @@ export function WidgetPreview({ appearance, activeSection, className, fillHeight
                   height: 56,
                   minWidth: 56,
                   borderRadius: "50%",
-                  background: `linear-gradient(135deg, ${bc}, ${darken(bc)})`,
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+                  background: bc,
+                  border: `2px solid ${bc}`,
                 }}
               >
                 <ChatBubbleIcon size={24} fill={bic} dotFill={bc} />
