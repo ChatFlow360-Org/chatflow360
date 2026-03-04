@@ -280,7 +280,7 @@
       "titlePlaceholder": "ej. Servicios y Precios",
       "contentLabel": "Contenido",
       "contentPlaceholder": "Ingresa el contenido del conocimiento que la IA debe usar para responder preguntas...",
-      "charCount": "{count}/4000 caracteres",
+      "charCount": "{count}/2000 caracteres",
       "saving": "Guardando...",
       "save": "Guardar",
       "emptyTitle": "Aun no hay elementos de conocimiento",

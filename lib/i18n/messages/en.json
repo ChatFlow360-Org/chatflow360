@@ -280,7 +280,7 @@
       "titlePlaceholder": "e.g. Services and Pricing",
       "contentLabel": "Content",
       "contentPlaceholder": "Enter the knowledge content that the AI should use to answer questions...",
-      "charCount": "{count}/4000 characters",
+      "charCount": "{count}/2000 characters",
       "saving": "Saving...",
       "save": "Save",
       "emptyTitle": "No knowledge items yet",
