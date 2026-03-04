@@ -76,13 +76,13 @@ export function FaqImportDialog({
 
   // Computed
   const availableSlots = ITEMS_MAX - currentCount;
-  const selectableIds = useMemo(
-    () => extractedFaqs.map((f) => f.id).slice(0, availableSlots),
-    [extractedFaqs, availableSlots],
+  const allIds = useMemo(
+    () => extractedFaqs.map((f) => f.id),
+    [extractedFaqs],
   );
+  const maxSelectable = Math.min(allIds.length, availableSlots);
   const allSelectableSelected =
-    selectableIds.length > 0 &&
-    selectableIds.every((id) => selectedIds.has(id));
+    selectedIds.size > 0 && selectedIds.size >= maxSelectable;
 
   // ─── Extract handler ────────────────────────────────────
 
@@ -263,7 +263,7 @@ export function FaqImportDialog({
                   checked={allSelectableSelected}
                   onCheckedChange={(checked) => {
                     if (checked) {
-                      setSelectedIds(new Set(selectableIds));
+                      setSelectedIds(new Set(allIds.slice(0, availableSlots)));
                     } else {
                       setSelectedIds(new Set());
                     }
@@ -274,7 +274,7 @@ export function FaqImportDialog({
                   className="text-sm cursor-pointer"
                 >
                   {t("import.selectAll")} ({selectedIds.size}/
-                  {Math.min(extractedFaqs.length, availableSlots)})
+                  {extractedFaqs.length})
                 </Label>
               </div>
 
