@@ -33,13 +33,31 @@ function stripHtml(html: string, charLimit = 15_000): string {
     .replace(/<\/?(p|div|br|li|h[1-6]|section|article|main)[^>]*>/gi, "\n")
     // Strip remaining tags
     .replace(/<[^>]+>/g, "")
-    // Decode common HTML entities
+    // Decode HTML entities
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&nbsp;/g, " ")
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
+    .replace(/&mdash;/g, "—")
+    .replace(/&ndash;/g, "–")
+    .replace(/&hellip;/g, "…")
+    .replace(/&rsquo;/g, "'")
+    .replace(/&lsquo;/g, "'")
+    .replace(/&rdquo;/g, "\u201D")
+    .replace(/&ldquo;/g, "\u201C")
+    .replace(/&bull;/g, "•")
+    .replace(/&copy;/g, "©")
+    .replace(/&reg;/g, "®")
+    .replace(/&trade;/g, "™")
+    // Decode numeric entities (&#8212; &#x2014; etc.)
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
+      String.fromCharCode(parseInt(hex, 16)),
+    )
+    .replace(/&#(\d+);/g, (_, dec) =>
+      String.fromCharCode(parseInt(dec, 10)),
+    )
     // Collapse whitespace
     .replace(/\n{3,}/g, "\n\n")
     .trim();
