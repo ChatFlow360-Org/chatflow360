@@ -1108,11 +1108,11 @@
     var collapseTimer = null;
     teaserEl.addEventListener("mouseenter", function () {
       clearTimeout(collapseTimer);
-      if (!state.teaserDismissed && !state.open) expandTeaser();
+      if (!state.open) expandTeaser();
     });
     teaserEl.addEventListener("mouseleave", function () {
       collapseTimer = setTimeout(function () {
-        if (!state.teaserAutoShow || state.teaserDismissed) collapseTeaser();
+        collapseTeaser();
       }, 400);
     });
   }

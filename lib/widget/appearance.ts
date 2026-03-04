@@ -73,7 +73,7 @@ export const DEFAULT_WIDGET_APPEARANCE: Required<WidgetAppearance> = {
   teaserBgColor: "#2f92ad",            // matches bubbleColor default
   teaserCtaColor: "#333333",
   teaserAutoShow: false,
-  teaserDelaySeconds: 5,
+  teaserDelaySeconds: 10,
 };
 
 // ─── Zod Schema ───────────────────────────────────────────────────
@@ -115,7 +115,7 @@ export const widgetAppearanceSchema = z.object({
   teaserBgColor: hexColor.optional().default(DEFAULT_WIDGET_APPEARANCE.teaserBgColor),
   teaserCtaColor: hexColor.optional().default(DEFAULT_WIDGET_APPEARANCE.teaserCtaColor),
   teaserAutoShow: z.boolean().optional().default(false),
-  teaserDelaySeconds: z.number().int().min(3).max(30).optional().default(5),
+  teaserDelaySeconds: z.number().int().min(3).max(30).optional().default(10),
 });
 
 // ─── Resolver ─────────────────────────────────────────────────────
