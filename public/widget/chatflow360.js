@@ -1587,7 +1587,7 @@
     if (logoUrl) {
       var logoImg = document.createElement("img");
       logoImg.src = logoUrl;
-      logoImg.alt = "Logo";
+      logoImg.alt = "";
       hero.appendChild(logoImg);
     }
     postChatEl.appendChild(hero);
@@ -2015,7 +2015,7 @@
       teaserBubbleEl.innerHTML = "";
       var img = document.createElement("img");
       img.src = logoUrl;
-      img.alt = "Logo";
+      img.alt = "";
       img.style.cssText = "width:100%;height:100%;object-fit:contain;border-radius:50%;";
       teaserBubbleEl.appendChild(img);
       teaserBubbleEl.classList.add("cf360-teaser-bubble--logo");
@@ -2026,7 +2026,7 @@
       chatIcon.innerHTML = "";
       var img2 = document.createElement("img");
       img2.src = logoUrl;
-      img2.alt = "Logo";
+      img2.alt = "";
       img2.style.cssText = "width:30px;height:30px;object-fit:contain;border-radius:50%;";
       chatIcon.appendChild(img2);
     }
