@@ -828,14 +828,11 @@
   var ICON_CLOSE = '<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
   var ICON_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg>';
   var ICON_MSG = '<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>';
-  var ICON_EXPAND = '<svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>';
-  var ICON_COLLAPSE = '<svg viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>';
 
   // ─── DOM Elements ─────────────────────────────────────────────────
   var container, bubble, badge, chatWindow, messagesArea, inputField, sendBtn;
-  var typingEl, connectingEl, newConvBtn, endConvEl, confirmEl, expandBtn, postChatEl;
+  var typingEl, connectingEl, newConvBtn, endConvEl, confirmEl, postChatEl;
   var teaserEl, teaserTextEl, teaserCtaEl, teaserCloseEl, teaserBubbleEl;
-  var isExpanded = false;
 
   function buildDOM() {
     // Container
@@ -900,13 +897,9 @@
     header.appendChild(headerInfo);
 
     var headerActions = el("div", "cf360-header-actions");
-    expandBtn = el("button", "cf360-header-btn cf360-header-btn--expand");
-    expandBtn.setAttribute("aria-label", "Expand");
-    expandBtn.innerHTML = ICON_EXPAND;
     var closeBtn = el("button", "cf360-header-btn");
     closeBtn.setAttribute("aria-label", "Close");
     closeBtn.innerHTML = ICON_CLOSE;
-    headerActions.appendChild(expandBtn);
     headerActions.appendChild(closeBtn);
     header.appendChild(headerActions);
     chatWindow.appendChild(header);
@@ -986,7 +979,6 @@
     // ─── Event listeners ──────────────────────────────────────────
     bubble.addEventListener("click", toggleWidget);
     closeBtn.addEventListener("click", closeWidget);
-    expandBtn.addEventListener("click", toggleExpand);
     sendBtn.addEventListener("click", handleSend);
     newConvBtn.addEventListener("click", startNewConversation);
     endConvBtn.addEventListener("click", showEndConfirm);
@@ -1134,6 +1126,7 @@
     bubble.classList.add("cf360-bubble--open");
     bubble.classList.remove("cf360-bubble--pulse");
     chatWindow.classList.add("cf360-window--open");
+    chatWindow.classList.add("cf360-window--expanded");
     badge.classList.remove("cf360-badge--show");
     badge.textContent = "0";
 
@@ -1152,29 +1145,11 @@
     bubble.style.display = "none";
     teaserEl.style.display = "";
     chatWindow.classList.remove("cf360-window--open");
+    chatWindow.classList.remove("cf360-window--expanded");
     // Clear mobile keyboard padding
     chatWindow.style.paddingBottom = "";
-    // Collapse back on close so next open is compact
-    if (isExpanded) {
-      isExpanded = false;
-      chatWindow.classList.remove("cf360-window--expanded");
-      expandBtn.innerHTML = ICON_EXPAND;
-      expandBtn.setAttribute("aria-label", "Expand");
-    }
   }
 
-  function toggleExpand() {
-    isExpanded = !isExpanded;
-    if (isExpanded) {
-      chatWindow.classList.add("cf360-window--expanded");
-      expandBtn.innerHTML = ICON_COLLAPSE;
-      expandBtn.setAttribute("aria-label", "Collapse");
-    } else {
-      chatWindow.classList.remove("cf360-window--expanded");
-      expandBtn.innerHTML = ICON_EXPAND;
-      expandBtn.setAttribute("aria-label", "Expand");
-    }
-  }
 
   // ─── Welcome state ────────────────────────────────────────────────
   function showWelcome() {
