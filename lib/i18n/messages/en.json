@@ -558,8 +558,8 @@
       "teaserBgColorHint": "Color visible behind the bubble circle",
       "teaserCtaColor": "Button color",
       "teaserCtaColorHint": "Background color of the teaser call-to-action button",
-      "teaserAutoShow": "Auto-show teaser",
-      "teaserAutoShowHint": "When off: teaser shows on hover (desktop) or first tap (mobile)",
+      "teaserAutoShow": "Auto-expand bubble",
+      "teaserAutoShowHint": "When off: bubble expands on hover (desktop) or first tap (mobile)",
       "teaserDelay": "Delay (seconds)",
       "teaserDelayHint": "Time before the teaser appears automatically (3-30s)"
     },

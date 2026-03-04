@@ -558,8 +558,8 @@
       "teaserBgColorHint": "Color visible detrás del círculo del bubble",
       "teaserCtaColor": "Color del botón",
       "teaserCtaColorHint": "Color de fondo del botón de llamada a la acción del teaser",
-      "teaserAutoShow": "Mostrar teaser automaticamente",
-      "teaserAutoShowHint": "Cuando esta apagado: el teaser se muestra al pasar el cursor (escritorio) o al primer toque (movil)",
+      "teaserAutoShow": "Expandir burbuja automáticamente",
+      "teaserAutoShowHint": "Cuando está apagado: la burbuja se expande al pasar el cursor (escritorio) o al primer toque (móvil)",
       "teaserDelay": "Retraso (segundos)",
       "teaserDelayHint": "Tiempo antes de que el teaser aparezca automaticamente (3-30s)"
     },
