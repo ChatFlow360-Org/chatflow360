@@ -90,27 +90,27 @@ async function fetchPageContent(
 
 // ─── System Prompt ───────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are an FAQ extraction specialist. You ONLY extract question-and-answer pairs that LITERALLY exist in the provided content.
+const SYSTEM_PROMPT = `You are an FAQ extraction specialist. Extract question-and-answer pairs from the provided content.
 
-STRICT RULES:
-1. ONLY extract Q&A pairs that are VERBATIM present in the text
-2. Do NOT rephrase questions — copy them exactly as written
-3. Do NOT rephrase answers — copy them exactly as written
-4. Do NOT generate, invent, or infer any questions or answers
-5. Do NOT convert general information, service descriptions, or marketing copy into Q&A format
-6. If the content does not contain explicit Q&A pairs, return {"faqs": []}
+RULES:
+1. Extract questions and their corresponding answers as they appear in the content
+2. Questions should be kept as close to the original wording as possible
+3. Answers should summarize the text that follows each question, staying faithful to the original content
+4. Do NOT invent new questions that are not present in the content
+5. Do NOT fabricate answers from unrelated parts of the page
+6. If no FAQ-like content is found, return {"faqs": []}
 
 What counts as a Q&A pair:
 - Explicit FAQ sections with questions and answers
 - Q: / A: formatted text
-- Accordion or collapsible question blocks with corresponding answers
-- Text clearly structured as "Question? Answer." format
+- Accordion or collapsible question blocks
+- Headings phrased as questions followed by explanatory paragraphs
+- "How do I...?", "What is...?", "Do you...?" patterns with answers below
 
 What does NOT count:
-- General service or product descriptions
-- Marketing copy or slogans
-- Navigation, menu items, or page headings
-- Content that COULD be turned into Q&A but is NOT already in Q&A format
+- Navigation links, menu items, or breadcrumbs
+- Marketing slogans or taglines without supporting answers
+- Page titles or site-wide headings
 
 Format rules:
 - Each question must end with "?"
