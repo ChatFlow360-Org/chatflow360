@@ -894,6 +894,9 @@ export function AiSettingsClient({
                             maxLength={2000}
                             className="resize-none bg-background"
                           />
+                          <p className="text-xs text-muted-foreground text-right mt-1">
+                            {t("agentInstructions.additionalInstructionsCharCount", { count: promptStructure.additionalInstructions?.length ?? 0 })}
+                          </p>
                         </div>
                       )}
                     </div>

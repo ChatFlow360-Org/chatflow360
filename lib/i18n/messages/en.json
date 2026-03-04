@@ -210,6 +210,7 @@
       "additionalInstructionsDescription": "Optional — use this for business-specific rules or context that doesn't fit in the structured fields above. The main instructions are defined by the fields above.",
       "additionalInstructionsPlaceholder": "Add any business-specific instructions that don't fit the fields above...",
       "additionalInstructionsHasContent": "has content",
+      "additionalInstructionsCharCount": "{count}/2000 characters",
       "browseTemplates": "Browse templates",
       "templateCategoryHeader": "{category} templates",
       "applyTemplate": "Apply",

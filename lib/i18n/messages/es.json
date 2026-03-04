@@ -210,6 +210,7 @@
       "additionalInstructionsDescription": "Opcional — usa esto para reglas especificas de tu negocio o contexto que no encaje en los campos estructurados de arriba. Las instrucciones principales se definen con los campos anteriores.",
       "additionalInstructionsPlaceholder": "Agrega instrucciones especificas de tu negocio que no encajen en los campos anteriores...",
       "additionalInstructionsHasContent": "tiene contenido",
+      "additionalInstructionsCharCount": "{count}/2000 caracteres",
       "browseTemplates": "Explorar plantillas",
       "templateCategoryHeader": "Plantillas de {category}",
       "applyTemplate": "Aplicar",
