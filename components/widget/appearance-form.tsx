@@ -218,6 +218,11 @@ export function AppearanceForm({
               value={appearance.teaserBgColor}
               onChange={(v) => update("teaserBgColor", v)}
             />
+            <ColorRow
+              label={t("teaserCtaColor")}
+              value={appearance.teaserCtaColor}
+              onChange={(v) => update("teaserCtaColor", v)}
+            />
           </div>
 
           <Separator />

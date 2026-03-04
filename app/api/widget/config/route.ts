@@ -30,12 +30,16 @@ export async function GET(request: NextRequest) {
     const appearance = resolveAppearance(configObj);
     const postChatFull = resolvePostChat(configObj);
 
-    // Replace {{org_name}} in teaser texts server-side
+    // Fill default teaser texts when empty, then replace {{org_name}}
     const orgName = channel.organization?.name || "";
+    if (!appearance.teaserTextEn) appearance.teaserTextEn = `Grow with ${orgName || "us"}!`;
+    if (!appearance.teaserTextEs) appearance.teaserTextEs = `Crece con ${orgName || "nosotros"}!`;
+    if (!appearance.teaserCtaEn) appearance.teaserCtaEn = "Let's Chat!";
+    if (!appearance.teaserCtaEs) appearance.teaserCtaEs = "Chatea!";
     if (orgName) {
       const replaceOrgName = (s: string) => s.replace(/\{\{org_name\}\}/g, orgName);
-      if (appearance.teaserTextEn) appearance.teaserTextEn = replaceOrgName(appearance.teaserTextEn);
-      if (appearance.teaserTextEs) appearance.teaserTextEs = replaceOrgName(appearance.teaserTextEs);
+      appearance.teaserTextEn = replaceOrgName(appearance.teaserTextEn);
+      appearance.teaserTextEs = replaceOrgName(appearance.teaserTextEs);
     }
 
     // Only expose what the widget needs (no email template details)

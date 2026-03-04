@@ -2004,7 +2004,9 @@
       ".cf360-teaser-bubble svg{fill:" + bic + ";}",
       ".cf360-teaser:not(.cf360-teaser--expanded) .cf360-teaser-bubble:not(.cf360-teaser-bubble--logo){animation:cf360-pulse 2s ease infinite;box-shadow:0 4px 20px rgba(0,0,0,0.2),0 0 0 0 " + bcAlpha80 + ";}",
       // Teaser accent background (visible behind bubble circle)
-      ".cf360-teaser:not(.cf360-teaser--expanded){background:" + safeHex(cfg.teaserBgColor, bc) + ";}"
+      ".cf360-teaser:not(.cf360-teaser--expanded){background:" + safeHex(cfg.teaserBgColor, bc) + ";}",
+      // Teaser CTA button color
+      ".cf360-teaser-cta{background:" + safeHex(cfg.teaserCtaColor, "#333333") + ";}"
     ].join("\n");
 
     // Remove old overrides if any

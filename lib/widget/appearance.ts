@@ -34,6 +34,7 @@ export interface WidgetAppearance {
   teaserCtaEn?: string;
   teaserCtaEs?: string;
   teaserBgColor?: string;
+  teaserCtaColor?: string;
   teaserAutoShow?: boolean;
   teaserDelaySeconds?: number;
 }
@@ -70,6 +71,7 @@ export const DEFAULT_WIDGET_APPEARANCE: Required<WidgetAppearance> = {
   teaserCtaEn: "",               // empty = use widget fallback "Let's Chat!"
   teaserCtaEs: "",
   teaserBgColor: "#2f92ad",            // matches bubbleColor default
+  teaserCtaColor: "#333333",
   teaserAutoShow: false,
   teaserDelaySeconds: 5,
 };
@@ -111,6 +113,7 @@ export const widgetAppearanceSchema = z.object({
   teaserCtaEn: z.string().max(30).optional().default(""),
   teaserCtaEs: z.string().max(30).optional().default(""),
   teaserBgColor: hexColor.optional().default(DEFAULT_WIDGET_APPEARANCE.teaserBgColor),
+  teaserCtaColor: hexColor.optional().default(DEFAULT_WIDGET_APPEARANCE.teaserCtaColor),
   teaserAutoShow: z.boolean().optional().default(false),
   teaserDelaySeconds: z.number().int().min(3).max(30).optional().default(5),
 });
