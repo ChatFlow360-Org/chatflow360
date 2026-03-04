@@ -1115,10 +1115,7 @@
     state.open = true;
     collapseTeaser();
     teaserEl.style.display = "none";
-    bubble.style.display = "";
     if (state.teaserTimer) { clearTimeout(state.teaserTimer); state.teaserTimer = null; }
-    bubble.classList.add("cf360-bubble--open");
-    bubble.classList.remove("cf360-bubble--pulse");
     chatWindow.classList.add("cf360-window--open");
     chatWindow.classList.add("cf360-window--expanded");
     badge.classList.remove("cf360-badge--show");
@@ -1135,11 +1132,8 @@
 
   function closeWidget() {
     state.open = false;
-    bubble.classList.remove("cf360-bubble--open");
-    bubble.style.display = "none";
     chatWindow.classList.remove("cf360-window--open");
     // Keep --expanded so the panel fades out in side-panel form (no compact flash)
-    // Clear mobile keyboard padding
     chatWindow.style.paddingBottom = "";
     // Restore teaser (collapsed) after close animation finishes
     setTimeout(function () {
