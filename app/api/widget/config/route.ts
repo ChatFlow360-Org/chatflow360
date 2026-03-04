@@ -32,8 +32,8 @@ export async function GET(request: NextRequest) {
 
     // Fill default teaser texts when empty, then replace {{org_name}}
     const orgName = channel.organization?.name || "";
-    if (!appearance.teaserTextEn) appearance.teaserTextEn = `Grow with ${orgName || "us"}!`;
-    if (!appearance.teaserTextEs) appearance.teaserTextEs = `Crece con ${orgName || "nosotros"}!`;
+    if (!appearance.teaserTextEn) appearance.teaserTextEn = `Grow with the ${orgName || "us"}?`;
+    if (!appearance.teaserTextEs) appearance.teaserTextEs = `Crece con ${orgName || "nosotros"}?`;
     if (!appearance.teaserCtaEn) appearance.teaserCtaEn = "Let's Chat!";
     if (!appearance.teaserCtaEs) appearance.teaserCtaEs = "Chatea!";
     if (orgName) {
