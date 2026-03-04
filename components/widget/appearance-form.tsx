@@ -352,12 +352,12 @@ export function AppearanceForm({
                   value={String(appearance.teaserDelaySeconds)}
                   onValueChange={(v) => update("teaserDelaySeconds", parseInt(v, 10))}
                 >
-                  <SelectTrigger className="w-24 h-8 text-sm">
+                  <SelectTrigger className="w-36 h-8 text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent position="popper">
                     {[5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60].map((s) => (
-                      <SelectItem key={s} value={String(s)}>{s}s</SelectItem>
+                      <SelectItem key={s} value={String(s)}>{s} seconds</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
