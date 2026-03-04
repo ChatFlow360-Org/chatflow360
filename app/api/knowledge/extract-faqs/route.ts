@@ -143,7 +143,7 @@ If no explicit Q&A content is found, return: {"faqs": []}`;
 const SOURCE_HINT_URL =
   "Note: This content was scraped from a website. You may summarize long answers while staying faithful to the original meaning.";
 const SOURCE_HINT_TEXT =
-  "IMPORTANT: This content was provided directly by the user. Preserve the original wording as faithfully as possible. Do NOT summarize or rewrite answers — keep them verbatim, only removing formatting artifacts.";
+  "IMPORTANT: This content was provided directly by the user. Preserve the original wording as faithfully as possible. Only summarize if an answer exceeds 800 characters — otherwise keep it verbatim, only removing formatting artifacts.";
 
 // ─── Constants ───────────────────────────────────────────
 
