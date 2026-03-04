@@ -543,7 +543,21 @@
       "starterQuestionsLabel": "Starter Questions",
       "starterPlaceholderEn": "e.g., What are your business hours?",
       "starterPlaceholderEs": "e.g., What is your schedule?",
-      "addStarterQuestion": "Add question"
+      "addStarterQuestion": "Add question",
+      "sectionBubble": "Chat Bubble",
+      "sectionBubbleHint": "Customize the floating chat button and teaser message",
+      "teaserText": "Teaser Message",
+      "teaserTextPlaceholderEn": "e.g., Grow with '{{org_name}}'!",
+      "teaserTextPlaceholderEs": "e.g., Crece con '{{org_name}}'!",
+      "teaserTextHint": "Use '{{org_name}}' to insert the organization name. Leave empty for default.",
+      "teaserCta": "Button Text",
+      "teaserCtaPlaceholderEn": "e.g., Let's Chat!",
+      "teaserCtaPlaceholderEs": "e.g., Chatea!",
+      "teaserCtaHint": "Leave empty to use the default button text",
+      "teaserAutoShow": "Auto-show teaser",
+      "teaserAutoShowHint": "When off: teaser shows on hover (desktop) or first tap (mobile)",
+      "teaserDelay": "Delay (seconds)",
+      "teaserDelayHint": "Time before the teaser appears automatically (3-30s)"
     },
     "postChat": {
       "title": "Post-Chat Experience",

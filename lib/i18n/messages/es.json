@@ -543,7 +543,21 @@
       "starterQuestionsLabel": "Preguntas Iniciales",
       "starterPlaceholderEn": "ej., What are your business hours?",
       "starterPlaceholderEs": "ej., Cual es su horario de atencion?",
-      "addStarterQuestion": "Agregar pregunta"
+      "addStarterQuestion": "Agregar pregunta",
+      "sectionBubble": "Burbuja de Chat",
+      "sectionBubbleHint": "Personaliza el boton flotante y el mensaje de teaser",
+      "teaserText": "Mensaje de Teaser",
+      "teaserTextPlaceholderEn": "ej., Grow with '{{org_name}}'!",
+      "teaserTextPlaceholderEs": "ej., Crece con '{{org_name}}'!",
+      "teaserTextHint": "Usa '{{org_name}}' para insertar el nombre de la organizacion. Dejar vacio para el predeterminado.",
+      "teaserCta": "Texto del Boton",
+      "teaserCtaPlaceholderEn": "ej., Let's Chat!",
+      "teaserCtaPlaceholderEs": "ej., Chatea!",
+      "teaserCtaHint": "Dejar vacio para usar el texto de boton predeterminado",
+      "teaserAutoShow": "Mostrar teaser automaticamente",
+      "teaserAutoShowHint": "Cuando esta apagado: el teaser se muestra al pasar el cursor (escritorio) o al primer toque (movil)",
+      "teaserDelay": "Retraso (segundos)",
+      "teaserDelayHint": "Tiempo antes de que el teaser aparezca automaticamente (3-30s)"
     },
     "postChat": {
       "title": "Experiencia Post-Chat",

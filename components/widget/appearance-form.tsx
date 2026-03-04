@@ -95,17 +95,20 @@ export function AppearanceForm({
   const tCommon = useTranslations("common");
   const [resetId, setResetId] = useState<string | null>(null);
   const [mobilePreview, setMobilePreview] = useState(false);
-  const [activeSection, setActiveSection] = useState<"welcome" | "texts" | "colors">("welcome");
+  const [activeSection, setActiveSection] = useState<"bubble" | "welcome" | "texts" | "colors">("bubble");
+  const { translateAll: translateBubble, loading: bulkBubble } = useBulkTranslate();
   const { translateAll: translateWelcome, loading: bulkWelcome } = useBulkTranslate();
   const { translateAll: translateTexts, loading: bulkTexts } = useBulkTranslate();
 
   // Scroll-spy refs
+  const bubbleRef = useRef<HTMLDivElement>(null);
   const welcomeRef = useRef<HTMLDivElement>(null);
   const textsRef = useRef<HTMLDivElement>(null);
   const colorsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const map = new Map<Element, "welcome" | "texts" | "colors">();
+    const map = new Map<Element, "bubble" | "welcome" | "texts" | "colors">();
+    if (bubbleRef.current) map.set(bubbleRef.current, "bubble");
     if (welcomeRef.current) map.set(welcomeRef.current, "welcome");
     if (textsRef.current) map.set(textsRef.current, "texts");
     if (colorsRef.current) map.set(colorsRef.current, "colors");
@@ -163,7 +166,190 @@ export function AppearanceForm({
 
   const formContent = (
     <div className="space-y-6">
-      {/* Welcome Screen Section */}
+      {/* ─── Chat Bubble Section ─────────────────────────────────── */}
+      <Card ref={bubbleRef}>
+        <CardHeader className="pb-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle className="text-base">{t("sectionBubble")}</CardTitle>
+              <CardDescription className="text-xs">
+                {t("sectionBubbleHint")}
+              </CardDescription>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="xs"
+              disabled={bulkBubble}
+              onClick={() => {
+                const pairs: { sourceText: string; direction: "en-to-es" | "es-to-en"; onTranslated: (t: string) => void }[] = [];
+                if (appearance.teaserTextEn && !appearance.teaserTextEs)
+                  pairs.push({ sourceText: appearance.teaserTextEn, direction: "en-to-es", onTranslated: (v) => update("teaserTextEs", v) });
+                else if (appearance.teaserTextEs && !appearance.teaserTextEn)
+                  pairs.push({ sourceText: appearance.teaserTextEs, direction: "es-to-en", onTranslated: (v) => update("teaserTextEn", v) });
+                if (appearance.teaserCtaEn && !appearance.teaserCtaEs)
+                  pairs.push({ sourceText: appearance.teaserCtaEn, direction: "en-to-es", onTranslated: (v) => update("teaserCtaEs", v) });
+                else if (appearance.teaserCtaEs && !appearance.teaserCtaEn)
+                  pairs.push({ sourceText: appearance.teaserCtaEs, direction: "es-to-en", onTranslated: (v) => update("teaserCtaEn", v) });
+                if (pairs.length > 0) translateBubble(pairs);
+              }}
+              className="text-xs bg-amber-500 hover:bg-amber-600 text-black border-0 shrink-0"
+            >
+              {bulkBubble ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Languages className="mr-1 h-3 w-3" />}
+              {tCommon("translateEmpty")}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {/* Bubble Colors */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <ColorRow
+              label={t("bubbleColor")}
+              value={appearance.bubbleColor}
+              onChange={(v) => update("bubbleColor", v)}
+            />
+            <ColorRow
+              label={t("bubbleIconColor")}
+              value={appearance.bubbleIconColor}
+              onChange={(v) => update("bubbleIconColor", v)}
+            />
+          </div>
+
+          <Separator />
+
+          {/* Teaser Text — EN / ES */}
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">{t("teaserText")}</Label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1">
+                  <Label htmlFor="teaserTextEn" className="text-xs text-muted-foreground">
+                    {t("english")}
+                  </Label>
+                  <TranslateButton sourceText={appearance.teaserTextEs} direction="es-to-en" onTranslated={(v) => update("teaserTextEn", v)} />
+                </div>
+                <Input
+                  id="teaserTextEn"
+                  value={appearance.teaserTextEn}
+                  onChange={(e) => update("teaserTextEn", e.target.value)}
+                  placeholder={t("teaserTextPlaceholderEn")}
+                  maxLength={80}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1">
+                  <Label htmlFor="teaserTextEs" className="text-xs text-muted-foreground">
+                    {t("spanish")}
+                  </Label>
+                  <TranslateButton sourceText={appearance.teaserTextEn} direction="en-to-es" onTranslated={(v) => update("teaserTextEs", v)} />
+                </div>
+                <Input
+                  id="teaserTextEs"
+                  value={appearance.teaserTextEs}
+                  onChange={(e) => update("teaserTextEs", e.target.value)}
+                  placeholder={t("teaserTextPlaceholderEs")}
+                  maxLength={80}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t("teaserTextHint")}
+            </p>
+          </div>
+
+          <Separator />
+
+          {/* Teaser CTA — EN / ES */}
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">{t("teaserCta")}</Label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1">
+                  <Label htmlFor="teaserCtaEn" className="text-xs text-muted-foreground">
+                    {t("english")}
+                  </Label>
+                  <TranslateButton sourceText={appearance.teaserCtaEs} direction="es-to-en" onTranslated={(v) => update("teaserCtaEn", v)} />
+                </div>
+                <Input
+                  id="teaserCtaEn"
+                  value={appearance.teaserCtaEn}
+                  onChange={(e) => update("teaserCtaEn", e.target.value)}
+                  placeholder={t("teaserCtaPlaceholderEn")}
+                  maxLength={30}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1">
+                  <Label htmlFor="teaserCtaEs" className="text-xs text-muted-foreground">
+                    {t("spanish")}
+                  </Label>
+                  <TranslateButton sourceText={appearance.teaserCtaEn} direction="en-to-es" onTranslated={(v) => update("teaserCtaEs", v)} />
+                </div>
+                <Input
+                  id="teaserCtaEs"
+                  value={appearance.teaserCtaEs}
+                  onChange={(e) => update("teaserCtaEs", e.target.value)}
+                  placeholder={t("teaserCtaPlaceholderEs")}
+                  maxLength={30}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t("teaserCtaHint")}
+            </p>
+          </div>
+
+          <Separator />
+
+          {/* Auto-show Toggle */}
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <Label htmlFor="teaserAutoShow" className="cursor-pointer text-sm font-medium">
+                {t("teaserAutoShow")}
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                {t("teaserAutoShowHint")}
+              </p>
+            </div>
+            <Switch
+              id="teaserAutoShow"
+              checked={appearance.teaserAutoShow}
+              onCheckedChange={(v) => update("teaserAutoShow", v)}
+            />
+          </div>
+
+          {/* Delay Seconds — only when auto-show is ON */}
+          {appearance.teaserAutoShow && (
+            <>
+              <Separator />
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <Label htmlFor="teaserDelaySeconds" className="text-sm font-medium">
+                    {t("teaserDelay")}
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    {t("teaserDelayHint")}
+                  </p>
+                </div>
+                <Input
+                  id="teaserDelaySeconds"
+                  type="number"
+                  min={3}
+                  max={30}
+                  value={appearance.teaserDelaySeconds}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value, 10);
+                    if (!isNaN(v) && v >= 3 && v <= 30) update("teaserDelaySeconds", v);
+                  }}
+                  className="w-20 h-8 text-sm"
+                />
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ─── Welcome Screen Section ──────────────────────────────── */}
       <Card ref={welcomeRef}>
         <CardHeader className="pb-4">
           <div className="flex items-start justify-between gap-4">
@@ -466,28 +652,6 @@ export function AppearanceForm({
               label={t("headerIconColor")}
               value={appearance.headerIconColor}
               onChange={(v) => update("headerIconColor", v)}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Floating Button */}
-        <Card>
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base">
-              {t("sectionFloatingButton")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <ColorRow
-              label={t("bubbleColor")}
-              value={appearance.bubbleColor}
-              onChange={(v) => update("bubbleColor", v)}
-            />
-            <Separator />
-            <ColorRow
-              label={t("bubbleIconColor")}
-              value={appearance.bubbleIconColor}
-              onChange={(v) => update("bubbleIconColor", v)}
             />
           </CardContent>
         </Card>

@@ -28,6 +28,13 @@ export interface WidgetAppearance {
   sendButtonColor?: string;
   useStarterQuestions?: boolean;
   starterQuestions?: StarterQuestion[];
+  // Teaser (2-stage bubble)
+  teaserTextEn?: string;
+  teaserTextEs?: string;
+  teaserCtaEn?: string;
+  teaserCtaEs?: string;
+  teaserAutoShow?: boolean;
+  teaserDelaySeconds?: number;
 }
 
 /** Shape of `Channel.config` JSONB (only the widget slice). */
@@ -57,6 +64,12 @@ export const DEFAULT_WIDGET_APPEARANCE: Required<WidgetAppearance> = {
   sendButtonColor: "#2f92ad",
   useStarterQuestions: false,
   starterQuestions: [],
+  teaserTextEn: "",              // empty = use widget fallback "Grow with us!"
+  teaserTextEs: "",
+  teaserCtaEn: "",               // empty = use widget fallback "Let's Chat!"
+  teaserCtaEs: "",
+  teaserAutoShow: false,
+  teaserDelaySeconds: 5,
 };
 
 // ─── Zod Schema ───────────────────────────────────────────────────
@@ -91,6 +104,12 @@ export const widgetAppearanceSchema = z.object({
   sendButtonColor: hexColor.optional().default(DEFAULT_WIDGET_APPEARANCE.sendButtonColor),
   useStarterQuestions: z.boolean().optional().default(false),
   starterQuestions: z.array(starterQuestionSchema).max(5).optional().default([]),
+  teaserTextEn: z.string().max(80).optional().default(""),
+  teaserTextEs: z.string().max(80).optional().default(""),
+  teaserCtaEn: z.string().max(30).optional().default(""),
+  teaserCtaEs: z.string().max(30).optional().default(""),
+  teaserAutoShow: z.boolean().optional().default(false),
+  teaserDelaySeconds: z.number().int().min(3).max(30).optional().default(5),
 });
 
 // ─── Resolver ─────────────────────────────────────────────────────
@@ -119,9 +138,14 @@ export function resolveAppearance(
 
   const resolved = { ...DEFAULT_WIDGET_APPEARANCE };
   for (const key of Object.keys(DEFAULT_WIDGET_APPEARANCE) as (keyof WidgetAppearance)[]) {
-    if (key === "useStarterQuestions") {
+    if (key === "useStarterQuestions" || key === "teaserAutoShow") {
       if (typeof compat[key] === "boolean") {
         (resolved as Record<string, unknown>)[key] = compat[key];
+      }
+    } else if (key === "teaserDelaySeconds") {
+      const num = (stored as Record<string, unknown>)?.[key];
+      if (typeof num === "number" && num >= 3 && num <= 30) {
+        (resolved as Record<string, unknown>)[key] = num;
       }
     } else if (key === "starterQuestions") {
       const arr = (stored as Record<string, unknown>)?.[key];

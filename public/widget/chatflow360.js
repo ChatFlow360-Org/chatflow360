@@ -76,7 +76,9 @@
       transcriptError: "Could not send transcript. Please try again.",
       transcriptPhoneCode: "+1",
       transcriptPhoneNumber: "Phone (optional)",
-      postChatDone: "Conversation ended"
+      postChatDone: "Conversation ended",
+      teaserDefault: "Grow with us!",
+      ctaDefault: "Let's Chat!"
     },
     es: {
       chatWithUs: "Chatea con nosotros",
@@ -102,7 +104,9 @@
       transcriptError: "No se pudo enviar. Int\u00e9ntalo de nuevo.",
       transcriptPhoneCode: "+1",
       transcriptPhoneNumber: "Tel\u00e9fono (opcional)",
-      postChatDone: "Conversaci\u00f3n finalizada"
+      postChatDone: "Conversaci\u00f3n finalizada",
+      teaserDefault: "\u00a1Crece con nosotros!",
+      ctaDefault: "\u00a1Chatea!"
     }
   };
 
@@ -226,7 +230,15 @@
     postChatConfig: null, // fetched from /api/widget/config
     contactName: null,
     useStarterQuestions: false,
-    starterQuestions: []
+    starterQuestions: [],
+    teaserText: null,
+    teaserCta: null,
+    teaserAutoShow: false,
+    teaserDelaySeconds: 5,
+    teaserShown: false,
+    teaserDismissed: false,
+    teaserTimer: null,
+    orgName: ""
   };
 
   // ─── Realtime Typing via Supabase Broadcast (Phoenix Channels) ──
@@ -462,6 +474,31 @@
       ".cf360-bubble .cf360-icon-close{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(90deg) scale(0);opacity:0;}",
       ".cf360-bubble--open .cf360-icon-chat{transform:rotate(-90deg) scale(0);opacity:0;}",
       ".cf360-bubble--open .cf360-icon-close{transform:translate(-50%,-50%) rotate(0) scale(1);opacity:1;}",
+
+      // Teaser callout
+      ".cf360-teaser{",
+      "  position:absolute;bottom:0;" + (posRight ? "right:72px;" : "left:72px;"),
+      "  background:#fff;border-radius:16px;padding:14px 18px;max-width:240px;",
+      "  box-shadow:0 4px 24px rgba(0,0,0,0.12),0 1px 4px rgba(0,0,0,0.06);",
+      "  display:flex;flex-direction:column;gap:10px;",
+      "  opacity:0;transform:translateY(8px) scale(0.95);pointer-events:none;",
+      "  transition:opacity 0.25s ease,transform 0.25s ease;",
+      "}",
+      ".cf360-teaser--show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}",
+      ".cf360-teaser-text{font-size:13px;color:#334155;line-height:1.4;padding-right:16px;}",
+      ".cf360-teaser-cta{",
+      "  background:linear-gradient(135deg," + primaryColor + "," + primaryDarker + ");color:#fff;",
+      "  border:none;border-radius:20px;padding:8px 18px;font-size:13px;font-weight:600;",
+      "  text-align:center;cursor:pointer;transition:opacity 0.15s;font-family:inherit;",
+      "}",
+      ".cf360-teaser-cta:hover{opacity:0.9;}",
+      ".cf360-teaser-close{",
+      "  position:absolute;top:6px;right:8px;width:20px;height:20px;border-radius:50%;",
+      "  background:#f1f5f9;border:none;display:flex;align-items:center;justify-content:center;",
+      "  cursor:pointer;padding:0;transition:background 0.15s;",
+      "}",
+      ".cf360-teaser-close:hover{background:#e2e8f0;}",
+      ".cf360-teaser-close svg{width:10px;height:10px;fill:#94a3b8;}",
 
       // Unread badge
       ".cf360-badge{",
@@ -744,6 +781,7 @@
       "  }",
       "  .cf360-header{border-radius:0;}",
       "  .cf360-bubble{position:fixed;bottom:16px;" + (posRight ? "right:16px;" : "left:16px;") + "}",
+      "  .cf360-teaser{position:fixed;bottom:80px;" + (posRight ? "right:16px;" : "left:16px;") + "max-width:calc(100vw - 32px);}",
       "}"
     ].join("\n");
 
@@ -764,6 +802,7 @@
   // ─── DOM Elements ─────────────────────────────────────────────────
   var container, bubble, badge, chatWindow, messagesArea, inputField, sendBtn;
   var typingEl, connectingEl, newConvBtn, endConvEl, confirmEl, expandBtn, postChatEl;
+  var teaserEl, teaserTextEl, teaserCtaEl, teaserCloseEl;
   var isExpanded = false;
 
   function buildDOM() {
@@ -781,6 +820,20 @@
     badge.textContent = "0";
     bubble.appendChild(badge);
     container.appendChild(bubble);
+
+    // Teaser callout
+    teaserEl = el("div", "cf360-teaser");
+    teaserCloseEl = el("button", "cf360-teaser-close");
+    teaserCloseEl.setAttribute("aria-label", "Close");
+    teaserCloseEl.innerHTML = '<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
+    teaserTextEl = el("p", "cf360-teaser-text");
+    teaserTextEl.textContent = t("teaserDefault");
+    teaserCtaEl = el("button", "cf360-teaser-cta");
+    teaserCtaEl.textContent = t("ctaDefault");
+    teaserEl.appendChild(teaserCloseEl);
+    teaserEl.appendChild(teaserTextEl);
+    teaserEl.appendChild(teaserCtaEl);
+    container.appendChild(teaserEl);
 
     // Chat window
     chatWindow = el("div", "cf360-window");
@@ -921,6 +974,18 @@
       }
     });
 
+    // Teaser listeners
+    teaserCtaEl.addEventListener("click", function () {
+      hideTeaser();
+      openWidget();
+    });
+    teaserCloseEl.addEventListener("click", function (e) {
+      e.stopPropagation();
+      hideTeaser();
+      state.teaserDismissed = true;
+      if (state.teaserTimer) { clearTimeout(state.teaserTimer); state.teaserTimer = null; }
+    });
+
     // Mobile viewport fix — listen for virtual keyboard show/hide
     if (window.visualViewport) {
       window.visualViewport.addEventListener("resize", updateMobileHeight);
@@ -958,6 +1023,62 @@
   }
 
   // ─── Widget toggle ────────────────────────────────────────────────
+  // ─── Teaser behavior ──────────────────────────────────────────────
+  function showTeaser() {
+    if (state.teaserDismissed || state.open || state.teaserShown) return;
+    state.teaserShown = true;
+    teaserEl.classList.add("cf360-teaser--show");
+  }
+
+  function hideTeaser() {
+    state.teaserShown = false;
+    teaserEl.classList.remove("cf360-teaser--show");
+  }
+
+  function initTeaserBehavior() {
+    if (state.teaserAutoShow) {
+      // Auto-show after delay
+      state.teaserTimer = setTimeout(function () {
+        if (!state.open && !state.teaserDismissed) {
+          showTeaser();
+        }
+      }, state.teaserDelaySeconds * 1000);
+    }
+
+    // Desktop: hover to show
+    var isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    if (!isTouchDevice) {
+      var hideTimer = null;
+      bubble.addEventListener("mouseenter", function () {
+        clearTimeout(hideTimer);
+        if (!state.open) showTeaser();
+      });
+      teaserEl.addEventListener("mouseenter", function () {
+        clearTimeout(hideTimer);
+      });
+      var scheduleHide = function () {
+        hideTimer = setTimeout(function () {
+          if (state.teaserShown && !state.teaserAutoShow) hideTeaser();
+        }, 400);
+      };
+      bubble.addEventListener("mouseleave", scheduleHide);
+      teaserEl.addEventListener("mouseleave", scheduleHide);
+    } else {
+      // Mobile: first tap shows teaser, second tap opens chat
+      bubble.removeEventListener("click", toggleWidget);
+      bubble.addEventListener("click", function () {
+        if (state.open) {
+          closeWidget();
+        } else if (!state.teaserShown) {
+          showTeaser();
+        } else {
+          hideTeaser();
+          openWidget();
+        }
+      });
+    }
+  }
+
   function toggleWidget() {
     if (state.open) {
       closeWidget();
@@ -968,6 +1089,8 @@
 
   function openWidget() {
     state.open = true;
+    hideTeaser();
+    if (state.teaserTimer) { clearTimeout(state.teaserTimer); state.teaserTimer = null; }
     bubble.classList.add("cf360-bubble--open");
     bubble.classList.remove("cf360-bubble--pulse");
     chatWindow.classList.add("cf360-window--open");
@@ -1786,6 +1909,16 @@
     if (wt && welTitleEl) welTitleEl.textContent = wt;
     if (ws && welSubEl) welSubEl.textContent = ws;
 
+    // Teaser config
+    var tt = lang === "es" ? (cfg.teaserTextEs || cfg.teaserTextEn) : (cfg.teaserTextEn || cfg.teaserTextEs);
+    var tc = lang === "es" ? (cfg.teaserCtaEs || cfg.teaserCtaEn) : (cfg.teaserCtaEn || cfg.teaserCtaEs);
+    if (tt) { state.teaserText = tt; if (teaserTextEl) teaserTextEl.textContent = tt; }
+    if (tc) { state.teaserCta = tc; if (teaserCtaEl) teaserCtaEl.textContent = tc; }
+    if (typeof cfg.teaserAutoShow === "boolean") state.teaserAutoShow = cfg.teaserAutoShow;
+    if (typeof cfg.teaserDelaySeconds === "number" && cfg.teaserDelaySeconds >= 3 && cfg.teaserDelaySeconds <= 30) {
+      state.teaserDelaySeconds = cfg.teaserDelaySeconds;
+    }
+
     // Store starter questions config
     if (cfg.useStarterQuestions && Array.isArray(cfg.starterQuestions)) {
       state.useStarterQuestions = true;
@@ -1834,7 +1967,8 @@
       ".cf360-welcome-icon{background:" + bcAlpha15 + ";}",
       ".cf360-welcome-icon svg{fill:" + bc + ";}",
       ".cf360-starter-btn{color:" + bc + ";border-color:" + bcAlpha15 + ";}",
-      ".cf360-starter-btn:hover{background:" + bcAlpha15 + ";}"
+      ".cf360-starter-btn:hover{background:" + bcAlpha15 + ";}",
+      ".cf360-teaser-cta{background:linear-gradient(135deg," + bc + "," + bcDarker + ");}"
     ].join("\n");
 
     // Remove old overrides if any
@@ -1854,12 +1988,17 @@
       fetch(url)
         .then(function (res) { return res.json(); })
         .then(function (data) {
+          if (data && data.orgName) {
+            state.orgName = data.orgName;
+          }
           if (data && data.appearance) {
             applyAppearance(data.appearance);
           }
           if (data && data.postChat) {
             state.postChatConfig = data.postChat;
           }
+          // Init teaser behavior after config is loaded
+          initTeaserBehavior();
         })
         .catch(function () { /* use data-color defaults — config fetch is non-blocking */ });
     } catch (e) { /* noop */ }
