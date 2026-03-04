@@ -403,77 +403,91 @@ export function WidgetPreview({ appearance, activeSection, className }: WidgetPr
           </div>
         </div>
 
-        {/* Floating Bubble + Teaser */}
-        <div className="flex items-end gap-2 justify-end w-full">
-          {/* Teaser Callout — shown when bubble section is active */}
-          {showBubble && (
+        {/* Floating Bubble + Teaser Strip */}
+        <div className="flex items-end justify-end w-full">
+          {showBubble ? (
+            /* Teaser strip — horizontal bar with bubble integrated */
             <div
               style={{
                 background: "#fff",
-                borderRadius: 16,
-                padding: "14px 18px",
-                boxShadow: "0 4px 24px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.06)",
-                maxWidth: 220,
+                borderRadius: 28,
+                padding: "5px 5px 5px 20px",
+                boxShadow: "0 2px 16px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06)",
                 display: "flex",
-                flexDirection: "column",
+                alignItems: "center",
                 gap: 10,
                 position: "relative",
+                whiteSpace: "nowrap",
               }}
             >
-              {/* Close X */}
+              {/* Close X (red) */}
               <div
                 style={{
                   position: "absolute",
-                  top: 6,
-                  right: 8,
-                  width: 18,
-                  height: 18,
+                  top: -6,
+                  left: -6,
+                  width: 20,
+                  height: 20,
                   borderRadius: "50%",
-                  background: "#f1f5f9",
+                  background: "#ef4444",
+                  border: "2px solid #fff",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   cursor: "pointer",
                 }}
               >
-                <X size={10} style={{ color: "#94a3b8" }} />
+                <X size={8} style={{ color: "#fff" }} />
               </div>
               {/* Teaser Text */}
-              <span style={{ fontSize: 13, color: "#334155", lineHeight: 1.4, paddingRight: 16 }}>
+              <span style={{ fontSize: 13.5, color: "#334155", lineHeight: 1.3 }}>
                 {teaserText}
               </span>
-              {/* CTA Button */}
+              {/* CTA Button (dark pill) */}
               <div
                 style={{
-                  background: `linear-gradient(135deg, ${bc}, ${darken(bc)})`,
-                  color: bic,
+                  background: "#1e293b",
+                  color: "#fff",
                   borderRadius: 20,
-                  padding: "8px 18px",
+                  padding: "8px 20px",
                   fontSize: 13,
                   fontWeight: 600,
-                  textAlign: "center",
                   cursor: "pointer",
+                  flexShrink: 0,
                 }}
               >
                 {teaserCta}
               </div>
+              {/* Bubble circle at end */}
+              <div
+                className="flex items-center justify-center shrink-0"
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: "50%",
+                  background: `linear-gradient(135deg, ${bc}, ${darken(bc)})`,
+                  cursor: "pointer",
+                }}
+              >
+                <ChatBubbleIcon size={22} fill={bic} dotFill={bc} />
+              </div>
+            </div>
+          ) : (
+            /* Standalone Bubble */
+            <div
+              className="flex items-center justify-center shrink-0"
+              style={{
+                width: 60,
+                height: 60,
+                borderRadius: "50%",
+                background: `linear-gradient(135deg, ${bc}, ${darken(bc)})`,
+                color: bic,
+                boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+              }}
+            >
+              <ChatBubbleIcon size={26} fill={bic} dotFill={bc} />
             </div>
           )}
-
-          {/* Bubble */}
-          <div
-            className="flex items-center justify-center shrink-0"
-            style={{
-              width: 60,
-              height: 60,
-              borderRadius: "50%",
-              background: `linear-gradient(135deg, ${bc}, ${darken(bc)})`,
-              color: bic,
-              boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
-            }}
-          >
-            <ChatBubbleIcon size={26} fill={bic} dotFill={bc} />
-          </div>
         </div>
       </div>
 
