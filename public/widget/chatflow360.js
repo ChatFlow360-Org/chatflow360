@@ -481,7 +481,7 @@
       ".cf360-teaser{",
       "  position:absolute;bottom:0;" + (posRight ? "right:0;" : "left:0;"),
       "  display:flex;flex-direction:row-reverse;align-items:center;gap:0;",
-      "  overflow:hidden;max-width:97px;",
+      "  overflow:hidden;max-width:86px;",
       "  background:transparent;" + (posRight ? "border-radius:32px 0 0 32px;" : "border-radius:0 32px 32px 0;"),
       "  " + (posRight ? "padding:0 25px 0 0;" : "padding:0 0 0 25px;"),
       "  box-shadow:none;white-space:nowrap;cursor:pointer;",
@@ -1998,6 +1998,7 @@
       ".cf360-starter-btn{color:" + bc + ";border-color:" + bcAlpha15 + ";}",
       ".cf360-starter-btn:hover{background:" + bcAlpha15 + ";}",
       ".cf360-teaser-bubble:not(.cf360-teaser-bubble--logo){background:linear-gradient(135deg," + bc + "," + bcDarker + ");}",
+      ".cf360-teaser-bubble--logo{background:" + bc + " !important;border-color:" + bc + " !important;}",
       ".cf360-teaser-bubble svg{fill:" + bic + ";}",
       ".cf360-teaser:not(.cf360-teaser--expanded) .cf360-teaser-bubble:not(.cf360-teaser-bubble--logo){animation:cf360-pulse 2s ease infinite;box-shadow:0 4px 20px rgba(0,0,0,0.2),0 0 0 0 " + bcAlpha80 + ";}",
       // Teaser accent background (visible behind bubble circle)
