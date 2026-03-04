@@ -76,7 +76,7 @@ export function RecentConversations({ conversations }: RecentConversationsProps)
                 </div>
 
                 {/* Content */}
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 overflow-hidden">
                   {/* Row 1: Name + Status + Time */}
                   <div className="flex items-center gap-2">
                     <p className="truncate text-sm font-semibold text-foreground">
