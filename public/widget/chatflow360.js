@@ -535,23 +535,17 @@
       "}",
       ".cf360-badge--show{display:flex;}",
 
-      // Chat window
+      // Chat window — always side-panel mode
       ".cf360-window{",
-      "  position:absolute;bottom:76px;" + (posRight ? "right:0;" : "left:0;"),
-      "  width:380px;height:560px;border-radius:20px 20px 12px 12px;overflow:hidden;",
-      "  background:#fff;box-shadow:0 8px 48px rgba(0,0,0,0.15),0 2px 8px rgba(0,0,0,0.08);",
-      "  display:flex;flex-direction:column;",
+      "  position:fixed;top:0;" + (posRight ? "right:0;" : "left:0;"),
+      "  bottom:0;width:420px;height:100vh;height:100dvh;overflow:hidden;",
+      "  background:#fff;box-shadow:-4px 0 24px rgba(0,0,0,0.12);",
+      "  display:flex;flex-direction:column;border-radius:0;",
       "  opacity:0;transform:translateY(16px) scale(0.95);pointer-events:none;",
       "  transition:opacity 0.25s ease,transform 0.25s ease;",
       "}",
       ".cf360-window--open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}",
-
-      // Expanded panel mode (desktop only)
-      ".cf360-window--expanded{",
-      "  position:fixed;top:0;right:0;bottom:0;width:420px;height:100vh;height:100dvh;",
-      "  border-radius:0;box-shadow:-4px 0 24px rgba(0,0,0,0.12);",
-      "}",
-      ".cf360-window--expanded .cf360-header{border-radius:0;}",
+      ".cf360-window .cf360-header{border-radius:0;}",
 
       // Header — two-row with bot avatar + curved bottom overlap
       ".cf360-header{",
@@ -1143,7 +1137,7 @@
     state.open = false;
     bubble.classList.remove("cf360-bubble--open");
     chatWindow.classList.remove("cf360-window--open");
-    chatWindow.classList.remove("cf360-window--expanded");
+    // Keep --expanded so the panel fades out in side-panel form (no compact flash)
     // Clear mobile keyboard padding
     chatWindow.style.paddingBottom = "";
     // Teaser stays hidden — it already served its purpose
