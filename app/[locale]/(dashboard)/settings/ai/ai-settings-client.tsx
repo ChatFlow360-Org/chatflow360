@@ -1549,7 +1549,7 @@ export function AiSettingsClient({
 
       {/* ── Add Knowledge Dialog ── */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-5xl">
           <DialogHeader>
             <DialogTitle>{t("knowledge.dialogTitle")}</DialogTitle>
             <DialogDescription>
@@ -1585,7 +1585,7 @@ export function AiSettingsClient({
                   onChange={(e) => setKnowledgeContent(e.target.value)}
                   placeholder={t("knowledge.contentPlaceholder")}
                   rows={8}
-                  maxLength={4000}
+                  maxLength={2000}
                   required
                   className="resize-none bg-background"
                 />
@@ -1867,7 +1867,7 @@ export function AiSettingsClient({
 
       {/* ── Edit Knowledge Dialog ── */}
       <Dialog open={!!editingItem} onOpenChange={(open) => { if (!open) setEditingItem(null); }}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-5xl">
           <DialogHeader>
             <DialogTitle>{t("knowledge.editDialogTitle")}</DialogTitle>
             <DialogDescription>
@@ -1904,7 +1904,7 @@ export function AiSettingsClient({
                   onChange={(e) => setEditContent(e.target.value)}
                   placeholder={t("knowledge.contentPlaceholder")}
                   rows={8}
-                  maxLength={4000}
+                  maxLength={2000}
                   required
                   className="resize-none bg-background"
                 />

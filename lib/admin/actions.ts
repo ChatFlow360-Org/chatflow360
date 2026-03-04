@@ -911,7 +911,7 @@ export async function upsertPlatformKey(
 const createKnowledgeSchema = z.object({
   organizationId: z.string().uuid(),
   title: z.string().min(1).max(200),
-  content: z.string().min(10).max(4000),
+  content: z.string().min(10).max(2000),
 });
 
 export async function createKnowledgeItem(
@@ -1158,7 +1158,7 @@ const updateKnowledgeSchema = z.object({
   organizationId: z.string().uuid(),
   knowledgeId: z.string().uuid(),
   title: z.string().min(1).max(200),
-  content: z.string().min(10).max(4000),
+  content: z.string().min(10).max(2000),
 });
 
 export async function updateKnowledgeItem(
