@@ -1142,12 +1142,17 @@
   function closeWidget() {
     state.open = false;
     bubble.classList.remove("cf360-bubble--open");
-    bubble.style.display = "none";
-    teaserEl.style.display = "";
     chatWindow.classList.remove("cf360-window--open");
     chatWindow.classList.remove("cf360-window--expanded");
     // Clear mobile keyboard padding
     chatWindow.style.paddingBottom = "";
+    // Delay teaser restore until close animation finishes (250ms transition)
+    setTimeout(function () {
+      if (!state.open) {
+        bubble.style.display = "none";
+        teaserEl.style.display = "";
+      }
+    }, 300);
   }
 
 
