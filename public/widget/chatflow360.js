@@ -494,8 +494,10 @@
       "}",
       ".cf360-teaser-content{display:flex;flex-direction:column;align-items:stretch;gap:6px;opacity:0;pointer-events:none;transition:none;text-align:center;}",
       ".cf360-teaser--expanded .cf360-teaser-content{opacity:1;pointer-events:auto;transition:opacity 0.15s ease 0.2s;flex:1;}",
-      ".cf360-teaser-close{opacity:0;pointer-events:none;transition:none;}",
-      ".cf360-teaser--expanded .cf360-teaser-close{opacity:1;pointer-events:auto;transition:opacity 0.15s ease 0.2s;}",
+      ".cf360-teaser-close{opacity:0;pointer-events:none;transition:none;display:none;}",
+      ".cf360-teaser--closable .cf360-teaser-close{display:flex;}",
+      ".cf360-teaser--closable.cf360-teaser--expanded .cf360-teaser-close{opacity:1;pointer-events:auto;transition:opacity 0.15s ease 0.2s;}",
+      ".cf360-teaser--closable.cf360-teaser--expanded{" + (posRight ? "border-top-left-radius:0;" : "border-top-right-radius:0;") + "}",
       ".cf360-teaser-text{font-size:13.5px;color:#334155;line-height:1.3;margin:0;white-space:normal;}",
       ".cf360-teaser-cta{",
       "  background:#1e293b;color:#fff;",
@@ -1086,6 +1088,12 @@
   function initTeaserBehavior() {
     // Hide original bubble — teaser replaces it
     bubble.style.display = "none";
+
+    // Close button visible on touch devices or when auto-show is ON
+    var isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    if (isTouchDevice || state.teaserAutoShow) {
+      teaserEl.classList.add("cf360-teaser--closable");
+    }
 
     if (state.teaserAutoShow) {
       // Auto-expand after delay
