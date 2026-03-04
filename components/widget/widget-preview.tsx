@@ -308,7 +308,7 @@ export function WidgetPreview({ appearance, activeSection, className, fillHeight
           >
             {showWelcome ? (
               /* Welcome Screen View */
-              <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
+              <div className="flex flex-col items-center gap-3 px-4 text-center my-auto">
                 <div
                   className="flex items-center justify-center"
                   style={{
@@ -363,7 +363,7 @@ export function WidgetPreview({ appearance, activeSection, className, fillHeight
               </div>
             ) : (
               /* Chat View */
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1.5 mt-auto">
                 {messages.map((msg, i) => (
                   <div
                     key={i}
