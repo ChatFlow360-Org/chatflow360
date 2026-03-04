@@ -475,38 +475,47 @@
       ".cf360-bubble--open .cf360-icon-chat{transform:rotate(-90deg) scale(0);opacity:0;}",
       ".cf360-bubble--open .cf360-icon-close{transform:translate(-50%,-50%) rotate(0) scale(1);opacity:1;}",
 
-      // Teaser strip (horizontal bar integrated with bubble)
+      // Teaser — single element: collapsed = bubble circle, expanded = horizontal strip
       ".cf360-teaser{",
       "  position:absolute;bottom:0;" + (posRight ? "right:-20px;" : "left:-20px;"),
-      "  display:flex;align-items:center;gap:10px;",
-      "  background:#fff;border-radius:28px;",
+      "  display:flex;align-items:center;gap:0;",
+      "  background:transparent;border-radius:9999px;",
+      "  padding:0;box-shadow:none;white-space:nowrap;cursor:pointer;",
+      "  transform:" + (posRight ? "translateX(calc(100% - 60px))" : "translateX(calc(-100% + 60px))") + ";",
+      "  transition:transform 0.4s cubic-bezier(0.4,0,0.2,1),background 0.3s ease,box-shadow 0.3s ease,gap 0.3s ease,padding 0.3s ease;",
+      "}",
+      ".cf360-teaser--expanded{",
+      "  transform:translateX(0);background:#fff;gap:10px;",
       "  " + (posRight ? "padding:5px 5px 5px 20px;" : "padding:5px 20px 5px 5px;"),
       "  box-shadow:0 2px 16px rgba(0,0,0,0.10),0 1px 4px rgba(0,0,0,0.06);",
-      "  white-space:nowrap;opacity:0;pointer-events:none;",
-      "  transform:" + (posRight ? "translateX(calc(100% + 20px))" : "translateX(calc(-100% - 20px))") + ";",
-      "  transition:opacity 0.3s ease,transform 0.3s ease;",
       "}",
-      ".cf360-teaser--show{opacity:1;transform:translateX(0);pointer-events:auto;}",
+      ".cf360-teaser-text,.cf360-teaser-cta,.cf360-teaser-close{opacity:0;pointer-events:none;transition:opacity 0.15s ease;}",
+      ".cf360-teaser--expanded .cf360-teaser-text,.cf360-teaser--expanded .cf360-teaser-cta,.cf360-teaser--expanded .cf360-teaser-close{opacity:1;pointer-events:auto;transition-delay:0.2s;}",
       ".cf360-teaser-text{font-size:13.5px;color:#334155;line-height:1.3;margin:0;}",
       ".cf360-teaser-cta{",
       "  background:#1e293b;color:#fff;",
       "  border:none;border-radius:20px;padding:8px 20px;font-size:13px;font-weight:600;",
-      "  cursor:pointer;transition:opacity 0.15s;font-family:inherit;white-space:nowrap;flex-shrink:0;",
+      "  cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;",
       "}",
       ".cf360-teaser-cta:hover{opacity:0.85;}",
       ".cf360-teaser-close{",
-      "  position:absolute;top:-6px;" + (posRight ? "left:-6px;" : "right:-6px;"),
+      "  position:absolute;top:-6px;" + (posRight ? "left:calc(100% - 66px);" : "right:calc(100% - 66px);"),
       "  width:20px;height:20px;border-radius:50%;",
       "  background:#ef4444;border:2px solid #fff;display:flex;align-items:center;justify-content:center;",
-      "  cursor:pointer;padding:0;transition:background 0.15s;",
+      "  cursor:pointer;padding:0;transition:background 0.15s,opacity 0.15s;",
       "}",
+      ".cf360-teaser--expanded .cf360-teaser-close{" + (posRight ? "left:-6px;" : "right:-6px;") + "}",
       ".cf360-teaser-close:hover{background:#dc2626;}",
       ".cf360-teaser-close svg{width:8px;height:8px;fill:#fff;}",
       ".cf360-teaser-bubble{",
-      "  width:48px;height:48px;border-radius:50%;flex-shrink:0;",
+      "  width:56px;height:56px;border-radius:50%;flex-shrink:0;",
       "  background:linear-gradient(135deg," + primaryColor + "," + primaryDarker + ");",
       "  display:flex;align-items:center;justify-content:center;cursor:pointer;",
+      "  box-shadow:0 4px 20px rgba(0,0,0,0.2);",
+      "  transition:box-shadow 0.3s ease,width 0.3s ease,height 0.3s ease;",
       "}",
+      ".cf360-teaser--expanded .cf360-teaser-bubble{width:48px;height:48px;box-shadow:none;}",
+      ".cf360-teaser:not(.cf360-teaser--expanded) .cf360-teaser-bubble{animation:cf360-pulse 2s ease infinite;}",
       ".cf360-teaser-bubble svg{width:24px;height:24px;fill:#fff;}",
 
       // Unread badge
@@ -790,10 +799,11 @@
       "  }",
       "  .cf360-header{border-radius:0;}",
       "  .cf360-bubble{position:fixed;bottom:16px;" + (posRight ? "right:16px;" : "left:16px;") + "}",
-      "  .cf360-teaser{position:fixed;bottom:16px;" + (posRight ? "right:0;" : "left:0;") + "max-width:calc(100vw - 8px);border-radius:24px;}",
-      "  .cf360-teaser-text{font-size:12.5px;}",
-      "  .cf360-teaser-cta{padding:7px 14px;font-size:12px;}",
-      "  .cf360-teaser-bubble{width:44px;height:44px;}",
+      "  .cf360-teaser{position:fixed;bottom:16px;" + (posRight ? "right:0;" : "left:0;") + "}",
+      "  .cf360-teaser-text{font-size:12px;}",
+      "  .cf360-teaser-cta{padding:7px 14px;font-size:11.5px;}",
+      "  .cf360-teaser-bubble{width:50px;height:50px;}",
+      "  .cf360-teaser--expanded .cf360-teaser-bubble{width:42px;height:42px;}",
       "}"
     ].join("\n");
 
@@ -989,14 +999,20 @@
       }
     });
 
-    // Teaser listeners
-    teaserCtaEl.addEventListener("click", function () {
-      hideTeaser();
-      openWidget();
+    // Teaser listeners — click collapsed teaser to expand; CTA/bubble click opens chat
+    teaserEl.addEventListener("click", function (e) {
+      if (!teaserEl.classList.contains("cf360-teaser--expanded")) {
+        expandTeaser();
+        e.stopPropagation();
+      }
+    });
+    teaserCtaEl.addEventListener("click", function () { openWidget(); });
+    teaserBubbleEl.addEventListener("click", function () {
+      if (teaserEl.classList.contains("cf360-teaser--expanded")) openWidget();
     });
     teaserCloseEl.addEventListener("click", function (e) {
       e.stopPropagation();
-      hideTeaser();
+      collapseTeaser();
       state.teaserDismissed = true;
       if (state.teaserTimer) { clearTimeout(state.teaserTimer); state.teaserTimer = null; }
     });
@@ -1039,63 +1055,39 @@
 
   // ─── Widget toggle ────────────────────────────────────────────────
   // ─── Teaser behavior ──────────────────────────────────────────────
-  function showTeaser() {
-    if (state.teaserDismissed || state.open || state.teaserShown) return;
-    state.teaserShown = true;
-    teaserEl.classList.add("cf360-teaser--show");
-    bubble.style.opacity = "0";
-    bubble.style.pointerEvents = "none";
+  function expandTeaser() {
+    if (state.open) return;
+    teaserEl.classList.add("cf360-teaser--expanded");
   }
 
-  function hideTeaser() {
-    state.teaserShown = false;
-    teaserEl.classList.remove("cf360-teaser--show");
-    bubble.style.opacity = "";
-    bubble.style.pointerEvents = "";
+  function collapseTeaser() {
+    teaserEl.classList.remove("cf360-teaser--expanded");
   }
 
   function initTeaserBehavior() {
+    // Hide original bubble — teaser replaces it
+    bubble.style.display = "none";
+
     if (state.teaserAutoShow) {
-      // Auto-show after delay
+      // Auto-expand after delay
       state.teaserTimer = setTimeout(function () {
         if (!state.open && !state.teaserDismissed) {
-          showTeaser();
+          expandTeaser();
         }
       }, state.teaserDelaySeconds * 1000);
     }
 
-    // Desktop: hover to show
-    var isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
-    if (!isTouchDevice) {
-      var hideTimer = null;
-      bubble.addEventListener("mouseenter", function () {
-        clearTimeout(hideTimer);
-        if (!state.open) showTeaser();
-      });
-      teaserEl.addEventListener("mouseenter", function () {
-        clearTimeout(hideTimer);
-      });
-      var scheduleHide = function () {
-        hideTimer = setTimeout(function () {
-          if (state.teaserShown && !state.teaserAutoShow) hideTeaser();
-        }, 400);
-      };
-      bubble.addEventListener("mouseleave", scheduleHide);
-      teaserEl.addEventListener("mouseleave", scheduleHide);
-    } else {
-      // Mobile: first tap shows teaser, second tap opens chat
-      bubble.removeEventListener("click", toggleWidget);
-      bubble.addEventListener("click", function () {
-        if (state.open) {
-          closeWidget();
-        } else if (!state.teaserShown) {
-          showTeaser();
-        } else {
-          hideTeaser();
-          openWidget();
-        }
-      });
-    }
+    // Desktop: hover to expand/collapse
+    var collapseTimer = null;
+    teaserEl.addEventListener("mouseenter", function () {
+      clearTimeout(collapseTimer);
+      if (!state.teaserDismissed && !state.open) expandTeaser();
+    });
+    teaserEl.addEventListener("mouseleave", function () {
+      collapseTimer = setTimeout(function () {
+        if (!state.teaserAutoShow || state.teaserDismissed) collapseTeaser();
+      }, 400);
+    });
   }
 
   function toggleWidget() {
@@ -1108,7 +1100,9 @@
 
   function openWidget() {
     state.open = true;
-    hideTeaser();
+    collapseTeaser();
+    teaserEl.style.display = "none";
+    bubble.style.display = "";
     if (state.teaserTimer) { clearTimeout(state.teaserTimer); state.teaserTimer = null; }
     bubble.classList.add("cf360-bubble--open");
     bubble.classList.remove("cf360-bubble--pulse");
@@ -1128,6 +1122,8 @@
   function closeWidget() {
     state.open = false;
     bubble.classList.remove("cf360-bubble--open");
+    bubble.style.display = "none";
+    teaserEl.style.display = "";
     chatWindow.classList.remove("cf360-window--open");
     // Clear mobile keyboard padding
     chatWindow.style.paddingBottom = "";
@@ -1988,7 +1984,8 @@
       ".cf360-starter-btn{color:" + bc + ";border-color:" + bcAlpha15 + ";}",
       ".cf360-starter-btn:hover{background:" + bcAlpha15 + ";}",
       ".cf360-teaser-bubble{background:linear-gradient(135deg," + bc + "," + bcDarker + ");}",
-      ".cf360-teaser-bubble svg{fill:" + bic + ";}"
+      ".cf360-teaser-bubble svg{fill:" + bic + ";}",
+      ".cf360-teaser:not(.cf360-teaser--expanded) .cf360-teaser-bubble{animation:cf360-pulse 2s ease infinite;box-shadow:0 4px 20px rgba(0,0,0,0.2),0 0 0 0 " + bcAlpha80 + ";}"
     ].join("\n");
 
     // Remove old overrides if any
