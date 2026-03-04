@@ -464,8 +464,8 @@
       // Teaser collapsed nudge — subtle peek animation
       "@keyframes cf360-nudge{",
       "  0%,88%,100%{transform:translateX(0);}",
-      "  92%{transform:translateX(-6px);}",
-      "  96%{transform:translateX(2px);}",
+      "  92%{transform:translateX(6px);}",
+      "  96%{transform:translateX(-2px);}",
       "}",
 
       // Bubble pulse
