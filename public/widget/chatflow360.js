@@ -461,6 +461,13 @@
       ".cf360-bubble:hover{transform:scale(1.08);box-shadow:0 6px 24px rgba(0,0,0,0.25);}",
       ".cf360-bubble:active{transform:scale(0.95);}",
 
+      // Teaser collapsed nudge — subtle peek animation
+      "@keyframes cf360-nudge{",
+      "  0%,88%,100%{transform:translateX(0);}",
+      "  92%{transform:translateX(-6px);}",
+      "  96%{transform:translateX(2px);}",
+      "}",
+
       // Bubble pulse
       "@keyframes cf360-pulse{",
       "  0%{box-shadow:0 4px 20px rgba(0,0,0,0.2),0 0 0 0 " + primaryAlpha80 + ";}",
@@ -486,8 +493,9 @@
       "  " + (posRight ? "padding:0 25px 0 0;" : "padding:0 0 0 25px;"),
       "  box-shadow:none;white-space:nowrap;cursor:pointer;",
       "  transition:max-width 0.4s cubic-bezier(0.4,0,0.2,1),background 0.3s ease,box-shadow 0.3s ease,gap 0.3s ease,padding 0.3s ease;",
+      "  animation:cf360-nudge 4s ease-in-out 3s infinite;",
       "}",
-      ".cf360-teaser--expanded{",
+      ".cf360-teaser--expanded{animation:none;",
       "  max-width:500px;max-height:inherit;min-width:260px;overflow:visible;background:#fff;gap:10px;",
       "  " + (posRight ? "padding:8px 5px 8px 10px;" : "padding:8px 10px 8px 5px;"),
       "  box-shadow:0 2px 16px rgba(0,0,0,0.10),0 1px 4px rgba(0,0,0,0.06);",
