@@ -238,7 +238,8 @@
     teaserShown: false,
     teaserDismissed: false,
     teaserTimer: null,
-    orgName: ""
+    orgName: "",
+    logoUrl: ""
   };
 
   // ─── Realtime Typing via Supabase Broadcast (Phoenix Channels) ──
@@ -495,7 +496,7 @@
       ".cf360-teaser-text{font-size:13.5px;color:#334155;line-height:1.3;margin:0;flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis;}",
       ".cf360-teaser-cta{",
       "  background:#1e293b;color:#fff;",
-      "  border:none;border-radius:20px;padding:8px 20px;font-size:13px;font-weight:600;",
+      "  border:none;border-radius:24px;padding:10px 24px;font-size:14px;font-weight:600;",
       "  cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;",
       "}",
       ".cf360-teaser-cta:hover{opacity:0.85;}",
@@ -517,6 +518,9 @@
       ".cf360-teaser--expanded .cf360-teaser-bubble{width:48px;height:48px;min-width:48px;box-shadow:none;}",
       ".cf360-teaser:not(.cf360-teaser--expanded) .cf360-teaser-bubble{animation:cf360-pulse 2s ease infinite;}",
       ".cf360-teaser-bubble svg{width:24px;height:24px;fill:#fff;}",
+      // Logo mode: white bg with subtle border instead of gradient
+      ".cf360-teaser-bubble--logo{background:#fff !important;border:2px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.10) !important;}",
+      ".cf360-teaser-bubble--logo img{padding:4px;}",
 
       // Unread badge
       ".cf360-badge{",
@@ -1985,9 +1989,9 @@
       ".cf360-welcome-icon svg{fill:" + bc + ";}",
       ".cf360-starter-btn{color:" + bc + ";border-color:" + bcAlpha15 + ";}",
       ".cf360-starter-btn:hover{background:" + bcAlpha15 + ";}",
-      ".cf360-teaser-bubble{background:linear-gradient(135deg," + bc + "," + bcDarker + ");}",
+      ".cf360-teaser-bubble:not(.cf360-teaser-bubble--logo){background:linear-gradient(135deg," + bc + "," + bcDarker + ");}",
       ".cf360-teaser-bubble svg{fill:" + bic + ";}",
-      ".cf360-teaser:not(.cf360-teaser--expanded) .cf360-teaser-bubble{animation:cf360-pulse 2s ease infinite;box-shadow:0 4px 20px rgba(0,0,0,0.2),0 0 0 0 " + bcAlpha80 + ";}"
+      ".cf360-teaser:not(.cf360-teaser--expanded) .cf360-teaser-bubble:not(.cf360-teaser-bubble--logo){animation:cf360-pulse 2s ease infinite;box-shadow:0 4px 20px rgba(0,0,0,0.2),0 0 0 0 " + bcAlpha80 + ";}"
     ].join("\n");
 
     // Remove old overrides if any
@@ -1998,6 +2002,31 @@
     style.id = "cf360-appearance-overrides";
     style.textContent = overrides;
     document.head.appendChild(style);
+  }
+
+  // ─── Apply Logo to Bubbles ─────────────────────────────────────
+  function applyLogoToBubbles(logoUrl) {
+    if (!logoUrl) return;
+    // Replace SVG in teaser bubble with logo image
+    if (teaserBubbleEl) {
+      teaserBubbleEl.innerHTML = "";
+      var img = document.createElement("img");
+      img.src = logoUrl;
+      img.alt = "Logo";
+      img.style.cssText = "width:100%;height:100%;object-fit:contain;border-radius:50%;";
+      teaserBubbleEl.appendChild(img);
+      teaserBubbleEl.classList.add("cf360-teaser-bubble--logo");
+    }
+    // Replace SVG in original bubble chat icon with logo
+    var chatIcon = bubble ? bubble.querySelector(".cf360-icon-chat") : null;
+    if (chatIcon) {
+      chatIcon.innerHTML = "";
+      var img2 = document.createElement("img");
+      img2.src = logoUrl;
+      img2.alt = "Logo";
+      img2.style.cssText = "width:30px;height:30px;object-fit:contain;border-radius:50%;";
+      chatIcon.appendChild(img2);
+    }
   }
 
   // ─── Fetch Config ───────────────────────────────────────────────
@@ -2015,6 +2044,10 @@
           }
           if (data && data.postChat) {
             state.postChatConfig = data.postChat;
+            if (data.postChat.logoUrl) {
+              state.logoUrl = data.postChat.logoUrl;
+              applyLogoToBubbles(data.postChat.logoUrl);
+            }
           }
           // Init teaser behavior after config is loaded
           initTeaserBehavior();
