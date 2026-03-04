@@ -253,7 +253,7 @@ export function UsersClient({ users, organizations, currentUserId }: UsersClient
                   </td>
                   <td className="hidden px-4 py-3 text-muted-foreground md:table-cell">
                     {u.membership?.organizationName || (
-                      <span className="text-xs text-muted-foreground/60">{t("noOrganization")}</span>
+                      <span className="text-xs text-muted-foreground/60">{t(u.isSuperAdmin ? "allOrganizations" : "noOrganization")}</span>
                     )}
                   </td>
                   <td className="hidden px-4 py-3 text-muted-foreground lg:table-cell">

@@ -701,6 +701,7 @@
     },
     "superAdmin": "Super Admin",
     "noOrganization": "Sin organizacion",
+    "allOrganizations": "Todas las organizaciones",
     "makeSuperAdmin": "Super Admin",
     "makeSuperAdminHint": "Acceso total a la plataforma — sin organizacion necesaria",
     "deleteConfirm": "Estas seguro de que quieres eliminar este usuario? Esta accion no se puede deshacer.",
