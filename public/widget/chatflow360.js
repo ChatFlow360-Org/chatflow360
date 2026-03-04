@@ -1015,13 +1015,16 @@
       }
     });
 
-    // Teaser listeners — click collapsed teaser to expand; CTA/bubble click opens chat
-    teaserEl.addEventListener("click", function (e) {
-      if (!teaserEl.classList.contains("cf360-teaser--expanded")) {
-        expandTeaser();
-        e.stopPropagation();
-      }
-    });
+    // Teaser listeners — mobile: click collapsed teaser to expand; desktop: hover only
+    var isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    if (isTouchDevice) {
+      teaserEl.addEventListener("click", function (e) {
+        if (!teaserEl.classList.contains("cf360-teaser--expanded")) {
+          expandTeaser();
+          e.stopPropagation();
+        }
+      });
+    }
     teaserCtaEl.addEventListener("click", function () { openWidget(); });
     teaserBubbleEl.addEventListener("click", function () {
       if (teaserEl.classList.contains("cf360-teaser--expanded")) openWidget();
