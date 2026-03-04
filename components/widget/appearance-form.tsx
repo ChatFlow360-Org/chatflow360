@@ -43,6 +43,32 @@ interface AppearanceFormProps {
   initialAppearance: WidgetAppearance;
 }
 
+// ─── Delay Input (allows empty intermediate state) ───────────────
+
+function DelayInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const [local, setLocal] = useState(String(value));
+  useEffect(() => { setLocal(String(value)); }, [value]);
+  return (
+    <Input
+      id="teaserDelaySeconds"
+      type="number"
+      min={3}
+      max={30}
+      value={local}
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={() => {
+        const v = parseInt(local, 10);
+        if (!isNaN(v) && v >= 3 && v <= 30) {
+          onChange(v);
+        } else {
+          setLocal(String(value));
+        }
+      }}
+      className="w-20 h-8 text-sm"
+    />
+  );
+}
+
 // ─── Color Picker Row ─────────────────────────────────────────────
 
 function ColorRow({
@@ -341,17 +367,9 @@ export function AppearanceForm({
                     {t("teaserDelayHint")}
                   </p>
                 </div>
-                <Input
-                  id="teaserDelaySeconds"
-                  type="number"
-                  min={3}
-                  max={30}
+                <DelayInput
                   value={appearance.teaserDelaySeconds}
-                  onChange={(e) => {
-                    const v = parseInt(e.target.value, 10);
-                    if (!isNaN(v) && v >= 3 && v <= 30) update("teaserDelaySeconds", v);
-                  }}
-                  className="w-20 h-8 text-sm"
+                  onChange={(v) => update("teaserDelaySeconds", v)}
                 />
               </div>
             </>
