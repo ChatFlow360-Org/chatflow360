@@ -1140,7 +1140,14 @@
     // Keep --expanded so the panel fades out in side-panel form (no compact flash)
     // Clear mobile keyboard padding
     chatWindow.style.paddingBottom = "";
-    // Teaser stays hidden — it already served its purpose
+    // Restore teaser (collapsed) after close animation finishes
+    setTimeout(function () {
+      if (!state.open) {
+        bubble.style.display = "none";
+        teaserEl.style.display = "";
+        collapseTeaser();
+      }
+    }, 300);
   }
 
 
