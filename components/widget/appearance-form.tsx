@@ -213,6 +213,11 @@ export function AppearanceForm({
               value={appearance.bubbleIconColor}
               onChange={(v) => update("bubbleIconColor", v)}
             />
+            <ColorRow
+              label={t("teaserBgColor")}
+              value={appearance.teaserBgColor}
+              onChange={(v) => update("teaserBgColor", v)}
+            />
           </div>
 
           <Separator />

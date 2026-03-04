@@ -447,7 +447,7 @@
       "  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;line-height:1.5;",
       "}",
       ".cf360-container{",
-      "  position:fixed;bottom:24px;" + (posRight ? "right:24px;" : "left:24px;"),
+      "  position:fixed;bottom:24px;" + (posRight ? "right:0;" : "left:0;"),
       "  z-index:2147483647;font-size:14px;",
       "}",
 
@@ -483,7 +483,7 @@
       "  display:flex;flex-direction:row-reverse;align-items:center;gap:0;",
       "  overflow:hidden;max-width:97px;",
       "  background:transparent;" + (posRight ? "border-radius:32px 0 0 32px;" : "border-radius:0 32px 32px 0;"),
-      "  " + (posRight ? "padding:0 35px 0 0;" : "padding:0 0 0 35px;"),
+      "  " + (posRight ? "padding:0 25px 0 0;" : "padding:0 0 0 25px;"),
       "  box-shadow:none;white-space:nowrap;cursor:pointer;",
       "  transition:max-width 0.4s cubic-bezier(0.4,0,0.2,1),background 0.3s ease,box-shadow 0.3s ease,gap 0.3s ease,padding 0.3s ease;",
       "}",
@@ -1999,7 +1999,9 @@
       ".cf360-starter-btn:hover{background:" + bcAlpha15 + ";}",
       ".cf360-teaser-bubble:not(.cf360-teaser-bubble--logo){background:linear-gradient(135deg," + bc + "," + bcDarker + ");}",
       ".cf360-teaser-bubble svg{fill:" + bic + ";}",
-      ".cf360-teaser:not(.cf360-teaser--expanded) .cf360-teaser-bubble:not(.cf360-teaser-bubble--logo){animation:cf360-pulse 2s ease infinite;box-shadow:0 4px 20px rgba(0,0,0,0.2),0 0 0 0 " + bcAlpha80 + ";}"
+      ".cf360-teaser:not(.cf360-teaser--expanded) .cf360-teaser-bubble:not(.cf360-teaser-bubble--logo){animation:cf360-pulse 2s ease infinite;box-shadow:0 4px 20px rgba(0,0,0,0.2),0 0 0 0 " + bcAlpha80 + ";}",
+      // Teaser accent background (visible behind bubble circle)
+      ".cf360-teaser:not(.cf360-teaser--expanded){background:" + safeHex(cfg.teaserBgColor, bc) + ";}"
     ].join("\n");
 
     // Remove old overrides if any

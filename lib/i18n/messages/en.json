@@ -554,6 +554,8 @@
       "teaserCtaPlaceholderEn": "e.g., Let's Chat!",
       "teaserCtaPlaceholderEs": "e.g., Chatea!",
       "teaserCtaHint": "Leave empty to use the default button text",
+      "teaserBgColor": "Teaser accent color",
+      "teaserBgColorHint": "Background color visible behind the bubble circle",
       "teaserAutoShow": "Auto-show teaser",
       "teaserAutoShowHint": "When off: teaser shows on hover (desktop) or first tap (mobile)",
       "teaserDelay": "Delay (seconds)",

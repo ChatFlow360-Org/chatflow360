@@ -554,6 +554,8 @@
       "teaserCtaPlaceholderEn": "ej., Let's Chat!",
       "teaserCtaPlaceholderEs": "ej., Chatea!",
       "teaserCtaHint": "Dejar vacio para usar el texto de boton predeterminado",
+      "teaserBgColor": "Color de acento del teaser",
+      "teaserBgColorHint": "Color de fondo visible detras del circulo del bubble",
       "teaserAutoShow": "Mostrar teaser automaticamente",
       "teaserAutoShowHint": "Cuando esta apagado: el teaser se muestra al pasar el cursor (escritorio) o al primer toque (movil)",
       "teaserDelay": "Retraso (segundos)",
