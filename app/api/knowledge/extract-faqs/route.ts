@@ -196,7 +196,12 @@ export async function POST(request: NextRequest) {
         .map(({ url, content }) => `--- Content from ${url} ---\n${content}`)
         .join("\n\n");
     } else {
-      contentToProcess = parsed.data.text;
+      const rawText = parsed.data.text;
+      // Detect HTML: if content has multiple HTML tags, strip it first
+      const htmlTagCount = (rawText.match(/<\/?[a-z][a-z0-9]*[\s>]/gi) ?? [])
+        .length;
+      contentToProcess =
+        htmlTagCount >= 3 ? stripHtml(rawText, TOTAL_CHAR_BUDGET) : rawText;
     }
 
     const completion = await openai.chat.completions.create({

@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import {
   Globe,
-  FileText,
+  FileCode2,
   Loader2,
   AlertTriangle,
   CheckCheck,
@@ -236,7 +236,7 @@ export function FaqImportDialog({
                 disabled={phase === "extracting"}
                 className="gap-1.5"
               >
-                <FileText className="size-3.5" />
+                <FileCode2 className="size-3.5" />
                 {t("import.tabText")}
               </TabsTrigger>
               <TabsTrigger
