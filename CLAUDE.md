@@ -77,4 +77,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.3.23** - UX Polish: Quick-add policy presets (11 bilingual presets in 2 groups). Knowledge Base dialogs widened to 5xl + content limit reduced to 2000 chars. Additional Instructions char counter. Super Admin shows "All organizations" in Users page. Dashboard Recent Conversations truncation fix (overflow-hidden + minmax grid). Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).
+**v0.3.24** - 2-Stage Chat Bubble (Teaser): collapsed bubble with logo/icon, expands on hover/tap with teaser message + CTA. Auto-show mode with delay. Starter question color picker. Clean close animation (no compact flash). Nudge animation on collapsed bubble. Widget preview improvements (fillHeight, internal scroll, real-widget styling). Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).

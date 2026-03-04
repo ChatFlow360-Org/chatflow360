@@ -2,6 +2,20 @@
 
 > Versiones recientes. Para historial completo ver los archivos en [`changelog/`](./changelog/).
 
+## v0.3.24 (2026-03-04)
+
+### 2-Stage Chat Bubble (Teaser) + Widget UX Fixes
+- **Chat Bubble Teaser** — New 2-stage widget bubble: collapsed state shows a circle with logo/icon, hover (desktop) or tap (mobile) expands a horizontal strip with teaser message + CTA button. Auto-show mode with configurable delay (5-60s). New "Chat Bubble" section in Settings > Widget with bilingual teaser text, CTA text, auto-show toggle, delay input, and 4 color pickers (bubble, icon, border, CTA button).
+- **Starter Question Color** (81f44ea) — New independent color picker for starter question buttons. Uses one base color with derived tonalities (text = pure, border = 40% opacity, hover bg = 15%, subtle bg = 8%). Fallback to bubbleColor when not set. New field `starterQuestionColor` in `WidgetAppearance`.
+- **Widget preview improvements** — Preview height adjusted (`calc(100vh - 260px)`). Mobile drawer uses flex layout (`fillHeight` prop) to fill available space without external scroll. Welcome screen content area scrolls internally when starter questions exceed space. Collapsed bubble preview matches real widget styling (solid color, no gradient, correct padding).
+- **Clean close animation** (ba0db4b, 45a9696) — Chat panel fades out in side-panel form (keeps `--expanded` class). Standalone bubble removed from open/close flow — teaser is the only entry point. Teaser restores after 300ms fade-out delay. Zero flash of compact view.
+- **Collapsed bubble nudge** (5aa3155) — Subtle peek animation every 4s (6px horizontal nudge with bounce). Starts after 3s delay, pauses when expanded.
+- **Logo alt text fix** (71bd9be) — Removed "Logo" alt text from bubble images to prevent text showing while image loads.
+- **Data layer** — 7 new fields in `WidgetAppearance`: `teaserTextEn/Es`, `teaserCtaEn/Es`, `teaserBgColor`, `teaserCtaColor`, `teaserAutoShow`, `teaserDelaySeconds`, `starterQuestionColor`. Zod validation + `resolveAppearance()` support. API returns `orgName` for `{{org_name}}` template replacement (server-side).
+- **i18n** — ~20 new keys (EN + ES) for bubble section, teaser fields, and starter question color.
+
+---
+
 ## v0.3.23 (2026-03-04)
 
 ### UX Polish: Policies Presets, Knowledge Limits, Dashboard Truncation
@@ -50,15 +64,6 @@
 
 ---
 
-## v0.3.19 (2026-03-03)
-
-### Bidirectional Bulk Translate Fix + Starter Questions Scope (a24462f, 9bf3adf)
-- **Fix: bidirectional translate** — `POST /api/translate` now groups texts by translation direction (`from-to` key) and makes parallel OpenAI calls per group. Previously used the first item's `from`/`to` for ALL items in the batch, causing wrong translations when mixing EN→ES and ES→EN in one request. Root cause: `fromLang`/`toLang` were derived from `texts[0]` only; now each group resolves its own language pair.
-- **Starter questions in bulk translate** — Welcome Screen "Translate empty fields" button now includes starter questions when `useStarterQuestions` is ON. Each starter question's `textEn`/`textEs` pair is added to the translation batch alongside welcome title/subtitle. When toggle is OFF, starter questions are excluded.
-- **Docs restructure** — All documentation fragmented to stay under 25 KB per file. CHANGELOG split into archives (`docs/changelog/v0.3-early.md`, `v0.2.md`, `v0.1.md`). ARCHITECTURE business logic section (506 lines) extracted to `docs/ARCHITECTURE-BUSINESS-LOGIC.md`. Security audit v0.2.2 archived to `docs/archive/`. INDEX.md and CLAUDE.md updated with new structure. New permanent rule: no `.md` > 25 KB.
-
----
-
 ---
 
 ## Indice de Todas las Versiones
@@ -69,6 +74,7 @@
 
 | Version | Fecha | Resumen |
 |---------|-------|---------|
+| v0.3.19 | 2026-03-03 | Bidirectional Bulk Translate Fix + Starter Questions Scope |
 | v0.3.18 | 2026-03-03 | AI-Powered Translate Buttons + Client View hides Technical Settings |
 | v0.3.17 | 2026-03-03 | Starter Questions for Widget (drag-and-drop, bilingual, welcome screen) |
 | v0.3.16 | 2026-03-03 | Client View Toggle + Typography Minimum Size |

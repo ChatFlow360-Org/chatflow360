@@ -202,6 +202,27 @@ Widget JS init → GET /api/widget/config?key=PUBLIC_KEY → applies colors + he
 
 **Dashboard UI:** 60/40 split layout — form on left, live React preview widget on right (sticky on desktop, FAB + Vaul drawer on mobile).
 
+### 2-Stage Chat Bubble — Teaser (v0.3.24)
+
+The widget uses a 2-stage bubble instead of a simple floating button:
+
+**Stage 1 — Collapsed:** A circle with logo (or SVG icon fallback) positioned at the screen edge. Subtle nudge animation every 4s draws attention.
+
+**Stage 2 — Expanded:** On hover (desktop) or first tap (mobile), the bubble expands into a horizontal strip with teaser message + CTA button. Close X dismisses (session only).
+
+**Auto-show mode:** When enabled, the teaser auto-expands after a configurable delay (5-60s) without user interaction.
+
+**Opening flow:** Teaser hides → side-panel opens (position:fixed, full viewport height). On close, panel fades out keeping expanded form (no compact flash), then teaser restores after 300ms. The standalone bubble element is never shown — the teaser is the only entry point.
+
+**Configuration fields** (in `Channel.config.widgetAppearance`):
+- `teaserTextEn/Es` — teaser message (supports `{{org_name}}` template, replaced server-side)
+- `teaserCtaEn/Es` — CTA button text
+- `teaserBgColor`, `teaserCtaColor` — accent colors
+- `teaserAutoShow`, `teaserDelaySeconds` — auto-expand behavior
+- `starterQuestionColor` — independent color for starter question buttons (tonalities derived from single base)
+
+**Dashboard UI:** New "Chat Bubble" section in Settings > Widget (before Welcome Screen). Color pickers, bilingual fields with per-field translate buttons, auto-show toggle with conditional delay input.
+
 ### Post-Chat Experience (v0.3.8 frontend / v0.3.9 backend)
 
 Post-chat settings control what happens after a conversation ends: visitor rating collection, transcript email delivery, and email branding customization. Settings are stored in `Channel.config` JSONB under `postChatSettings`, alongside `widgetAppearance`.
