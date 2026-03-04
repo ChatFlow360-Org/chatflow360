@@ -43,7 +43,7 @@ export function RecentConversations({ conversations }: RecentConversationsProps)
   };
 
   return (
-    <Card className="border-border bg-card">
+    <Card className="border-border bg-card overflow-hidden">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold">{t("recentConversations")}</CardTitle>
       </CardHeader>

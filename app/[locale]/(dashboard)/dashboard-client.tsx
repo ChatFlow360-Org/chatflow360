@@ -63,7 +63,7 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
         </div>
       </div>
       <StatsGrid stats={data.stats} />
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <RecentConversations conversations={data.recentConversations} />
         <div className="space-y-6">
           <TopPages pages={data.topPages} />
