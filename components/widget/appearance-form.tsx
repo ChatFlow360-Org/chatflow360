@@ -50,6 +50,17 @@ interface AppearanceFormProps {
   initialAppearance: WidgetAppearance;
 }
 
+// ─── Character Counter ────────────────────────────────────────────
+
+function CharCount({ value, max }: { value: string; max: number }) {
+  if (!value) return null;
+  return (
+    <span className="text-[10px] text-muted-foreground/60 tabular-nums text-right block mt-0.5">
+      {value.length}/{max}
+    </span>
+  );
+}
+
 // ─── Color Picker Row ─────────────────────────────────────────────
 
 function ColorRow({
@@ -252,6 +263,7 @@ export function AppearanceForm({
                   placeholder={t("teaserTextPlaceholderEn")}
                   maxLength={80}
                 />
+                <CharCount value={appearance.teaserTextEn} max={80} />
               </div>
               <div className="space-y-1.5">
                 <div className="flex items-center gap-1">
@@ -267,6 +279,7 @@ export function AppearanceForm({
                   placeholder={t("teaserTextPlaceholderEs")}
                   maxLength={80}
                 />
+                <CharCount value={appearance.teaserTextEs} max={80} />
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -294,6 +307,7 @@ export function AppearanceForm({
                   placeholder={t("teaserCtaPlaceholderEn")}
                   maxLength={30}
                 />
+                <CharCount value={appearance.teaserCtaEn} max={30} />
               </div>
               <div className="space-y-1.5">
                 <div className="flex items-center gap-1">
@@ -309,6 +323,7 @@ export function AppearanceForm({
                   placeholder={t("teaserCtaPlaceholderEs")}
                   maxLength={30}
                 />
+                <CharCount value={appearance.teaserCtaEs} max={30} />
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -437,6 +452,7 @@ export function AppearanceForm({
                   placeholder={t("welcomeTitlePlaceholderEn")}
                   maxLength={60}
                 />
+                <CharCount value={appearance.welcomeTitleEn} max={60} />
               </div>
               <div className="space-y-1.5">
                 <div className="flex items-center gap-1">
@@ -452,6 +468,7 @@ export function AppearanceForm({
                   placeholder={t("welcomeTitlePlaceholderEs")}
                   maxLength={60}
                 />
+                <CharCount value={appearance.welcomeTitleEs} max={60} />
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -479,6 +496,7 @@ export function AppearanceForm({
                   placeholder={t("welcomeSubtitlePlaceholderEn")}
                   maxLength={80}
                 />
+                <CharCount value={appearance.welcomeSubtitleEn} max={80} />
               </div>
               <div className="space-y-1.5">
                 <div className="flex items-center gap-1">
@@ -494,6 +512,7 @@ export function AppearanceForm({
                   placeholder={t("welcomeSubtitlePlaceholderEs")}
                   maxLength={80}
                 />
+                <CharCount value={appearance.welcomeSubtitleEs} max={80} />
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -592,6 +611,7 @@ export function AppearanceForm({
                   placeholder={t("headerTitlePlaceholderEn")}
                   maxLength={40}
                 />
+                <CharCount value={appearance.headerTitleEn} max={40} />
               </div>
               <div className="space-y-1.5">
                 <div className="flex items-center gap-1">
@@ -607,6 +627,7 @@ export function AppearanceForm({
                   placeholder={t("headerTitlePlaceholderEs")}
                   maxLength={40}
                 />
+                <CharCount value={appearance.headerTitleEs} max={40} />
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -634,6 +655,7 @@ export function AppearanceForm({
                   placeholder={t("headerSubtitlePlaceholderEn")}
                   maxLength={60}
                 />
+                <CharCount value={appearance.headerSubtitleEn} max={60} />
               </div>
               <div className="space-y-1.5">
                 <div className="flex items-center gap-1">
@@ -649,6 +671,7 @@ export function AppearanceForm({
                   placeholder={t("headerSubtitlePlaceholderEs")}
                   maxLength={60}
                 />
+                <CharCount value={appearance.headerSubtitleEs} max={60} />
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
