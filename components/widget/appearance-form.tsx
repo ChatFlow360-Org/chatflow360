@@ -816,11 +816,11 @@ export function AppearanceForm({
 
       {/* Mobile Preview Drawer */}
       <Drawer open={mobilePreview} onOpenChange={setMobilePreview}>
-        <DrawerContent>
-          <DrawerHeader className="text-left">
+        <DrawerContent className="flex flex-col max-h-[85vh]">
+          <DrawerHeader className="text-left shrink-0">
             <DrawerTitle>{t("preview")}</DrawerTitle>
           </DrawerHeader>
-          <div className="px-4 pb-6 overflow-y-auto max-h-[80vh]">
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-6">
             <WidgetPreview appearance={appearance} activeSection={activeSection} />
           </div>
         </DrawerContent>

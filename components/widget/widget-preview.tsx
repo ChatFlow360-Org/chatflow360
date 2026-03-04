@@ -143,7 +143,7 @@ export function WidgetPreview({ appearance, activeSection, className }: WidgetPr
       </div>
 
       {/* Widget Replica */}
-      <div className="flex flex-col items-end gap-3" style={{ height: "calc(100vh - 180px)", minHeight: 400 }}>
+      <div className="flex flex-col items-end gap-3" style={{ height: "calc(100vh - 260px)", minHeight: 400 }}>
         {showBubble ? (
           /* Bubble section — show teaser strip only, centered vertically */
           <div className="flex flex-1 flex-col items-end justify-center w-full gap-6">
