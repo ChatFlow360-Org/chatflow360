@@ -1146,13 +1146,7 @@
     chatWindow.classList.remove("cf360-window--expanded");
     // Clear mobile keyboard padding
     chatWindow.style.paddingBottom = "";
-    // Delay teaser restore until close animation finishes (250ms transition)
-    setTimeout(function () {
-      if (!state.open) {
-        bubble.style.display = "none";
-        teaserEl.style.display = "";
-      }
-    }, 300);
+    // Teaser stays hidden — it already served its purpose
   }
 
 
