@@ -478,7 +478,7 @@
       // Teaser — single element: collapsed = bubble circle, expanded = horizontal strip
       // Uses row-reverse + overflow:hidden + max-width so bubble (rightmost) stays visible when collapsed
       ".cf360-teaser{",
-      "  position:absolute;bottom:0;" + (posRight ? "right:0;" : "left:0;"),
+      "  position:absolute;bottom:0;" + (posRight ? "right:-24px;" : "left:-24px;"),
       "  display:flex;flex-direction:row-reverse;align-items:center;gap:0;",
       "  overflow:hidden;max-width:60px;",
       "  background:transparent;border-radius:9999px;",
