@@ -873,6 +873,8 @@
     container.appendChild(teaserEl);
     // Hide original bubble immediately — teaser replaces it
     bubble.style.display = "none";
+    // Keep teaser invisible until config loads (prevents unstyled flash)
+    teaserEl.style.visibility = "hidden";
 
     // Chat window
     chatWindow = el("div", "cf360-window");
@@ -2060,10 +2062,16 @@
               applyLogoToBubbles(data.postChat.logoUrl);
             }
           }
+          // Reveal teaser now that styles + logo are applied
+          if (teaserEl) teaserEl.style.visibility = "visible";
           // Init teaser behavior after config is loaded
           initTeaserBehavior();
         })
-        .catch(function () { /* use data-color defaults — config fetch is non-blocking */ });
+        .catch(function () {
+          // Config fetch failed — reveal teaser with defaults so it's not stuck hidden
+          if (teaserEl) teaserEl.style.visibility = "visible";
+          initTeaserBehavior();
+        });
     } catch (e) { /* noop */ }
   }
 
