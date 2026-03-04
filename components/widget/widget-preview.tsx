@@ -157,7 +157,7 @@ export function WidgetPreview({ appearance, activeSection, className, fillHeight
                 maxWidth: 86,
                 borderRadius: "32px 0 0 32px",
                 background: "#fff",
-                padding: "0 25px 0 0",
+                padding: "6px 25px 6px 10px",
               }}
             >
               <div
