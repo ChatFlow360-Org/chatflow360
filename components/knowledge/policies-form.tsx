@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Plus, Trash2, Shield } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/accordion";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { PoliciesData } from "@/lib/knowledge/policies";
+import { POLICY_PRESETS, type PolicyPreset } from "@/lib/knowledge/policies";
 
 // ─── Constants ────────────────────────────────────────────────────
 
@@ -27,11 +29,12 @@ interface PoliciesFormProps {
   data: PoliciesData;
   onChange: (data: PoliciesData) => void;
   t: (key: string, values?: Record<string, unknown>) => string;
+  locale?: string;
 }
 
 // ─── Main Component ──────────────────────────────────────────────
 
-export function PoliciesForm({ data, onChange, t }: PoliciesFormProps) {
+export function PoliciesForm({ data, onChange, t, locale = "en" }: PoliciesFormProps) {
   // Tracks which accordion items are expanded (by index-based key)
   const [expandedItems, setExpandedItems] = useState<string[]>(() =>
     data.items.map((_, i) => `policy-${i}`),
@@ -87,6 +90,105 @@ export function PoliciesForm({ data, onChange, t }: PoliciesFormProps) {
     [data, onChange],
   );
 
+  // ─── Preset helpers ──────────────────────────────────────────
+
+  const addPresetPolicy = useCallback(
+    (preset: PolicyPreset) => {
+      const label = locale === "es" ? preset.nameEs : preset.name;
+      const alreadyExists = data.items.some(
+        (item) => item.title.toLowerCase() === label.toLowerCase(),
+      );
+      if (alreadyExists) return;
+
+      const newIndex = data.items.length;
+      const newKey = `policy-${newIndex}`;
+      onChange({
+        ...data,
+        items: [...data.items, { title: label, content: "" }],
+      });
+      setExpandedItems((prev) => [...prev, newKey]);
+    },
+    [data, onChange, locale],
+  );
+
+  const availablePresetsCommon = useMemo(
+    () =>
+      POLICY_PRESETS.filter(
+        (p) =>
+          p.group === "common" &&
+          !data.items.some(
+            (item) =>
+              item.title.toLowerCase() === (locale === "es" ? p.nameEs : p.name).toLowerCase(),
+          ),
+      ),
+    [data.items, locale],
+  );
+
+  const availablePresetsOther = useMemo(
+    () =>
+      POLICY_PRESETS.filter(
+        (p) =>
+          p.group === "other" &&
+          !data.items.some(
+            (item) =>
+              item.title.toLowerCase() === (locale === "es" ? p.nameEs : p.name).toLowerCase(),
+          ),
+      ),
+    [data.items, locale],
+  );
+
+  // ─── Quick-add chips renderer ───────────────────────────────
+
+  const renderPresetChips = () => {
+    if (availablePresetsCommon.length === 0 && availablePresetsOther.length === 0) return null;
+
+    return (
+      <div className="space-y-3">
+        {availablePresetsCommon.length > 0 && (
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground font-normal">
+              {t("quickAddCommon")}
+            </Label>
+            <div className="flex flex-wrap gap-1.5">
+              {availablePresetsCommon.map((preset) => (
+                <Badge
+                  key={preset.key}
+                  variant="outline"
+                  className="cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors"
+                  onClick={() => addPresetPolicy(preset)}
+                >
+                  <Plus className="size-3 mr-0.5" />
+                  {locale === "es" ? preset.nameEs : preset.name}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {availablePresetsOther.length > 0 && (
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground font-normal">
+              {t("quickAddOther")}
+            </Label>
+            <div className="flex flex-wrap gap-1.5">
+              {availablePresetsOther.map((preset) => (
+                <Badge
+                  key={preset.key}
+                  variant="outline"
+                  className="cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors"
+                  onClick={() => addPresetPolicy(preset)}
+                >
+                  <Plus className="size-3 mr-0.5" />
+                  {locale === "es" ? preset.nameEs : preset.name}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // ─── Render: Empty State ───────────────────────────────────────
 
   if (data.items.length === 0) {
@@ -111,6 +213,8 @@ export function PoliciesForm({ data, onChange, t }: PoliciesFormProps) {
           <Plus className="size-4" />
           {t("addPolicy")}
         </Button>
+
+        {renderPresetChips()}
       </div>
     );
   }
@@ -218,6 +322,8 @@ export function PoliciesForm({ data, onChange, t }: PoliciesFormProps) {
         <Plus className="size-4" />
         {t("addPolicy")}
       </Button>
+
+      {renderPresetChips()}
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog

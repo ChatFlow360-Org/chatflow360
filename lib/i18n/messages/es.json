@@ -475,7 +475,9 @@
       "itemCount": "{count} politicas",
       "deleteConfirmTitle": "Eliminar esta politica?",
       "deleteConfirmDescription": "Esta entrada de politica sera eliminada.",
-      "newPolicy": "Nueva Politica"
+      "newPolicy": "Nueva Politica",
+      "quickAddCommon": "Agregar politicas comunes:",
+      "quickAddOther": "Otras politicas:"
     },
     "apiKey": {
       "title": "Clave OpenAI Personalizada",

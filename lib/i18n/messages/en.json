@@ -475,7 +475,9 @@
       "itemCount": "{count} policies",
       "deleteConfirmTitle": "Delete this policy?",
       "deleteConfirmDescription": "This policy entry will be removed.",
-      "newPolicy": "New Policy"
+      "newPolicy": "New Policy",
+      "quickAddCommon": "Quick add common policies:",
+      "quickAddOther": "Other policies:"
     },
     "apiKey": {
       "title": "Custom OpenAI Key",

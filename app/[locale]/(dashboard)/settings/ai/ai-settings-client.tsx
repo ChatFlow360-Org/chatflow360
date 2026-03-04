@@ -1822,7 +1822,7 @@ export function AiSettingsClient({
 
       {/* ── Policies Dialog ── */}
       <Dialog open={showPoliciesDialog} onOpenChange={setShowPoliciesDialog}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-5xl">
           <DialogHeader>
             <DialogTitle>{t("policies.dialogTitle")}</DialogTitle>
             <DialogDescription>
@@ -1838,6 +1838,7 @@ export function AiSettingsClient({
               <PoliciesForm
                 data={policiesData}
                 onChange={setPoliciesData}
+                locale={locale}
                 t={(key, values) => t(`policies.${key}`, values as Record<string, string | number | Date> | undefined)}
               />
             </div>
