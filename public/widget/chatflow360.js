@@ -482,7 +482,7 @@
       "  position:absolute;bottom:0;" + (posRight ? "right:-24px;" : "left:-24px;"),
       "  display:flex;flex-direction:row-reverse;align-items:center;gap:0;",
       "  overflow:hidden;max-width:60px;",
-      "  background:transparent;" + (posRight ? "border-radius:9999px 0 0 9999px;" : "border-radius:0 9999px 9999px 0;"),
+      "  background:transparent;" + (posRight ? "border-radius:50% 0 0 50%;" : "border-radius:0 50% 50% 0;"),
       "  padding:0;box-shadow:none;white-space:nowrap;cursor:pointer;",
       "  transition:max-width 0.4s cubic-bezier(0.4,0,0.2,1),background 0.3s ease,box-shadow 0.3s ease,gap 0.3s ease,padding 0.3s ease,border-radius 0.3s ease;",
       "}",
@@ -491,9 +491,11 @@
       "  " + (posRight ? "padding:5px 5px 5px 20px;" : "padding:5px 20px 5px 5px;"),
       "  box-shadow:0 2px 16px rgba(0,0,0,0.10),0 1px 4px rgba(0,0,0,0.06);",
       "}",
-      ".cf360-teaser-text,.cf360-teaser-cta,.cf360-teaser-close{opacity:0;pointer-events:none;transition:opacity 0.15s ease;}",
-      ".cf360-teaser--expanded .cf360-teaser-text,.cf360-teaser--expanded .cf360-teaser-cta,.cf360-teaser--expanded .cf360-teaser-close{opacity:1;pointer-events:auto;transition-delay:0.2s;}",
-      ".cf360-teaser-text{font-size:13.5px;color:#334155;line-height:1.3;margin:0;flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis;}",
+      ".cf360-teaser-content{display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0;pointer-events:none;transition:opacity 0.15s ease;text-align:center;}",
+      ".cf360-teaser--expanded .cf360-teaser-content{opacity:1;pointer-events:auto;transition-delay:0.2s;}",
+      ".cf360-teaser-close{opacity:0;pointer-events:none;transition:opacity 0.15s ease;}",
+      ".cf360-teaser--expanded .cf360-teaser-close{opacity:1;pointer-events:auto;transition-delay:0.2s;}",
+      ".cf360-teaser-text{font-size:13.5px;color:#334155;line-height:1.3;margin:0;white-space:normal;}",
       ".cf360-teaser-cta{",
       "  background:#1e293b;color:#fff;",
       "  border:none;border-radius:24px;padding:10px 24px;font-size:14px;font-weight:600;",
@@ -859,12 +861,17 @@
     teaserCtaEl.textContent = t("ctaDefault");
     teaserBubbleEl = el("div", "cf360-teaser-bubble");
     teaserBubbleEl.innerHTML = ICON_CHAT;
+    // Content wrapper: text above CTA (vertical stack)
+    var teaserContentEl = el("div", "cf360-teaser-content");
+    teaserContentEl.appendChild(teaserTextEl);
+    teaserContentEl.appendChild(teaserCtaEl);
     // row-reverse: first child = rightmost visually → bubble stays visible when collapsed
     teaserEl.appendChild(teaserCloseEl);
     teaserEl.appendChild(teaserBubbleEl);
-    teaserEl.appendChild(teaserCtaEl);
-    teaserEl.appendChild(teaserTextEl);
+    teaserEl.appendChild(teaserContentEl);
     container.appendChild(teaserEl);
+    // Hide original bubble immediately — teaser replaces it
+    bubble.style.display = "none";
 
     // Chat window
     chatWindow = el("div", "cf360-window");
