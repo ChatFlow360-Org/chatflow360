@@ -115,7 +115,7 @@ export const widgetAppearanceSchema = z.object({
   teaserBgColor: hexColor.optional().default(DEFAULT_WIDGET_APPEARANCE.teaserBgColor),
   teaserCtaColor: hexColor.optional().default(DEFAULT_WIDGET_APPEARANCE.teaserCtaColor),
   teaserAutoShow: z.boolean().optional().default(false),
-  teaserDelaySeconds: z.number().int().min(3).max(30).optional().default(10),
+  teaserDelaySeconds: z.number().int().min(5).max(60).optional().default(10),
 });
 
 // ─── Resolver ─────────────────────────────────────────────────────
@@ -150,7 +150,7 @@ export function resolveAppearance(
       }
     } else if (key === "teaserDelaySeconds") {
       const num = (stored as Record<string, unknown>)?.[key];
-      if (typeof num === "number" && num >= 3 && num <= 30) {
+      if (typeof num === "number" && num >= 5 && num <= 60) {
         (resolved as Record<string, unknown>)[key] = num;
       }
     } else if (key === "starterQuestions") {

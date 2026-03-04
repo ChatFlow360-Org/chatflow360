@@ -561,7 +561,7 @@
       "teaserAutoShow": "Auto-expand bubble",
       "teaserAutoShowHint": "When off: bubble expands on hover (desktop) or first tap (mobile)",
       "teaserDelay": "Delay (seconds)",
-      "teaserDelayHint": "Time before the teaser appears automatically (3-30s)"
+      "teaserDelayHint": "Time before the bubble expands automatically"
     },
     "postChat": {
       "title": "Post-Chat Experience",

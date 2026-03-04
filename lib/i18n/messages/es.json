@@ -561,7 +561,7 @@
       "teaserAutoShow": "Expandir burbuja automáticamente",
       "teaserAutoShowHint": "Cuando está apagado: la burbuja se expande al pasar el cursor (escritorio) o al primer toque (móvil)",
       "teaserDelay": "Retraso (segundos)",
-      "teaserDelayHint": "Tiempo antes de que el teaser aparezca automaticamente (3-30s)"
+      "teaserDelayHint": "Tiempo antes de que la burbuja se expanda automáticamente"
     },
     "postChat": {
       "title": "Experiencia Post-Chat",

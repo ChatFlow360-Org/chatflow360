@@ -18,6 +18,13 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Drawer,
   DrawerContent,
   DrawerHeader,
@@ -41,32 +48,6 @@ interface AppearanceFormProps {
   channelId: string;
   publicKey: string;
   initialAppearance: WidgetAppearance;
-}
-
-// ─── Delay Input (allows empty intermediate state) ───────────────
-
-function DelayInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  const [local, setLocal] = useState(String(value));
-  useEffect(() => { setLocal(String(value)); }, [value]);
-  return (
-    <Input
-      id="teaserDelaySeconds"
-      type="number"
-      min={3}
-      max={30}
-      value={local}
-      onChange={(e) => setLocal(e.target.value)}
-      onBlur={() => {
-        const v = parseInt(local, 10);
-        if (!isNaN(v) && v >= 3 && v <= 30) {
-          onChange(v);
-        } else {
-          setLocal(String(value));
-        }
-      }}
-      className="w-20 h-8 text-sm"
-    />
-  );
 }
 
 // ─── Color Picker Row ─────────────────────────────────────────────
@@ -367,10 +348,19 @@ export function AppearanceForm({
                     {t("teaserDelayHint")}
                   </p>
                 </div>
-                <DelayInput
-                  value={appearance.teaserDelaySeconds}
-                  onChange={(v) => update("teaserDelaySeconds", v)}
-                />
+                <Select
+                  value={String(appearance.teaserDelaySeconds)}
+                  onValueChange={(v) => update("teaserDelaySeconds", parseInt(v, 10))}
+                >
+                  <SelectTrigger className="w-24 h-8 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent position="popper">
+                    {[5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60].map((s) => (
+                      <SelectItem key={s} value={String(s)}>{s}s</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </>
           )}

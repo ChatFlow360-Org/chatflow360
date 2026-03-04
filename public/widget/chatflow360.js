@@ -1957,7 +1957,7 @@
     if (tt) { state.teaserText = tt; if (teaserTextEl) teaserTextEl.textContent = tt; }
     if (tc) { state.teaserCta = tc; if (teaserCtaEl) teaserCtaEl.textContent = tc; }
     if (typeof cfg.teaserAutoShow === "boolean") state.teaserAutoShow = cfg.teaserAutoShow;
-    if (typeof cfg.teaserDelaySeconds === "number" && cfg.teaserDelaySeconds >= 3 && cfg.teaserDelaySeconds <= 30) {
+    if (typeof cfg.teaserDelaySeconds === "number" && cfg.teaserDelaySeconds >= 5 && cfg.teaserDelaySeconds <= 60) {
       state.teaserDelaySeconds = cfg.teaserDelaySeconds;
     }
 
