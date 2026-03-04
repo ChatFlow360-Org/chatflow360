@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { X, Expand, Send } from "lucide-react";
+import { X, Send } from "lucide-react";
 import type { WidgetAppearance } from "@/lib/widget/appearance";
 
 // ─── Chat Icon (matches the real widget SVG) ─────────────────────
@@ -143,13 +143,92 @@ export function WidgetPreview({ appearance, activeSection, className }: WidgetPr
       </div>
 
       {/* Widget Replica */}
-      <div className="flex flex-col items-end gap-3">
-        {/* Chat Window */}
+      <div className="flex flex-col items-end gap-3" style={{ height: "calc(100vh - 180px)", minHeight: 400 }}>
+        {showBubble ? (
+          /* Bubble section — show teaser strip only, centered vertically */
+          <div className="flex flex-1 flex-col items-end justify-center w-full gap-6">
+            {/* Collapsed state — just the bubble circle */}
+            <div
+              className="flex items-center justify-end"
+              style={{
+                overflow: "hidden",
+                maxWidth: 86,
+                borderRadius: "32px 0 0 32px",
+                background: appearance.teaserBgColor,
+                padding: "0 25px 0 0",
+              }}
+            >
+              <div
+                className="flex items-center justify-center shrink-0"
+                style={{
+                  width: 56,
+                  height: 56,
+                  minWidth: 56,
+                  borderRadius: "50%",
+                  background: `linear-gradient(135deg, ${bc}, ${darken(bc)})`,
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+                }}
+              >
+                <ChatBubbleIcon size={24} fill={bic} dotFill={bc} />
+              </div>
+            </div>
+            {/* Expanded state — full teaser strip */}
+            <div
+              style={{
+                background: "#fff",
+                borderRadius: "32px 0 0 32px",
+                padding: "8px 5px 8px 10px",
+                boxShadow: "0 2px 16px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06)",
+                display: "flex",
+                flexDirection: "row-reverse",
+                alignItems: "center",
+                gap: 10,
+                position: "relative",
+                minWidth: 260,
+              }}
+            >
+              {/* Bubble circle */}
+              <div
+                className="flex items-center justify-center shrink-0"
+                style={{
+                  width: 48,
+                  height: 48,
+                  minWidth: 48,
+                  borderRadius: "50%",
+                  background: `linear-gradient(135deg, ${bc}, ${darken(bc)})`,
+                }}
+              >
+                <ChatBubbleIcon size={22} fill={bic} dotFill={bc} />
+              </div>
+              {/* Content: text above CTA */}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "stretch", gap: 6, flex: 1, textAlign: "center" }}>
+                <span style={{ fontSize: 13.5, color: "#334155", lineHeight: 1.3, whiteSpace: "normal" }}>
+                  {teaserText}
+                </span>
+                <div
+                  style={{
+                    background: appearance.teaserCtaColor || "#333333",
+                    color: "#fff",
+                    borderRadius: 24,
+                    padding: "10px 24px",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    textAlign: "center",
+                  }}
+                >
+                  {teaserCta}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+        /* Chat Window — full height */
         <div
-          className="w-full overflow-hidden rounded-t-[20px] rounded-b-xl flex flex-col"
+          className="w-full overflow-hidden rounded-t-[20px] rounded-b-xl flex flex-col flex-1"
           style={{
             maxWidth: 380,
-            height: 480,
             boxShadow: "0 8px 48px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.08)",
           }}
         >
@@ -204,12 +283,6 @@ export function WidgetPreview({ appearance, activeSection, className }: WidgetPr
 
             {/* Actions */}
             <div className="flex items-center gap-0.5 shrink-0">
-              <div
-                className="flex items-center justify-center rounded-lg"
-                style={{ padding: 6, opacity: 0.7 }}
-              >
-                <Expand size={18} style={{ color: hic }} />
-              </div>
               <div
                 className="flex items-center justify-center rounded-lg"
                 style={{ padding: 6, opacity: 0.7 }}
@@ -402,93 +475,7 @@ export function WidgetPreview({ appearance, activeSection, className }: WidgetPr
             <span className="font-semibold">ChatFlow360</span>
           </div>
         </div>
-
-        {/* Floating Bubble + Teaser Strip */}
-        <div className="flex items-end justify-end w-full">
-          {showBubble ? (
-            /* Teaser strip — horizontal bar with bubble integrated */
-            <div
-              style={{
-                background: "#fff",
-                borderRadius: 28,
-                padding: "5px 5px 5px 20px",
-                boxShadow: "0 2px 16px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06)",
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                position: "relative",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {/* Close X (red) */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: -6,
-                  left: -6,
-                  width: 20,
-                  height: 20,
-                  borderRadius: "50%",
-                  background: "#ef4444",
-                  border: "2px solid #fff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                }}
-              >
-                <X size={8} style={{ color: "#fff" }} />
-              </div>
-              {/* Teaser Text */}
-              <span style={{ fontSize: 13.5, color: "#334155", lineHeight: 1.3 }}>
-                {teaserText}
-              </span>
-              {/* CTA Button (dark pill) */}
-              <div
-                style={{
-                  background: "#1e293b",
-                  color: "#fff",
-                  borderRadius: 20,
-                  padding: "8px 20px",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  flexShrink: 0,
-                }}
-              >
-                {teaserCta}
-              </div>
-              {/* Bubble circle at end */}
-              <div
-                className="flex items-center justify-center shrink-0"
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: "50%",
-                  background: `linear-gradient(135deg, ${bc}, ${darken(bc)})`,
-                  cursor: "pointer",
-                }}
-              >
-                <ChatBubbleIcon size={22} fill={bic} dotFill={bc} />
-              </div>
-            </div>
-          ) : (
-            /* Standalone Bubble */
-            <div
-              className="flex items-center justify-center shrink-0"
-              style={{
-                width: 60,
-                height: 60,
-                borderRadius: "50%",
-                background: `linear-gradient(135deg, ${bc}, ${darken(bc)})`,
-                color: bic,
-                boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
-              }}
-            >
-              <ChatBubbleIcon size={26} fill={bic} dotFill={bc} />
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Keyframe for typing dots */}
