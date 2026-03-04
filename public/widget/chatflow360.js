@@ -1136,6 +1136,7 @@
   function closeWidget() {
     state.open = false;
     bubble.classList.remove("cf360-bubble--open");
+    bubble.style.display = "none";
     chatWindow.classList.remove("cf360-window--open");
     // Keep --expanded so the panel fades out in side-panel form (no compact flash)
     // Clear mobile keyboard padding
@@ -1143,7 +1144,6 @@
     // Restore teaser (collapsed) after close animation finishes
     setTimeout(function () {
       if (!state.open) {
-        bubble.style.display = "none";
         teaserEl.style.display = "";
         collapseTeaser();
       }
