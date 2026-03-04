@@ -540,6 +540,7 @@
       "sectionWelcomeHint": "Customize the first thing visitors see when they open the chat",
       "useStarterQuestions": "Use starter questions",
       "useStarterQuestionsHint": "Show clickable conversation starters on the welcome screen",
+      "starterQuestionColor": "Question Color",
       "starterQuestionsLabel": "Starter Questions",
       "starterPlaceholderEn": "e.g., What are your business hours?",
       "starterPlaceholderEs": "e.g., What is your schedule?",

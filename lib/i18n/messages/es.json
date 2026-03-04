@@ -540,6 +540,7 @@
       "sectionWelcomeHint": "Personaliza lo primero que ven los visitantes al abrir el chat",
       "useStarterQuestions": "Usar preguntas iniciales",
       "useStarterQuestionsHint": "Muestra botones de conversacion en la pantalla de bienvenida",
+      "starterQuestionColor": "Color de Preguntas",
       "starterQuestionsLabel": "Preguntas Iniciales",
       "starterPlaceholderEn": "ej., What are your business hours?",
       "starterPlaceholderEs": "ej., Cual es su horario de atencion?",

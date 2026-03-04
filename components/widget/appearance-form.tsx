@@ -520,9 +520,15 @@ export function AppearanceForm({
             />
           </div>
 
-          {/* Starter Questions Editor */}
+          {/* Starter Questions Color + Editor */}
           {appearance.useStarterQuestions && (
             <>
+              <Separator />
+              <ColorRow
+                label={t("starterQuestionColor")}
+                value={appearance.starterQuestionColor}
+                onChange={(v) => update("starterQuestionColor", v)}
+              />
               <Separator />
               <StarterQuestionsEditor
                 questions={appearance.starterQuestions}

@@ -26,6 +26,7 @@ export interface WidgetAppearance {
   aiBubbleBg?: string;
   aiBubbleText?: string;
   sendButtonColor?: string;
+  starterQuestionColor?: string;
   useStarterQuestions?: boolean;
   starterQuestions?: StarterQuestion[];
   // Teaser (2-stage bubble)
@@ -64,6 +65,7 @@ export const DEFAULT_WIDGET_APPEARANCE: Required<WidgetAppearance> = {
   aiBubbleBg: "#e8ecf1",
   aiBubbleText: "#1e293b",
   sendButtonColor: "#2f92ad",
+  starterQuestionColor: "#2f92ad",
   useStarterQuestions: false,
   starterQuestions: [],
   teaserTextEn: "",              // empty = use widget fallback "Grow with us!"
@@ -106,6 +108,7 @@ export const widgetAppearanceSchema = z.object({
   aiBubbleBg: hexColor.optional().default(DEFAULT_WIDGET_APPEARANCE.aiBubbleBg),
   aiBubbleText: hexColor.optional().default(DEFAULT_WIDGET_APPEARANCE.aiBubbleText),
   sendButtonColor: hexColor.optional().default(DEFAULT_WIDGET_APPEARANCE.sendButtonColor),
+  starterQuestionColor: hexColor.optional().default(DEFAULT_WIDGET_APPEARANCE.starterQuestionColor),
   useStarterQuestions: z.boolean().optional().default(false),
   starterQuestions: z.array(starterQuestionSchema).max(5).optional().default([]),
   teaserTextEn: z.string().max(80).optional().default(""),

@@ -87,6 +87,7 @@ export function WidgetPreview({ appearance, activeSection, className, fillHeight
   const abg = appearance.aiBubbleBg;
   const abt = appearance.aiBubbleText;
   const sbc = appearance.sendButtonColor;
+  const sqc = appearance.starterQuestionColor;
 
   const title =
     (previewLang === "es" ? appearance.headerTitleEs : appearance.headerTitleEn) ||
@@ -344,11 +345,11 @@ export function WidgetPreview({ appearance, activeSection, className, fillHeight
                             key={q.id}
                             style={{
                               padding: "10px 16px",
-                              border: `1px solid ${bc}40`,
+                              border: `1px solid ${sqc}40`,
                               borderRadius: 20,
                               fontSize: 13,
-                              color: bc,
-                              background: `${bc}08`,
+                              color: sqc,
+                              background: `${sqc}08`,
                               cursor: "pointer",
                               textAlign: "left",
                               transition: "background 0.15s",
