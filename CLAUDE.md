@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.3.21 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.3.22 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -77,4 +77,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.3.21** - AI-Powered FAQ Import: Hybrid import feature (URL fetch + paste text) using `gpt-4o-mini` to extract Q&A pairs. New `POST /api/knowledge/extract-faqs` endpoint. `FaqImportDialog` component with tabs (From Text / From URL), preview with checkboxes, respects 20 FAQ limit. New `Checkbox` UI component. Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).
+**v0.3.23** - UX Polish: Quick-add policy presets (11 bilingual presets in 2 groups). Knowledge Base dialogs widened to 5xl + content limit reduced to 2000 chars. Additional Instructions char counter. Super Admin shows "All organizations" in Users page. Dashboard Recent Conversations truncation fix (overflow-hidden + minmax grid). Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).

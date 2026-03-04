@@ -2,6 +2,32 @@
 
 > Versiones recientes. Para historial completo ver los archivos en [`changelog/`](./changelog/).
 
+## v0.3.23 (2026-03-04)
+
+### UX Polish: Policies Presets, Knowledge Limits, Dashboard Truncation
+- **Quick-add policy presets** (fca6f65) — Badge chips for 11 common policies in two groups: "Most Common" (Privacy, Terms, Cookie, Accessibility, Refund, Shipping) and "Others" (FTC, HIPAA, CCPA, COPPA, Data Protection). Bilingual names (EN/ES). Auto-hide when already added. `POLICY_PRESETS` array in `lib/knowledge/policies.ts`. Policies dialog widened to `max-w-5xl`.
+- **Knowledge Base dialog improvements** (7aec654, 81d741c) — Add/Edit Knowledge dialogs widened to `max-w-5xl`. Content character limit reduced from 4000 to 2000 (client `maxLength` + Zod server-side validation in `actions.ts`). Character counter label updated to match.
+- **Additional Instructions char counter** (d2130f9) — Added `{count}/2000 characters` counter below the Additional Instructions textarea so users can track usage.
+- **Super Admin "All organizations"** (ba10923) — Users page now shows "All organizations" instead of "No organization" for Super Admin users, correctly reflecting their platform-wide access.
+- **Dashboard message truncation** (521fa9a, 44687ab) — Long last-message previews in Recent Conversations no longer expand the grid. Fixed with `overflow-hidden` on the Card + `minmax(0,1fr)` grid column (prevents `white-space: nowrap` content from inflating the `auto` minimum of `1fr`).
+- **i18n** — new keys (EN + ES): `quickAddCommon`, `quickAddOther`, `additionalInstructionsCharCount`, `allOrganizations`. Updated `knowledge.charCount` to 2000.
+
+---
+
+## v0.3.22 (2026-03-03)
+
+### Multi-URL FAQ Import + Text/HTML Paste + Faithful Extraction
+- **Multi-URL support** (febf684) — FAQ import accepts up to 5 URLs. Zod schema: `urls: z.array(z.string().url().max(2048)).min(1).max(5)`. Parallel fetching via `Promise.allSettled` with per-URL char budget (`Math.floor(15000 / urls.length)`). Failed URLs reported as `warnings`; if all fail returns 422.
+- **Channel URL pre-population** — first URL input auto-filled with `channel.name` (website URL). Threaded via `page.tsx` → `ai-settings-client.tsx` → `faq-import-dialog.tsx` as `channelWebsiteUrl` prop.
+- **Dynamic URL list UI** — `urls: string[]` state with `addUrl()`, `removeUrl(index)`, `updateUrl(index, value)`. Trash2 delete button (visible when >1 URL). "Add another URL" (Plus icon) hidden at max.
+- **AI disclaimer banner** (40ffa29) — amber banner with Info icon in preview phase. Dark mode compatible (`dark:border-amber-400/30 dark:bg-amber-950/20`).
+- **HTML entity decoding fix** (c2060fa) — `stripHtml()` now decodes 11 named entities (`&mdash;`, `&ndash;`, `&hellip;`, `&rsquo;`, `&ldquo;`, etc.) plus generic numeric entities (`&#8212;`, `&#x2014;`). Previously only decoded 6 basic entities, causing text after em-dashes to be cut off.
+- **"From Text / HTML" tab** (411af3a) — "From Text" tab renamed to "From Text / HTML". Label: "Paste Content or HTML". Hint explains users can paste plain text or raw HTML from browser inspector. Icon changed to `FileCode2`. Auto-detects HTML (≥3 tags) and runs `stripHtml()` server-side before sending to GPT.
+- **Source-specific prompts** (43f99a1, b2bd29b) — Two extraction modes: Text/HTML source preserves original wording verbatim (only summarizes if answer exceeds 800 chars). URL source may summarize noisy scraped content. Answer limit raised from 500 to 800 chars. Bullet points/lists converted to flowing text with commas/semicolons.
+- **i18n** — new/updated keys (EN + ES): `addUrl`, `urlFetchWarning` (ICU plural), `aiDisclaimer`, `tabText` ("From Text / HTML"), `textLabel` ("Paste Content or HTML"), `textHint`, `textPlaceholder`, `dialogDescription`.
+
+---
+
 ## v0.3.21 (2026-03-03)
 
 ### AI-Powered FAQ Import (Hybrid: URL + Text)
@@ -33,37 +59,6 @@
 
 ---
 
-## v0.3.18 (2026-03-03)
-
-### AI-Powered Translate Buttons (60394c1, 757be47)
-- **Per-field translate icons** — `<TranslateButton>` component (`components/ui/translate-button.tsx`). Ghost button with amber-colored `Languages` icon (`text-amber-500`). Placed next to each English/Spanish label in bilingual forms. Translates from the opposite field using OpenAI. Disabled when source field is empty.
-- **Bulk "Translate empty fields" button** — amber full button (`bg-amber-500 hover:bg-amber-600 text-black`) in card headers. Scans all bilingual pairs in the card, identifies fields where one language is filled and the other empty, and translates them all in a single API call. Uses `useBulkTranslate()` hook (`lib/hooks/use-bulk-translate.ts`).
-- **`POST /api/translate`** — new authenticated API route. Accepts batch of up to 20 text items with `from`/`to` language. Uses `gpt-4o-mini` (temperature 0.3) via `resolvePlatformApiKey()` (platform-level key, NOT per-org). System prompt preserves template variables (`{{visitor_name}}`, `{{org_name}}`). Zod validation: max 500 chars per text, max 20 items.
-- **`resolvePlatformApiKey()`** — new function in `lib/openai/client.ts`. Resolves platform-level API key only (platform_settings → env var). Used for platform utilities that are not org-specific.
-- **Amber styling pattern** — documented in RULES.md (Regla 16) and BRANDBOOK.md. Two tiers: full amber button for high-visibility actions (Take Control, Translate empty fields) and ghost amber icon for subtle per-field actions (translate icons).
-- **Applied to 3 forms** — Widget > Welcome Screen, Widget > Texts, Post-Chat template editor. Starter Questions editor already had translate buttons (updated to amber style).
-- **i18n** — 7 new keys (EN + ES): translateFromEn, translateFromEs, translateError, translateBulkSuccess, translateEmpty, translateBulkBtn (unused placeholder removed).
-
-### Client View Hides Technical Settings (1508f15)
-- **Technical Settings + Custom API Key hidden** — when Client View toggle is ON, the Technical Settings card (model, temperature, max tokens) and Custom OpenAI Key card are hidden in AI Settings. These are super_admin-only configuration that clients should not see or modify.
-
----
-
-## v0.3.17 (2026-03-03)
-
-### Starter Questions for Widget
-- **New WELCOME card** — Settings > Widget restructured: welcome title/subtitle fields moved from TEXTS into a new "Welcome Screen" card (first position). TEXTS card now contains only header title/subtitle.
-- **Starter Questions toggle** — "Use starter questions" switch with hint text. When ON, reveals the Starter Questions editor. When OFF, editor hidden and questions not rendered.
-- **Drag-and-drop editor** — up to 5 bilingual questions (EN/ES) with `@dnd-kit` sortable rows. Each row: drag handle (GripVertical) + two inputs (side-by-side on desktop, stacked on mobile) + delete button. Counter shows `{n}/5`, "Add question" button auto-hides at max.
-- **Context-aware preview** — `activeSection` state (`"welcome" | "texts" | "colors"`) switches the live preview between welcome screen mode (icon + title + subtitle + starter buttons) and chat view mode (sample messages + typing indicator). Controlled by `onFocus` on each Card.
-- **Widget embed** — `chatflow360.js` renders starter question buttons on the welcome screen using `bubbleColor` as accent. Click sends the question text via `sendMessage()`. Buttons auto-disappear when any message is sent (existing `appendMessage()` removes `.cf360-welcome`).
-- **Data model** — `StarterQuestion` interface (`id`, `textEn`, `textEs`). `WidgetAppearance` extended with `useStarterQuestions: boolean` and `starterQuestions: StarterQuestion[]`. Zod validation: max 5 items, max 100 chars per text. `resolveAppearance()` updated for boolean + array types.
-- **Auto-save** — works without changes via existing `useAutoSave` hook (JSON snapshot comparison).
-- **i18n** — 8 new keys (EN + ES): sectionWelcome, sectionWelcomeHint, useStarterQuestions, useStarterQuestionsHint, starterQuestionsLabel, starterPlaceholderEn/Es, addStarterQuestion.
-- **Dependencies** — `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities` added.
-
----
-
 ---
 
 ## Indice de Todas las Versiones
@@ -74,6 +69,8 @@
 
 | Version | Fecha | Resumen |
 |---------|-------|---------|
+| v0.3.18 | 2026-03-03 | AI-Powered Translate Buttons + Client View hides Technical Settings |
+| v0.3.17 | 2026-03-03 | Starter Questions for Widget (drag-and-drop, bilingual, welcome screen) |
 | v0.3.16 | 2026-03-03 | Client View Toggle + Typography Minimum Size |
 | v0.3.15 | 2026-03-03 | Rules UX Overhaul (Edit/Duplicate/Delete + Global/Specific split) |
 | v0.3.14 | 2026-03-02 | Dynamic Global Rules Injection + Take Control Amber + Post-Chat on Close + Welcome Texts |
