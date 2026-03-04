@@ -476,22 +476,23 @@
       ".cf360-bubble--open .cf360-icon-close{transform:translate(-50%,-50%) rotate(0) scale(1);opacity:1;}",
 
       // Teaser — single element: collapsed = bubble circle, expanded = horizontal strip
+      // Uses row-reverse + overflow:hidden + max-width so bubble (rightmost) stays visible when collapsed
       ".cf360-teaser{",
-      "  position:absolute;bottom:0;" + (posRight ? "right:-20px;" : "left:-20px;"),
-      "  display:flex;align-items:center;gap:0;",
+      "  position:absolute;bottom:0;" + (posRight ? "right:0;" : "left:0;"),
+      "  display:flex;flex-direction:row-reverse;align-items:center;gap:0;",
+      "  overflow:hidden;max-width:60px;",
       "  background:transparent;border-radius:9999px;",
       "  padding:0;box-shadow:none;white-space:nowrap;cursor:pointer;",
-      "  transform:" + (posRight ? "translateX(calc(100% - 60px))" : "translateX(calc(-100% + 60px))") + ";",
-      "  transition:transform 0.4s cubic-bezier(0.4,0,0.2,1),background 0.3s ease,box-shadow 0.3s ease,gap 0.3s ease,padding 0.3s ease;",
+      "  transition:max-width 0.4s cubic-bezier(0.4,0,0.2,1),background 0.3s ease,box-shadow 0.3s ease,gap 0.3s ease,padding 0.3s ease,border-radius 0.3s ease;",
       "}",
       ".cf360-teaser--expanded{",
-      "  transform:translateX(0);background:#fff;gap:10px;",
+      "  max-width:500px;background:#fff;gap:10px;border-radius:32px;",
       "  " + (posRight ? "padding:5px 5px 5px 20px;" : "padding:5px 20px 5px 5px;"),
       "  box-shadow:0 2px 16px rgba(0,0,0,0.10),0 1px 4px rgba(0,0,0,0.06);",
       "}",
       ".cf360-teaser-text,.cf360-teaser-cta,.cf360-teaser-close{opacity:0;pointer-events:none;transition:opacity 0.15s ease;}",
       ".cf360-teaser--expanded .cf360-teaser-text,.cf360-teaser--expanded .cf360-teaser-cta,.cf360-teaser--expanded .cf360-teaser-close{opacity:1;pointer-events:auto;transition-delay:0.2s;}",
-      ".cf360-teaser-text{font-size:13.5px;color:#334155;line-height:1.3;margin:0;}",
+      ".cf360-teaser-text{font-size:13.5px;color:#334155;line-height:1.3;margin:0;flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis;}",
       ".cf360-teaser-cta{",
       "  background:#1e293b;color:#fff;",
       "  border:none;border-radius:20px;padding:8px 20px;font-size:13px;font-weight:600;",
@@ -499,22 +500,21 @@
       "}",
       ".cf360-teaser-cta:hover{opacity:0.85;}",
       ".cf360-teaser-close{",
-      "  position:absolute;top:-6px;" + (posRight ? "left:calc(100% - 66px);" : "right:calc(100% - 66px);"),
+      "  position:absolute;top:-6px;" + (posRight ? "left:-6px;" : "right:-6px;"),
       "  width:20px;height:20px;border-radius:50%;",
       "  background:#ef4444;border:2px solid #fff;display:flex;align-items:center;justify-content:center;",
-      "  cursor:pointer;padding:0;transition:background 0.15s,opacity 0.15s;",
+      "  cursor:pointer;padding:0;transition:background 0.15s,opacity 0.15s;z-index:1;",
       "}",
-      ".cf360-teaser--expanded .cf360-teaser-close{" + (posRight ? "left:-6px;" : "right:-6px;") + "}",
       ".cf360-teaser-close:hover{background:#dc2626;}",
       ".cf360-teaser-close svg{width:8px;height:8px;fill:#fff;}",
       ".cf360-teaser-bubble{",
-      "  width:56px;height:56px;border-radius:50%;flex-shrink:0;",
+      "  width:56px;height:56px;min-width:56px;border-radius:50%;flex-shrink:0;",
       "  background:linear-gradient(135deg," + primaryColor + "," + primaryDarker + ");",
       "  display:flex;align-items:center;justify-content:center;cursor:pointer;",
       "  box-shadow:0 4px 20px rgba(0,0,0,0.2);",
-      "  transition:box-shadow 0.3s ease,width 0.3s ease,height 0.3s ease;",
+      "  transition:box-shadow 0.3s ease,width 0.3s ease,height 0.3s ease,min-width 0.3s ease;",
       "}",
-      ".cf360-teaser--expanded .cf360-teaser-bubble{width:48px;height:48px;box-shadow:none;}",
+      ".cf360-teaser--expanded .cf360-teaser-bubble{width:48px;height:48px;min-width:48px;box-shadow:none;}",
       ".cf360-teaser:not(.cf360-teaser--expanded) .cf360-teaser-bubble{animation:cf360-pulse 2s ease infinite;}",
       ".cf360-teaser-bubble svg{width:24px;height:24px;fill:#fff;}",
 
@@ -799,11 +799,12 @@
       "  }",
       "  .cf360-header{border-radius:0;}",
       "  .cf360-bubble{position:fixed;bottom:16px;" + (posRight ? "right:16px;" : "left:16px;") + "}",
-      "  .cf360-teaser{position:fixed;bottom:16px;" + (posRight ? "right:0;" : "left:0;") + "}",
+      "  .cf360-teaser{position:fixed;bottom:16px;" + (posRight ? "right:0;" : "left:0;") + "max-width:54px;}",
+      "  .cf360-teaser--expanded{max-width:calc(100vw - 16px);}",
       "  .cf360-teaser-text{font-size:12px;}",
       "  .cf360-teaser-cta{padding:7px 14px;font-size:11.5px;}",
-      "  .cf360-teaser-bubble{width:50px;height:50px;}",
-      "  .cf360-teaser--expanded .cf360-teaser-bubble{width:42px;height:42px;}",
+      "  .cf360-teaser-bubble{width:50px;height:50px;min-width:50px;}",
+      "  .cf360-teaser--expanded .cf360-teaser-bubble{width:42px;height:42px;min-width:42px;}",
       "}"
     ].join("\n");
 
@@ -854,10 +855,11 @@
     teaserCtaEl.textContent = t("ctaDefault");
     teaserBubbleEl = el("div", "cf360-teaser-bubble");
     teaserBubbleEl.innerHTML = ICON_CHAT;
+    // row-reverse: first child = rightmost visually → bubble stays visible when collapsed
     teaserEl.appendChild(teaserCloseEl);
-    teaserEl.appendChild(teaserTextEl);
-    teaserEl.appendChild(teaserCtaEl);
     teaserEl.appendChild(teaserBubbleEl);
+    teaserEl.appendChild(teaserCtaEl);
+    teaserEl.appendChild(teaserTextEl);
     container.appendChild(teaserEl);
 
     // Chat window
