@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
+import { useState, useActionState, useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, usePathname, Link } from "@/lib/i18n/navigation";
 import Image from "next/image";
-import { Clock, Users, DollarSign, TrendingUp, Zap, Sparkles } from "lucide-react";
+import { Clock, Users, DollarSign, TrendingUp, Zap, Sparkles, Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { cn } from "@/lib/utils";
 import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
@@ -23,6 +24,7 @@ export default function LoginPage() {
     null
   );
   const [isLocalePending, startLocaleTransition] = useTransition();
+  const [showPassword, setShowPassword] = useState(false);
 
   const switchLocale = (newLocale: string) => {
     startLocaleTransition(() => {
@@ -171,16 +173,28 @@ export default function LoginPage() {
                     {t("forgotPassword")}
                   </Link>
                 </div>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="••••••••"
-                  required
-                  minLength={8}
-                  maxLength={128}
-                  className="h-10 bg-background dark:border-muted-foreground/20 dark:bg-muted/30"
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    required
+                    minLength={8}
+                    maxLength={128}
+                    className="h-10 pr-10 bg-background dark:border-muted-foreground/20 dark:bg-muted/30"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 cursor-pointer text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowPassword(!showPassword)}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  </Button>
+                </div>
               </div>
 
               <button
