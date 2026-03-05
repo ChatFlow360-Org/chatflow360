@@ -63,14 +63,17 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isPublicRoute && user) {
-    // Already authenticated → redirect to dashboard
-    const locale = pathname.match(localePattern)?.[1] || "en";
-    const dashboardUrl = new URL(`/${locale}/`, request.url);
-    const response = NextResponse.redirect(dashboardUrl);
-    supabaseCookies.forEach(({ name, value, options }) => {
-      response.cookies.set(name, value, options as Record<string, string>);
-    });
-    return response;
+    // Allow authenticated users to reach /update-password
+    // (they arrive here after OTP verification via /api/auth/confirm)
+    if (!pathnameWithoutLocale.startsWith("/update-password")) {
+      const locale = pathname.match(localePattern)?.[1] || "en";
+      const dashboardUrl = new URL(`/${locale}/`, request.url);
+      const response = NextResponse.redirect(dashboardUrl);
+      supabaseCookies.forEach(({ name, value, options }) => {
+        response.cookies.set(name, value, options as Record<string, string>);
+      });
+      return response;
+    }
   }
 
   // --- Step 4: Run intl middleware ---

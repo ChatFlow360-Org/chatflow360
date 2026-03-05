@@ -1,10 +1,10 @@
 import { type EmailOtpType } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { locales, defaultLocale } from "@/lib/i18n/routing";
 
 /**
- * Email confirmation route — handles email links for password recovery,
- * signup confirmation, etc.
+ * Email confirmation route — handles email links for password recovery.
  *
  * Instead of relying on Supabase's /auth/v1/verify endpoint (which can
  * fail with PKCE flow state expiration), we verify the OTP directly
@@ -14,12 +14,8 @@ import { createServerClient } from "@supabase/ssr";
  *   {{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/update-password
  */
 
-const VALID_OTP_TYPES = new Set<string>([
-  "recovery",
-  "signup",
-  "email_change",
-  "email",
-]);
+const VALID_OTP_TYPES = new Set<string>(["recovery"]);
+const VALID_LOCALES = new Set<string>(locales as readonly string[]);
 
 function sanitizeRedirectPath(rawNext: string | null): string {
   const fallback = "/";
@@ -41,11 +37,16 @@ function sanitizeRedirectPath(rawNext: string | null): string {
   }
 }
 
+function sanitizeLocale(raw: string | null): string {
+  return raw && VALID_LOCALES.has(raw) ? raw : defaultLocale;
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type");
   const next = sanitizeRedirectPath(searchParams.get("next"));
+  const locale = sanitizeLocale(searchParams.get("locale"));
 
   if (tokenHash && type && VALID_OTP_TYPES.has(type)) {
     const cookiesToSet: Array<{
@@ -76,10 +77,11 @@ export async function GET(request: NextRequest) {
 
     if (!error) {
       const redirectUrl = request.nextUrl.clone();
-      redirectUrl.pathname = `/en${next}`;
+      redirectUrl.pathname = `/${locale}${next}`;
       redirectUrl.searchParams.delete("token_hash");
       redirectUrl.searchParams.delete("type");
       redirectUrl.searchParams.delete("next");
+      redirectUrl.searchParams.delete("locale");
 
       const response = NextResponse.redirect(redirectUrl);
       cookiesToSet.forEach(({ name, value, options }) => {
@@ -93,10 +95,11 @@ export async function GET(request: NextRequest) {
 
   // Error — redirect to login with error indicator
   const loginUrl = request.nextUrl.clone();
-  loginUrl.pathname = "/en/login";
+  loginUrl.pathname = `/${locale}/login`;
   loginUrl.searchParams.delete("token_hash");
   loginUrl.searchParams.delete("type");
   loginUrl.searchParams.delete("next");
+  loginUrl.searchParams.delete("locale");
   loginUrl.searchParams.set("error", "link_expired");
 
   return NextResponse.redirect(loginUrl);
