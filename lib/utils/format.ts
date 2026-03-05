@@ -1,3 +1,8 @@
+export function formatUserName(firstName: string | null, lastName: string | null, email: string): string {
+  const parts = [firstName, lastName].filter(Boolean);
+  return parts.length > 0 ? parts.join(" ") : email;
+}
+
 export function formatRelativeTime(dateString: string, locale: string = "en"): string {
   const date = new Date(dateString);
   const now = new Date();

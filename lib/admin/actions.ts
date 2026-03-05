@@ -181,7 +181,8 @@ export async function deleteOrganization(id: string): Promise<AdminActionState> 
 
 const createUserSchema = z.object({
   email: z.string().email().max(254),
-  fullName: z.string().min(1).max(100),
+  firstName: z.string().min(1).max(50),
+  lastName: z.string().min(1).max(50),
   password: z.string().min(8).max(128),
   organizationId: z.string().uuid().optional().or(z.literal("")),
   role: z.enum(["admin"]).optional(),
@@ -190,7 +191,8 @@ const createUserSchema = z.object({
 
 const updateUserSchema = z.object({
   id: z.string().uuid(),
-  fullName: z.string().min(1).max(100),
+  firstName: z.string().min(1).max(50),
+  lastName: z.string().min(1).max(50),
   organizationId: z.string().uuid().optional().or(z.literal("")),
   role: z.enum(["admin"]).optional(),
   isSuperAdmin: z.coerce.boolean().optional(),
@@ -205,7 +207,8 @@ export async function createUser(
 
     const parsed = createUserSchema.safeParse({
       email: formData.get("email"),
-      fullName: formData.get("fullName"),
+      firstName: formData.get("firstName"),
+      lastName: formData.get("lastName"),
       password: formData.get("password"),
       organizationId: formData.get("organizationId") || "",
       role: formData.get("role") || undefined,
@@ -246,7 +249,8 @@ export async function createUser(
         data: {
           id: supabaseUserId,
           email: parsed.data.email,
-          fullName: parsed.data.fullName,
+          firstName: parsed.data.firstName,
+          lastName: parsed.data.lastName,
           isSuperAdmin,
         },
       });
@@ -288,7 +292,8 @@ export async function updateUser(
 
     const parsed = updateUserSchema.safeParse({
       id: formData.get("id"),
-      fullName: formData.get("fullName"),
+      firstName: formData.get("firstName"),
+      lastName: formData.get("lastName"),
       organizationId: formData.get("organizationId") || "",
       role: formData.get("role") || undefined,
       isSuperAdmin: formData.get("isSuperAdmin") || undefined,
@@ -305,7 +310,8 @@ export async function updateUser(
       await tx.user.update({
         where: { id: parsed.data.id },
         data: {
-          fullName: parsed.data.fullName,
+          firstName: parsed.data.firstName,
+          lastName: parsed.data.lastName,
           isSuperAdmin,
         },
       });
@@ -669,7 +675,7 @@ export async function getConversationMessages(conversationId: string) {
       senderType: true,
       content: true,
       createdAt: true,
-      sender: { select: { fullName: true } },
+      sender: { select: { firstName: true, lastName: true } },
     },
   });
 
@@ -686,7 +692,7 @@ export async function getConversationMessages(conversationId: string) {
           ? "Visitor"
           : m.senderType === "ai"
             ? "AI Assistant"
-            : (m.sender?.fullName || "Agent"),
+            : ([m.sender?.firstName, m.sender?.lastName].filter(Boolean).join(" ") || "Agent"),
       createdAt: m.createdAt.toISOString(),
     })),
   };

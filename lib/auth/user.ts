@@ -32,7 +32,8 @@ export const getCurrentUser = cache(async function getCurrentUserImpl() {
       create: {
         id: user.id,
         email: user.email!,
-        fullName: user.user_metadata?.full_name || null,
+        firstName: user.user_metadata?.first_name || user.user_metadata?.full_name?.split(" ")[0] || null,
+        lastName: user.user_metadata?.last_name || user.user_metadata?.full_name?.split(" ").slice(1).join(" ") || null,
         isSuperAdmin: false,
       },
       include: {
@@ -57,7 +58,8 @@ export const getCurrentUser = cache(async function getCurrentUserImpl() {
         create: {
           id: user.id,
           email: user.email!,
-          fullName: user.user_metadata?.full_name || null,
+          firstName: user.user_metadata?.first_name || user.user_metadata?.full_name?.split(" ")[0] || null,
+          lastName: user.user_metadata?.last_name || user.user_metadata?.full_name?.split(" ").slice(1).join(" ") || null,
           isSuperAdmin: count === 0,
         },
         include: {

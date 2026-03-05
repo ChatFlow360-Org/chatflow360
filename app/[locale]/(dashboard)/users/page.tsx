@@ -26,7 +26,8 @@ export default async function UsersPage() {
   const serializedUsers = users.map((u) => ({
     id: u.id,
     email: u.email,
-    fullName: u.fullName,
+    firstName: u.firstName,
+    lastName: u.lastName,
     isSuperAdmin: u.isSuperAdmin,
     createdAt: u.createdAt.toISOString(),
     membership: u.memberships[0]

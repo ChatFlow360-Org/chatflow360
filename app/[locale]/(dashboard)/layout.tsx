@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/user";
 import { prisma } from "@/lib/db/prisma";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { formatUserName } from "@/lib/utils/format";
 
 export default async function DashboardLayout({
   children,
@@ -60,7 +61,7 @@ export default async function DashboardLayout({
   return (
     <DashboardShell
       isSuperAdmin={user?.isSuperAdmin ?? false}
-      userName={user?.fullName || user?.email || ""}
+      userName={formatUserName(user?.firstName ?? null, user?.lastName ?? null, user?.email ?? "")}
       userEmail={user?.email || ""}
       organizationName={organizationName}
       adminContext={adminContext}

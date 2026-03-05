@@ -33,7 +33,8 @@ import {
 interface SerializedUser {
   id: string;
   email: string;
-  fullName: string | null;
+  firstName: string | null;
+  lastName: string | null;
   isSuperAdmin: boolean;
   createdAt: string;
   membership: {
@@ -173,16 +174,16 @@ export function UsersClient({ users, organizations, currentUserId }: UsersClient
   const actionState = editingUser ? updateState : createState;
   const isPending = editingUser ? isUpdating : isCreating;
 
-  const getInitials = (name: string | null, email: string) => {
-    if (name) {
-      return name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
+  const getInitials = (firstName: string | null, lastName: string | null, email: string) => {
+    if (firstName || lastName) {
+      return [firstName?.[0], lastName?.[0]].filter(Boolean).join("").toUpperCase().slice(0, 2);
     }
     return email[0].toUpperCase();
+  };
+
+  const displayName = (firstName: string | null, lastName: string | null, email: string) => {
+    const parts = [firstName, lastName].filter(Boolean);
+    return parts.length > 0 ? parts.join(" ") : email;
   };
 
   return (
@@ -210,7 +211,7 @@ export function UsersClient({ users, organizations, currentUserId }: UsersClient
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30">
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("fullName")}</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("name")}</th>
                 <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground sm:table-cell">{t("email")}</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("role")}</th>
                 <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground md:table-cell">{t("organization")}</th>
@@ -228,11 +229,11 @@ export function UsersClient({ users, organizations, currentUserId }: UsersClient
                     <div className="flex items-center gap-2.5">
                       <Avatar className="h-7 w-7">
                         <AvatarFallback className="bg-primary/10 text-[10px] text-primary">
-                          {getInitials(u.fullName, u.email)}
+                          {getInitials(u.firstName, u.lastName, u.email)}
                         </AvatarFallback>
                       </Avatar>
                       <span className="font-medium text-foreground">
-                        {u.fullName || u.email}
+                        {displayName(u.firstName, u.lastName, u.email)}
                       </span>
                     </div>
                   </td>
@@ -326,17 +327,31 @@ export function UsersClient({ users, organizations, currentUserId }: UsersClient
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="fullName">{t("fullName")}</Label>
-              <Input
-                id="fullName"
-                name="fullName"
-                defaultValue={editingUser?.fullName || ""}
-                placeholder="John Doe"
-                required
-                maxLength={100}
-                className="bg-background"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">{t("firstName")}</Label>
+                <Input
+                  id="firstName"
+                  name="firstName"
+                  defaultValue={editingUser?.firstName || ""}
+                  placeholder="John"
+                  required
+                  maxLength={50}
+                  className="bg-background"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">{t("lastName")}</Label>
+                <Input
+                  id="lastName"
+                  name="lastName"
+                  defaultValue={editingUser?.lastName || ""}
+                  placeholder="Doe"
+                  required
+                  maxLength={50}
+                  className="bg-background"
+                />
+              </div>
             </div>
 
             {!editingUser && (
