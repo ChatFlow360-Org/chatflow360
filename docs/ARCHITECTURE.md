@@ -73,7 +73,8 @@ chatflow360-dashboard/
 │   │   │   └── [id]/
 │   │   │       └── route.ts    # GET — conversation history, PATCH — close conversation
 │   │   ├── auth/
-│   │   │   └── callback/       # Supabase auth callback (code exchange)
+│   │   │   ├── callback/       # Supabase auth callback (code exchange)
+│   │   │   └── confirm/        # Server-side OTP verification for password reset (v0.3.26)
 │   │   ├── widget/
 │   │   │   ├── config/
 │   │   │   │   └── route.ts    # GET — widget appearance + postChat config by publicKey
@@ -121,7 +122,8 @@ chatflow360-dashboard/
 │   │   ├── server.ts           # Server client (auth verification)
 │   │   └── admin.ts            # Admin client (SERVICE_ROLE_KEY)
 │   ├── email/
-│   │   └── transcript.ts       # renderTranscriptEmail() — branded HTML email renderer (v0.3.9)
+│   │   ├── transcript.ts       # renderTranscriptEmail() — branded HTML email renderer (v0.3.9)
+│   │   └── reset-password.ts   # renderResetPasswordEmail() — bilingual password reset HTML email (v0.3.26)
 │   ├── widget/
 │   │   ├── appearance.ts       # WidgetAppearance types, Zod schema, defaults, resolveAppearance()
 │   │   └── post-chat.ts        # PostChatSettings types, Zod schema, defaults, resolvePostChat()
@@ -186,6 +188,20 @@ POST  /api/widget/transcript             # Generar y enviar email de transcripci
 - Envia via Resend: `from: "{orgName} <noreply@chatflow360.com>"`, `to: [visitor email]`, `cc: [ccEmail si configurado]`
 - Body size: verificado via `request.text()` (no confia en `Content-Length` header), limite 4KB
 
+### Auth API Routes
+
+```
+GET   /api/auth/confirm?token_hash=…&type=recovery&next=/…  # Server-side OTP verify → redirect (v0.3.26)
+```
+
+**GET /api/auth/confirm:**
+- Query params: `token_hash` (from Supabase magic link), `type` (must be `recovery`), `next` (redirect path after success), `locale` (optional — `en` or `es`, defaults to `en`)
+- Calls `supabase.auth.verifyOtp({ token_hash, type: "recovery" })` server-side — fixes PKCE flow state expiration that caused `otp_expired` when Supabase handled the redirect itself
+- Restricted to `type=recovery` only; returns 400 for any other OTP type
+- On success: redirects to `/{locale}/update-password` (with optional `next` path preserved)
+- On failure: redirects to `/{locale}/forgot-password?error=otp_expired`
+- **`sanitizeRedirectPath()`** — 6-layer open redirect protection: allowlist of valid base paths, strips protocol/host, blocks `//` double-slash, rejects non-relative paths, encodes special chars, enforces max 200 char length
+
 ### Dashboard — Authenticated API Routes
 
 ```
@@ -221,6 +237,32 @@ lib/admin/actions.ts:
 lib/auth/actions.ts:
   - login, logout, forgotPassword, updatePassword
 ```
+
+#### Custom Password Reset Flow (v0.3.26)
+
+The password reset flow bypasses Supabase's built-in email delivery in favor of full platform control:
+
+```
+User enters email → forgotPassword()
+    → supabaseAdmin.auth.admin.generateLink({ type: "recovery", email })
+    → Resend API sends branded bilingual email (lib/email/reset-password.ts)
+        → Email contains link: /api/auth/confirm?token_hash=…&type=recovery&locale=en
+
+User clicks link → GET /api/auth/confirm
+    → verifyOtp({ token_hash, type: "recovery" }) server-side
+    → Redirects to /[locale]/update-password
+
+User submits new password → updatePassword()
+    → AMR check: mfa.getAuthenticatorAssuranceLevel()
+        → Must be recovery session (aal1 + aal1) — rejects regular dashboard sessions
+    → supabase.auth.updateUser({ password })
+```
+
+**Key design decisions:**
+- `admin.generateLink()` gives the platform a raw `token_hash` — no dependency on Supabase email templates or Supabase Dashboard configuration
+- Server-side OTP verification in `/api/auth/confirm` eliminates PKCE state expiration (PKCE code verifier is stored in a cookie that expires before the user clicks the email link in some flows)
+- AMR check (PWR-03) prevents password changes via regular authenticated sessions — requires an active recovery session obtained through the reset email link
+- `lib/email/reset-password.ts` uses `escapeHtml()` on all variable fields including the reset URL, matches brand colors (`#fafcfe` header, `#2f92ad` CTA button)
 
 ### Futuras (Post-MVP)
 

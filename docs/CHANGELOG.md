@@ -2,6 +2,21 @@
 
 > Versiones recientes. Para historial completo ver los archivos en [`changelog/`](./changelog/).
 
+## v0.3.26 (2026-03-04)
+
+### Custom Password Reset Flow + Security Hardening
+
+- **`/api/auth/confirm` endpoint** — New server-side OTP verification route (`app/api/auth/confirm/route.ts`). Uses `supabase.auth.verifyOtp()` instead of delegating to Supabase's `/auth/v1/verify`. Fixes PKCE flow state expiration that caused `otp_expired` errors when Supabase's default redirect URL was used. Restricted to `recovery` OTP type only. Supports dynamic locale. Returns redirect to `/update-password` on success or `/forgot-password?error=otp_expired` on failure.
+- **`sanitizeRedirectPath()`** — 6-layer open redirect protection on the confirm endpoint: allowlist of valid paths, strips protocol/host, blocks `//` double-slash, rejects non-relative paths, encodes special chars, enforces max length (200 chars).
+- **`forgotPassword` rewritten** — `lib/auth/actions.ts` now uses `supabaseAdmin.auth.admin.generateLink({ type: "recovery" })` + Resend API instead of `supabase.auth.resetPasswordForEmail()`. Gives full control: bilingual emails, custom branded template, no dependency on Supabase email service or Supabase dashboard template editor.
+- **`lib/email/reset-password.ts`** — New bilingual HTML email template for password reset. Header `#fafcfe` with color logo, CTA button in `#2f92ad` (brand teal), supports EN/ES locale, `escapeHtml()` applied to all variable fields including URLs.
+- **`middleware.ts` fix** — Authenticated users can now reach `/update-password` after OTP verification. Previously the middleware redirected them to the dashboard before they could set a new password.
+- **PWR-03: AMR check in `updatePassword`** — `lib/auth/actions.ts` now calls `supabase.auth.mfa.getAuthenticatorAssuranceLevel()` before allowing a password change. Verifies `currentLevel === "aal1"` AND `nextLevel === "aal1"` on a recovery session. Returns `auth.errors.sessionExpired` if the session is not a valid recovery session, blocking password changes from regular dashboard sessions without a recovery token.
+- **Update Password UX** — `app/[locale]/(auth)/update-password/page.tsx` enhanced with: eye toggle (show/hide) for both password fields, crypto-secure password generator (16 chars, uppercase + lowercase + digits + symbols, Fisher-Yates shuffle via `crypto.getRandomValues()`), and live validation checklist (8+ chars, uppercase, lowercase, number, symbol).
+- **i18n** — New keys (EN + ES): `auth.updatePassword.generate`, `auth.updatePassword.pwMin8`, `auth.updatePassword.pwUppercase`, `auth.updatePassword.pwLowercase`, `auth.updatePassword.pwNumber`, `auth.updatePassword.pwSymbol`, `auth.errors.sessionExpired`.
+
+---
+
 ## v0.3.25 (2026-03-04)
 
 ### Fullscreen Loader Overlay
@@ -52,17 +67,6 @@
 
 ---
 
-## v0.3.21 (2026-03-03)
-
-### AI-Powered FAQ Import (Hybrid: URL + Text)
-- **`POST /api/knowledge/extract-faqs`** — new authenticated endpoint. Accepts `{ source: "url", url }` or `{ source: "text", text }`. For URLs: server-side fetch with 10s timeout + User-Agent, strips HTML (script/style/nav/header/footer/aside), limits to 15K chars. For text: processes directly. Uses `gpt-4o-mini` (temperature 0.1, `response_format: json_object`) to extract up to 30 Q&A pairs. Post-processes: validates types, truncates question to 300 chars and answer to 1000 chars. Auth via `getCurrentUser()`, API key via `resolvePlatformApiKey()`. Zod validation with discriminated union.
-- **`FaqImportDialog`** — new component (`components/knowledge/faq-import-dialog.tsx`). Two tabs: "From Text" (primary/default) and "From URL". Three phases: idle → extracting (with Loader2 spinner) → preview. Preview shows scrollable list of extracted FAQs with checkboxes. Auto-selects up to available slots (20 - existing count). Amber warning when extracted FAQs exceed available slots. "Import N FAQs" button adds selected items to the editor.
-- **`FAQsForm` updated** — new `onImport` prop + "Import FAQs" button (outline muted style) alongside "Add FAQ" in both empty state and items view.
-- **`Checkbox` UI component** — new `components/ui/checkbox.tsx` using Radix UI Checkbox primitive. Follows same pattern as Switch component.
-- **i18n** — 16 new keys (EN + ES) under `settings.faqs.import`: dialogTitle, tabUrl, tabText, urlLabel, textLabel, extractButton, extracting, noFaqsFound, selectAll, slotWarning, importSelected, importSuccess, etc.
-
----
-
 ## Indice de Todas las Versiones
 
 > Cada version con titulo resumido de 1 linea. Detalle completo en los archivos enlazados.
@@ -71,6 +75,7 @@
 
 | Version | Fecha | Resumen |
 |---------|-------|---------|
+| v0.3.21 | 2026-03-03 | AI-Powered FAQ Import (Hybrid: URL + Text) |
 | v0.3.20 | 2026-03-03 | RLS Policies for 3 Tables + Post-Chat Flow Reorder |
 | v0.3.19 | 2026-03-03 | Bidirectional Bulk Translate Fix + Starter Questions Scope |
 | v0.3.18 | 2026-03-03 | AI-Powered Translate Buttons + Client View hides Technical Settings |

@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.3.25 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.3.26 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -77,4 +77,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.3.25** - Fullscreen Loader overlay (logo animation + spinning ring) for locale switch and logout. Reusable `FullscreenLoader` component with `useTransition`. Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).
+**v0.3.26** - Custom Password Reset Flow: `admin.generateLink()` + Resend API replaces Supabase email (full control, bilingual template). New `/api/auth/confirm` endpoint for server-side OTP verification (fixes PKCE `otp_expired` errors). `sanitizeRedirectPath()` with 6-layer open redirect protection. PWR-03: AMR check in `updatePassword` via `mfa.getAuthenticatorAssuranceLevel()` (blocks password change without recovery session). Update Password UX: eye toggle, crypto-secure generator, live validation checklist. Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).

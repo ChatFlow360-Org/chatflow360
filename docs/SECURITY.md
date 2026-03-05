@@ -173,6 +173,16 @@ Without `setAuth`, all Realtime subscriptions on RLS-enabled tables silently rec
 
 ---
 
+## Resuelto en v0.3.26 (Custom Password Reset Flow + Security Hardening)
+
+| ID | Severidad | Issue | Solucion |
+|----|-----------|-------|----------|
+| PWR-01 | Alto | `forgotPassword` dependia de Supabase email (no customizable, no bilingue) | Reescrito con `supabaseAdmin.auth.admin.generateLink({ type: "recovery" })` + Resend API. Plataforma controla el template, el idioma, y el remitente. `lib/email/reset-password.ts` con `escapeHtml()` en todos los campos variables. |
+| PWR-02 | Alto | OTP verification via Supabase redirect causaba `otp_expired` (PKCE flow state expiraba) | Nuevo endpoint `GET /api/auth/confirm` que llama `verifyOtp()` server-side. Elimina dependencia en el PKCE code verifier del browser. Restringido a `type=recovery` unicamente. |
+| PWR-03 | Medio | `updatePassword` no verificaba que la sesion activa fuera una recovery session | AMR check con `supabase.auth.mfa.getAuthenticatorAssuranceLevel()`. Verifica `currentLevel === "aal1"` y `nextLevel === "aal1"`. Retorna `auth.errors.sessionExpired` si la sesion es una sesion de dashboard regular (sin recovery token). Bloquea cambios de password sin flujo de recovery. |
+| PWR-04 | Bajo | Open redirect en `/api/auth/confirm` via parametro `next` | `sanitizeRedirectPath()`: 6 capas — allowlist de paths validos, strip de protocol/host, bloqueo de `//`, rechazo de paths no-relativos, encoding de chars especiales, max 200 chars. |
+| PWR-05 | Bajo | `/update-password` inaccesible para usuarios autenticados (middleware redirigía al dashboard) | `middleware.ts` actualizado: usuarios autenticados con sesion de recovery pueden llegar a `/update-password` para completar el flujo. |
+
 ## Pendiente: Phase 2 (Pre-Launch)
 
 | ID | Severidad | Issue | Accion | Esfuerzo |
@@ -236,6 +246,10 @@ Without `setAuth`, all Realtime subscriptions on RLS-enabled tables silently rec
 - [x] Activar auth check en `middleware.ts` (getUser server-side)
 - [x] Crear paginas `/login`, `/forgot-password`, `/update-password`
 - [x] Validar session token en cada request (middleware + layout guard)
+- [x] Password reset flow con `admin.generateLink()` + Resend (custom bilingual email, PWR-01, v0.3.26)
+- [x] Server-side OTP verification en `/api/auth/confirm` (fixes PKCE expiration, PWR-02, v0.3.26)
+- [x] AMR check en `updatePassword` — verifica recovery session via `getAuthenticatorAssuranceLevel()` (PWR-03, v0.3.26)
+- [x] Open redirect protection en `/api/auth/confirm` — `sanitizeRedirectPath()` 6-layer (PWR-04, v0.3.26)
 - [ ] Implementar refresh token rotation
 - [ ] Rate limiting en login (`@upstash/ratelimit`)
 
