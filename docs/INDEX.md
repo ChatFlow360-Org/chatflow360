@@ -38,6 +38,7 @@
 | Documento | Descripcion |
 |-----------|-------------|
 | [RAG-KNOWLEDGE.md](./RAG-KNOWLEDGE.md) | Sistema RAG, embeddings, busqueda semantica, instrucciones vs conocimiento |
+| [ASSISTANT-COPILOT.md](./ASSISTANT-COPILOT.md) | Dashboard AI Assistant — onboarding wizard + copilot permanente (v0.4.0 target) |
 
 ## Integraciones
 
@@ -63,6 +64,6 @@
 ---
 
 **Proyecto:** ChatFlow360 - Multi-tenant Live Chat SaaS con IA
-**Version actual:** v0.3.21
+**Version actual:** v0.3.24
 **Fase:** MVP Development - Semanas 1-6
 **Produccion:** https://app.chatflow360.com

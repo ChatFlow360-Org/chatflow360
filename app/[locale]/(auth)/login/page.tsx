@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, usePathname, Link } from "@/lib/i18n/navigation";
 import Image from "next/image";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { cn } from "@/lib/utils";
+import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 import { login, type AuthState } from "@/lib/auth/actions";
 
 export default function LoginPage() {
@@ -21,9 +22,12 @@ export default function LoginPage() {
     login,
     null
   );
+  const [isLocalePending, startLocaleTransition] = useTransition();
 
   const switchLocale = (newLocale: string) => {
-    router.replace(pathname, { locale: newLocale as "en" | "es" });
+    startLocaleTransition(() => {
+      router.replace(pathname, { locale: newLocale as "en" | "es" });
+    });
   };
 
   const features = [
@@ -37,6 +41,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen">
+      {isLocalePending && <FullscreenLoader />}
       {/* Left Panel — Branding */}
       <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] flex-col items-center justify-between bg-[#0f1c2e] p-12 text-white border-r border-white/10">
         <div />

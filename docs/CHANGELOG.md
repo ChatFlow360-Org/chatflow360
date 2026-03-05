@@ -12,6 +12,7 @@
 - **Collapsed bubble nudge** (5aa3155) — Subtle peek animation every 4s (6px horizontal nudge with bounce). Starts after 3s delay, pauses when expanded.
 - **Logo alt text fix** (71bd9be) — Removed "Logo" alt text from bubble images to prevent text showing while image loads.
 - **Data layer** — 7 new fields in `WidgetAppearance`: `teaserTextEn/Es`, `teaserCtaEn/Es`, `teaserBgColor`, `teaserCtaColor`, `teaserAutoShow`, `teaserDelaySeconds`, `starterQuestionColor`. Zod validation + `resolveAppearance()` support. API returns `orgName` for `{{org_name}}` template replacement (server-side).
+- **Character counters** (ca1b8ea) — Inline `{length}/{max}` counters on all 12 bilingual text inputs in Widget settings: teaserText (80), teaserCta (30), welcomeTitle (60), welcomeSubtitle (80), headerTitle (40), headerSubtitle (60). Only visible when field has content. Styled `text-[10px] text-muted-foreground/60 tabular-nums`.
 - **i18n** — ~20 new keys (EN + ES) for bubble section, teaser fields, and starter question color.
 
 ---

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Bell, LogOut, Menu, User } from "lucide-react";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useRouter, usePathname } from "@/lib/i18n/navigation";
 import { logout } from "@/lib/auth/actions";
+import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 import type { Locale } from "@/lib/i18n/routing";
 
 interface HeaderProps {
@@ -29,9 +31,18 @@ export function Header({ onMenuClick, userName, userEmail, organizationName }: H
   const router = useRouter();
   const pathname = usePathname();
   const t = useTranslations("layout.header");
+  const [isPending, startTransition] = useTransition();
 
   const switchLocale = (newLocale: Locale) => {
-    router.replace(pathname, { locale: newLocale });
+    startTransition(() => {
+      router.replace(pathname, { locale: newLocale });
+    });
+  };
+
+  const handleLogout = () => {
+    startTransition(() => {
+      logout();
+    });
   };
 
   const currentDate = new Date().toLocaleDateString(locale, {
@@ -115,17 +126,17 @@ export function Header({ onMenuClick, userName, userEmail, organizationName }: H
               {t("myProfile")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <form action={logout} className="contents">
-              <DropdownMenuItem asChild className="cursor-pointer text-destructive focus:text-destructive">
-                <button type="submit" className="flex w-full items-center">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  {t("logout")}
-                </button>
-              </DropdownMenuItem>
-            </form>
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="cursor-pointer text-destructive focus:text-destructive"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              {t("logout")}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      {isPending && <FullscreenLoader />}
     </header>
   );
 }
