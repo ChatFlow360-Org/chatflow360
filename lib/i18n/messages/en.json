@@ -667,7 +667,13 @@
       "newPassword": "New Password",
       "confirmPassword": "Confirm Password",
       "update": "Update password",
-      "updating": "Updating..."
+      "updating": "Updating...",
+      "generate": "Generate",
+      "pwMin8": "At least 8 characters",
+      "pwUppercase": "One uppercase letter",
+      "pwLowercase": "One lowercase letter",
+      "pwNumber": "One number",
+      "pwSymbol": "One special character (!@#$...)"
     }
   },
   "organizations": {
