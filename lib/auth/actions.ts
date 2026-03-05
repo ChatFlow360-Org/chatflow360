@@ -148,6 +148,16 @@ export async function updatePassword(
   }
 
   const supabase = await createClient();
+
+  // PWR-03: Verify this is a recovery session (not a regular login)
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  const isRecoverySession = (aal?.currentAuthenticationMethods ?? []).some(
+    (entry) => (typeof entry === "string" ? entry : entry.method) === "otp"
+  );
+  if (!isRecoverySession) {
+    return { error: "sessionExpired" };
+  }
+
   const { error } = await supabase.auth.updateUser({
     password: parsed.data.password,
   });

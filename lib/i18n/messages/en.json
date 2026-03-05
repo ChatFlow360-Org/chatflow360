@@ -649,7 +649,8 @@
       "invalidEmail": "Please enter a valid email address.",
       "passwordTooShort": "Password must be at least 8 characters.",
       "passwordsMismatch": "Passwords do not match.",
-      "updateFailed": "Failed to update password. Please try again."
+      "updateFailed": "Failed to update password. Please try again.",
+      "sessionExpired": "Your reset session has expired. Please request a new password reset link."
     },
     "success": {
       "resetEmailSent": "If an account exists with this email, you will receive a password reset link."

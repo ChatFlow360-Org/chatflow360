@@ -649,7 +649,8 @@
       "invalidEmail": "Por favor ingresa un correo electrónico válido.",
       "passwordTooShort": "La contraseña debe tener al menos 8 caracteres.",
       "passwordsMismatch": "Las contraseñas no coinciden.",
-      "updateFailed": "No se pudo actualizar la contraseña. Intenta de nuevo."
+      "updateFailed": "No se pudo actualizar la contraseña. Intenta de nuevo.",
+      "sessionExpired": "Tu sesión de restablecimiento ha expirado. Solicita un nuevo enlace de restablecimiento."
     },
     "success": {
       "resetEmailSent": "Si existe una cuenta con este correo, recibirás un enlace para restablecer tu contraseña."
