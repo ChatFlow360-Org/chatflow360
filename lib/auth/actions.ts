@@ -4,6 +4,9 @@ import { z } from "zod";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { renderResetPasswordEmail } from "@/lib/email/reset-password";
+import { Resend } from "resend";
 import { locales, defaultLocale } from "@/lib/i18n/routing";
 
 /** Validate locale against allowed list to prevent path injection */
@@ -88,14 +91,39 @@ export async function forgotPassword(
   }
 
   const locale = sanitizeLocale(formData.get("locale"));
-  const supabase = await createClient();
+  const lang = locale === "es" ? "es" : "en";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-  const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  try {
+    // Generate recovery link via admin API (returns token_hash)
+    const admin = createAdminClient();
+    const { data, error } = await admin.auth.admin.generateLink({
+      type: "recovery",
+      email: parsed.data.email,
+    });
 
-  await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-    redirectTo: `${appUrl}/api/auth/confirm?next=/update-password&locale=${locale}`,
-  });
+    if (error || !data?.properties?.hashed_token) {
+      // Silently fail — don't reveal if email exists
+      return { success: "resetEmailSent" };
+    }
+
+    // Build reset URL pointing to our confirm route
+    const resetUrl = `${appUrl}/api/auth/confirm?token_hash=${data.properties.hashed_token}&type=recovery&next=/update-password&locale=${locale}`;
+
+    // Render bilingual email
+    const { subject, html } = renderResetPasswordEmail({ resetUrl, lang });
+
+    // Send via Resend
+    const resend = new Resend(process.env.RESEND_API_KEY!);
+    await resend.emails.send({
+      from: "ChatFlow360 <noreply@chatflow360.com>",
+      to: [parsed.data.email],
+      subject,
+      html,
+    });
+  } catch (err) {
+    console.error("[forgotPassword] Error:", err);
+  }
 
   // Always return success — don't reveal if email exists
   return { success: "resetEmailSent" };
