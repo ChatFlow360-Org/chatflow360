@@ -2,9 +2,9 @@
 
 > Versiones recientes. Para historial completo ver los archivos en [`changelog/`](./changelog/).
 
-## v0.3.26 (2026-03-04)
+## v0.3.26 (2026-03-05)
 
-### Custom Password Reset Flow + Security Hardening
+### Custom Password Reset Flow + Security Hardening + UX Polish
 
 - **`/api/auth/confirm` endpoint** — New server-side OTP verification route (`app/api/auth/confirm/route.ts`). Uses `supabase.auth.verifyOtp()` instead of delegating to Supabase's `/auth/v1/verify`. Fixes PKCE flow state expiration that caused `otp_expired` errors when Supabase's default redirect URL was used. Restricted to `recovery` OTP type only. Supports dynamic locale. Returns redirect to `/update-password` on success or `/forgot-password?error=otp_expired` on failure.
 - **`sanitizeRedirectPath()`** — 6-layer open redirect protection on the confirm endpoint: allowlist of valid paths, strips protocol/host, blocks `//` double-slash, rejects non-relative paths, encodes special chars, enforces max length (200 chars).
@@ -14,6 +14,7 @@
 - **PWR-03: AMR check in `updatePassword`** — `lib/auth/actions.ts` now calls `supabase.auth.mfa.getAuthenticatorAssuranceLevel()` before allowing a password change. Verifies `currentLevel === "aal1"` AND `nextLevel === "aal1"` on a recovery session. Returns `auth.errors.sessionExpired` if the session is not a valid recovery session, blocking password changes from regular dashboard sessions without a recovery token.
 - **Update Password UX** — `app/[locale]/(auth)/update-password/page.tsx` enhanced with: eye toggle (show/hide) for both password fields, crypto-secure password generator (16 chars, uppercase + lowercase + digits + symbols, Fisher-Yates shuffle via `crypto.getRandomValues()`), and live validation checklist (8+ chars, uppercase, lowercase, number, symbol).
 - **i18n** — New keys (EN + ES): `auth.updatePassword.generate`, `auth.updatePassword.pwMin8`, `auth.updatePassword.pwUppercase`, `auth.updatePassword.pwLowercase`, `auth.updatePassword.pwNumber`, `auth.updatePassword.pwSymbol`, `auth.errors.sessionExpired`.
+- **Login password visibility toggle** — `app/[locale]/(auth)/login/page.tsx` now has the same eye toggle (show/hide) pattern used in update-password, allowing users to reveal their password while typing.
 
 ---
 
