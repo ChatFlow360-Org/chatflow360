@@ -87,13 +87,14 @@ export async function forgotPassword(
     return { error: "invalidEmail" };
   }
 
+  const locale = sanitizeLocale(formData.get("locale"));
   const supabase = await createClient();
 
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-    redirectTo: `${appUrl}/api/auth/callback?next=/update-password`,
+    redirectTo: `${appUrl}/api/auth/confirm?next=/update-password&locale=${locale}`,
   });
 
   // Always return success — don't reveal if email exists
