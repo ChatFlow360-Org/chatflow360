@@ -1,6 +1,6 @@
 # CLAUDE.md - ChatFlow360
 
-> **Version:** v0.3.24 | **Fase:** MVP Development (Semanas 1-6)
+> **Version:** v0.3.25 | **Fase:** MVP Development (Semanas 1-6)
 
 ## Quick Context
 
@@ -77,4 +77,4 @@ npm run build                  # Build produccion
 
 ## Estado Actual
 
-**v0.3.24** - 2-Stage Chat Bubble (Teaser): collapsed bubble with logo/icon, expands on hover/tap with teaser message + CTA. Auto-show mode with delay. Starter question color picker. Clean close animation (no compact flash). Nudge animation on collapsed bubble. Widget preview improvements (fillHeight, internal scroll, real-widget styling). Character counters on all 12 bilingual widget text inputs. Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).
+**v0.3.25** - Fullscreen Loader overlay (logo animation + spinning ring) for locale switch and logout. Reusable `FullscreenLoader` component with `useTransition`. Pendiente: rate limiting (Upstash Redis — CRIT-01, deferred).

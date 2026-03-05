@@ -2,6 +2,15 @@
 
 > Versiones recientes. Para historial completo ver los archivos en [`changelog/`](./changelog/).
 
+## v0.3.25 (2026-03-04)
+
+### Fullscreen Loader Overlay
+- **FullscreenLoader component** (2bd656e) — Reusable fullscreen loading overlay with ChatFlow360 logo animation. Fixed overlay with `backdrop-blur-sm` + `bg-background/80`. Logo centered with breathing pulse animation (`cf360-breathe`). Spinning ring in CTA color (`cf360-spin`). Works in light and dark mode. Component: `components/ui/fullscreen-loader.tsx`. Keyframes in `globals.css`.
+- **Locale switch loader** — `useTransition` wraps `router.replace()` in Header and Login page. Shows FullscreenLoader during the pending state of language switching (EN↔ES).
+- **Logout loader** — Same `useTransition` in Header wraps `logout()` server action. Shows FullscreenLoader while signOut + redirect processes.
+
+---
+
 ## v0.3.24 (2026-03-04)
 
 ### 2-Stage Chat Bubble (Teaser) + Widget UX Fixes
@@ -54,19 +63,6 @@
 
 ---
 
-## v0.3.20 (2026-03-03)
-
-### RLS Policies for 3 Tables + Post-Chat Flow Reorder (ce111ba)
-- **RLS: `business_categories`** — enabled Row Level Security. `service_role` full access + `super_admin` SELECT only. All mutations via Prisma (`requireSuperAdmin()`). Migration: `supabase/migrations/20260303_rls_business_categories.sql`.
-- **RLS: `leads`** — enabled Row Level Security. `service_role` full access + org-scoped SELECT/DELETE via `get_user_org_ids()`. No INSERT policy (lead creation via Prisma in `/api/widget/transcript`). No UPDATE (leads immutable). Migration: `supabase/migrations/20260303_rls_leads.sql`.
-- **RLS: `prompt_pieces`** — enabled Row Level Security. `service_role` full access + `super_admin` SELECT + org members can read global rules (`category_id IS NULL, type='rule'`) and their org's assigned category pieces. All mutations via Prisma (`requireSuperAdmin()`). Migration: `supabase/migrations/20260303_rls_prompt_pieces.sql`.
-- **Post-chat flow reorder** — widget now shows transcript form FIRST, then rating. Previously was rating → transcript. Skip button in transcript step goes to rating (if enabled) instead of done. Functions modified: `showPostChatFlow()`, `showRatingStep()`, `submitRating()`, `showTranscriptStep()`, `showTranscriptSuccess()`.
-- **Verification** — code audit confirmed ZERO direct Supabase client access on all 3 tables (all via Prisma). Build passes. All dashboard pages + widget APIs respond correctly after RLS enablement.
-
----
-
----
-
 ## Indice de Todas las Versiones
 
 > Cada version con titulo resumido de 1 linea. Detalle completo en los archivos enlazados.
@@ -75,6 +71,7 @@
 
 | Version | Fecha | Resumen |
 |---------|-------|---------|
+| v0.3.20 | 2026-03-03 | RLS Policies for 3 Tables + Post-Chat Flow Reorder |
 | v0.3.19 | 2026-03-03 | Bidirectional Bulk Translate Fix + Starter Questions Scope |
 | v0.3.18 | 2026-03-03 | AI-Powered Translate Buttons + Client View hides Technical Settings |
 | v0.3.17 | 2026-03-03 | Starter Questions for Widget (drag-and-drop, bilingual, welcome screen) |
